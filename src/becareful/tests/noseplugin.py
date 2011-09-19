@@ -3,7 +3,7 @@ A nose plugin to ease some testing pain.
 """
 import sys
 from os import makedirs
-from os.path import dirname, join, isdir
+from os.path import dirname, join, isdir, realpath
 from shutil import rmtree
 from subprocess import call, PIPE
 
@@ -63,7 +63,8 @@ class TestSetup(Plugin):
         rmtree(test.test.gitrepodir)
 
     def _create_git_repo(self):
-        repo_harness_dir = join(dirname(__file__), '..', '.testrepos')
+        testrepos = ['..'] * 3 + ['.testrepos']
+        repo_harness_dir = join(dirname(__file__), *testrepos)
 
         try:
             repo = join(repo_harness_dir, 'repo')
@@ -81,4 +82,4 @@ class TestSetup(Plugin):
             raise TestSetupError('Could not initialize a Git repository to '
                 'run tests, is Git installed?')
 
-        return repo
+        return realpath(repo)

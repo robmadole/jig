@@ -28,3 +28,21 @@ class PreCommitExists(BeCarefulException):
 
     """
     pass
+
+
+class GitRepoNotInitialized(BeCarefulException):
+
+    """
+    The given Git repository has not been initialized for usage.
+
+    """
+    pass
+
+
+class AlreadyInitialized(BeCarefulException):
+
+    """
+    The given Git repository has been initialized already.
+
+    """
+    pass

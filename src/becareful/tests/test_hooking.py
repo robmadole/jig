@@ -49,3 +49,15 @@ class TestAddingHook(BeCarefulTestCase):
 
         self.assertEqual(self.pc_filename,
             pc_filename)
+
+    def test_hook_runs(self):
+        """
+        New hook will run.
+        """
+        pc_filename = hook(self.gitrepodir)
+
+        retcode, output = self.runcmd(pc_filename)
+
+        self.assertEqual(1, retcode)
+        self.assertEqual('This repository has not been initialized. Run '
+            'becareful init GITREPO to set it up', output)
