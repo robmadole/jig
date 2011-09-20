@@ -46,3 +46,12 @@ class AlreadyInitialized(BeCarefulException):
 
     """
     pass
+
+
+class PluginError(BeCarefulException):
+
+    """
+    An error occured while working with a plugin.
+
+    """
+    pass

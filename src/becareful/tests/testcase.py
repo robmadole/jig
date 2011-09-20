@@ -1,5 +1,6 @@
 import shlex
 import unittest
+from os.path import join, dirname
 from subprocess import check_output, STDOUT, CalledProcessError
 
 from becareful.runner import Runner
@@ -11,6 +12,9 @@ class BeCarefulTestCase(unittest.TestCase):
     Base test case for all BeCareful tests.
 
     """
+    def setUp(self):
+        self.fixturesdir = join(dirname(__file__), 'fixtures')
+
     def runcmd(self, cmd):
         """
         Takes a string and runs it, returning the output and exit code.

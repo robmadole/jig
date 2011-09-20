@@ -9,8 +9,8 @@ class TestRunnerFromHook(RunnerTestCase):
         """
         self.runner.fromhook(self.gitrepodir)
 
-        self.assertEqual(self.error, 'This repository has not been initialized. Run '
-            'becareful init GITREPO to set it up')
+        self.assertEqual(self.error, 'This repository has not been '
+            'initialized. Run becareful init GITREPO to set it up')
 
     def test_no_plugins(self):
         """
