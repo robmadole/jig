@@ -2,11 +2,15 @@ from os import mkdir
 from os.path import join, isfile
 from functools import wraps
 from ConfigParser import SafeConfigParser
+from ConfigParser import Error as ConfigParserError
+from ConfigParser import NoSectionError, NoOptionError
+from collections import OrderedDict
 
-from becareful.exc import NotGitRepo, AlreadyInitialized, GitRepoNotInitialized
+from becareful.exc import (NotGitRepo, AlreadyInitialized,
+    GitRepoNotInitialized, PluginError)
 from becareful.gitutils import is_git_repo, repo_bcinitialized
-from becareful.conf import (BC_DIR_NAME, BC_PLUGINS_FILENAME,
-    PLUGIN_CONFIG_FILENAME)
+from becareful.conf import (BC_DIR_NAME, BC_PLUGIN_CONFIG_FILENAME,
+    BC_PLUGIN_DIR, PLUGIN_CONFIG_FILENAME)
 
 
 def _git_check(func):
@@ -14,15 +18,18 @@ def _git_check(func):
     Checks to see if the directory is a Git repo.
 
     Raises :py:exc:`NotGitRepo` if it's not.
+
+    You can only use this decorator on a function where the first argument is
+    the path to the Git repository.
     """
     @wraps(func)
-    def wrapper(gitrepo):
+    def wrapper(gitrepo, *args, **kwargs):
         # Is it a Git repo?
         if not is_git_repo(gitrepo):
             raise NotGitRepo('Trying to initialize a directory that is not a '
                 'Git repository.')
 
-        return func(gitrepo)
+        return func(gitrepo, *args, **kwargs)
     return wrapper
 
 
@@ -42,6 +49,7 @@ def initializer(gitrepo):
     bc_dir = join(gitrepo, BC_DIR_NAME)
 
     mkdir(bc_dir)
+    mkdir(join(bc_dir, BC_PLUGIN_DIR))
 
     return set_bcconfig(gitrepo)
 
@@ -64,7 +72,7 @@ def set_bcconfig(gitrepo, config=None):
     plugins = config if config else SafeConfigParser()
 
     # Create a plugin list file
-    with open(join(bc_dir, BC_PLUGINS_FILENAME), 'w') as fh:
+    with open(join(bc_dir, BC_PLUGIN_CONFIG_FILENAME), 'w') as fh:
         plugins.write(fh)
 
         return plugins
@@ -80,7 +88,7 @@ def get_bcconfig(gitrepo):
     if not repo_bcinitialized(gitrepo):
         raise GitRepoNotInitialized('This repository has not been initialized')
 
-    with open(join(bc_dir, BC_PLUGINS_FILENAME), 'r') as fh:
+    with open(join(bc_dir, BC_PLUGIN_CONFIG_FILENAME), 'r') as fh:
         plugins = SafeConfigParser()
         plugins.readfp(fh)
 
@@ -103,12 +111,44 @@ class PluginManager(object):
         """
         # The instance of SafeConfigParser we get from :py:method:`config`.
         self.config = config
-        self._plugins = []
 
-        # Slurp the existing config, creating any plugins we find
-        for name in config.sections():
-            section = Plugin(dict(config.items('section')))
-            self._plugins.append(section)
+        # Look through the config and initialize any installed plugins
+        self._plugins = self._init_plugins(config)
+
+    def _init_plugins(self, config):
+        """
+        Creates :py:class:`Plugin` instances from ``config``.
+        """
+        plugins = []
+        for section_name in config.sections():
+            if not section_name.startswith('plugin:'):
+                # We are only interested in the plugin configs
+                continue
+
+            _, bundle, name = section_name.split(':')
+
+            path = config.get(section_name, 'path')
+
+            plugin_cfg = join(path, PLUGIN_CONFIG_FILENAME)
+
+            with open(plugin_cfg) as fh:
+                plugin_config = SafeConfigParser()
+                try:
+                    plugin_config.readfp(fh)
+                except ConfigParserError:
+                    # Something happened when parsing the config
+                    raise PluginError('Could not parse config file for '
+                        '{} in {}'.format(name, path))
+
+            # Get rid of the path, we don't need to send this as part of the
+            # config for the plugin
+            pc = OrderedDict(config.items(section_name))
+            del pc['path']
+
+            section = Plugin(bundle, name, path, pc)
+            plugins.append(section)
+
+        return plugins
 
     def __iter__(self):
         return iter(self._plugins)
@@ -121,8 +161,13 @@ class PluginManager(object):
         return list(self)
 
     def add(self, plugindir):
+        """
+        Add the given plugin to this manager instance.
+
+        ``plugindir`` should be the full path to a directory containing all the
+        files required for a BeCareful plugin.
+        """
         # Is this a plugins?
-        import pdb; pdb.set_trace();
         config_filename = join(plugindir, PLUGIN_CONFIG_FILENAME)
 
         if not isfile(config_filename):
@@ -132,11 +177,45 @@ class PluginManager(object):
         config = SafeConfigParser()
 
         with open(config_filename, 'r') as fh:
-            config.readfp(fh)
+            try:
+                config.readfp(fh)
+            except ConfigParserError as e:
+                raise PluginError(e)
 
-        defaults = config.defaults()
-        import pdb; pdb.set_trace();
+        try:
+            settings = OrderedDict(config.items('settings'))
+        except NoSectionError:
+            settings = []
 
+        try:
+            plugin_info = OrderedDict(config.items('plugin'))
+        except NoSectionError:
+            raise PluginError('The plugin config does not contain a '
+                '[plugin] section')
+
+        try:
+            bundle = plugin_info['bundle']
+            name = plugin_info['name']
+        except KeyError:
+            raise PluginError('Could not find the bundle or name of '
+                'the plugin')
+
+        new_section = 'plugin:{bundle}:{name}'.format(
+            bundle=bundle, name=name)
+
+        if self.config.has_section(new_section):
+            raise PluginError('The plugin is already installed.')
+
+        self.config.add_section(new_section)
+
+        self.config.set(new_section, 'path', plugindir)
+
+        for setting in settings:
+            option, value = setting, settings[setting]
+            self.config.set(new_section, option, value)
+
+        # Re-initialize the self.plugins list
+        self._plugins = self._init_plugins(self.config)
 
 
 class Plugin(object):
@@ -145,5 +224,12 @@ class Plugin(object):
     A set of functionality that interfaces with BeCareful.
 
     """
-    def __init__(self, config={}):
+    def __init__(self, bundle, name, path, config={}):
+        # What bundle is this plugin a part of
+        self.bundle = bundle
+        # What is the name of this plugin?
+        self.name = name
+        # Where does this plugin live
+        self.path = path
+        # Plugin-specific configuration
         self.config = config

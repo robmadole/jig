@@ -6,7 +6,8 @@ BC_DIR_NAME = '.bc'
 
 # Name of the file that will be created to manage a list of plugins and
 # settings for them
-BC_PLUGINS_FILENAME = 'plugins.cfg'
+BC_PLUGIN_CONFIG_FILENAME = 'plugins.cfg'
+BC_PLUGIN_DIR = 'plugins'
 
 
 ## Plugin specific settings

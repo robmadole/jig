@@ -1,0 +1,9 @@
+#!/usr/bin/env python2.7
+import json
+
+data = [
+   (1, 'This line is ugly')
+]
+
+print(json.dumps(data))
+exit(1)
