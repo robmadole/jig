@@ -8,7 +8,8 @@ NEWS = open(os.path.join(here, 'NEWS.txt')).read()
 
 version = '0.1.0'
 
-install_requires = []
+install_requires = [
+    'GitPython>=0.3.2RC1']
 
 
 setup(name='becareful',
