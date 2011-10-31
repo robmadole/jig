@@ -2,6 +2,8 @@ import sys
 from StringIO import StringIO
 from contextlib import contextmanager
 
+from becareful.exc import RunnerExit
+
 
 class View(object):
 
@@ -48,3 +50,5 @@ class ConsoleView(View):
 
             if self.exit_on_exception:
                 sys.exit(retcode)
+            else:
+                raise RunnerExit(retcode)

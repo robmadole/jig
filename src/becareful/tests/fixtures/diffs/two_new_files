@@ -1,0 +1,97 @@
+diff --git a/famous-deaths.txt b/famous-deaths.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..c5aee78e23366dd1ddab4253cbd3c13966932e8f
+--- /dev/null
++++ b/famous-deaths.txt
+@@ -0,0 +1,39 @@
++It's Wolfgang Amamdeus Mozart / Famous Deaths
++=============================================
++
++The cast:
++~~~~~~~~~
++
++MOZART
++  John Cleese
++VOICE OVER
++  Graham Chapman
++EDDIE
++  Edic Idle
++FOSTER
++  Graham Chapman
++
++The sketch:
++~~~~~~~~~~~
++
++(Opening Scene: Mozart sitting at piano tinkling with the keys. He
++finishes tinkling.) Mozart: Hello again, and welcome to the show.
++Tonight we continue to look at some famous deaths. Tonight we start with
++the wonderful death of Genghis Khan, conqueror of India. Take it away
++Genghis.
++
++(Cut to Genghis Khan's tent. Genghis strides about purposefully.
++Indian-style background music. Suddenly the music cuts out and Genghis
++Khan with a squawk throws himself in the air and lands on his back. This
++happens very suddenly. Judges hold up cards with points on, in the
++manner of ice skating judges.)
++
++Voice Over: 9.1, 9.3, 9.7, that's 28.1 for Genghis Khan.
++
++(Mozart still at piano.)
++
++Mozart: Bad luck Genghis. Nice to have you on the show. And now here are
++the scores.
++
++(Scoreboard with Eddie Waring figure stnding by it. The scoreboard looks
++a little like this:)
+diff --git a/italian-lesson.txt b/italian-lesson.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..1c1fb5cb4da028abd87647550174f790ca5c296a
+--- /dev/null
++++ b/italian-lesson.txt
+@@ -0,0 +1,46 @@
++Italian Lesson
++==============
++
++The cast:
++~~~~~~~~~
++
++TEACHER
++  Terry Jones
++GIUSEPPE
++  Michael Palin
++MARIOLINI
++  John Cleese
++FRANCESCO
++  Eric Idle
++HELMUT
++  Graham Chapman
++
++The sketch:
++~~~~~~~~~~~
++
++(Cut to a night school Teacher looking down out of classroom window. He
++crosses to a long wall blackboard with line of pigs drawn on near end.
++He crosses one off, walks along blackboard to other end which has
++written on it 'evening classes 7-8p.m. '. He writes 'Italian' below this
++and turns to camera.) Teacher: Ah - good evening everyone, and welcome
++to the second of our Italian language classes, in which we'll be helping
++you brush up your Italian. Last week we started at the beginning, and we
++learnt the Italian for a 'spoon'. Now, I wonder how many of you can
++remember what it was?
++
++(Shout of 'Si, Si, Si,' from the class whom we see are all Italians.)
++
++Teacher: Not all at once ... sit down Mario. Giuseppe!
++
++Giuseppe: II cucchiaio.
++
++Teacher: Well done Giuseppe, or, as the Italians would say: 'Molto bene,
++Giuseppe'.
++
++Giuseppe: Grazie signor ... grazie di tutta la sua gentilezza.
++
++Teacher: Well, now, this week we're going to learn some useful phrases
++to help us open a conversation with an Italian. Now first of all try
++telling him where you come from. For example, I would say: 'Sono Inglese
++di Gerrard's Cross', I am an Englishman from Gerrard's Cross. Shall we
++all try that together?

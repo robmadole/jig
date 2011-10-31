@@ -1,16 +1,19 @@
+import json
 from os import mkdir
 from os.path import join, isfile
+from subprocess import Popen, PIPE
 from functools import wraps
 from ConfigParser import SafeConfigParser
 from ConfigParser import Error as ConfigParserError
-from ConfigParser import NoSectionError, NoOptionError
+from ConfigParser import NoSectionError
 from collections import OrderedDict
 
 from becareful.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized, PluginError)
-from becareful.gitutils import is_git_repo, repo_bcinitialized
 from becareful.conf import (BC_DIR_NAME, BC_PLUGIN_CONFIG_FILENAME,
-    BC_PLUGIN_DIR, PLUGIN_CONFIG_FILENAME)
+    BC_PLUGIN_DIR, PLUGIN_CONFIG_FILENAME, PLUGIN_PRE_COMMIT_SCRIPT)
+from becareful.gitutils import is_git_repo, repo_bcinitialized
+from becareful.diffconvert import GitDiffIndex
 
 
 def _git_check(func):
@@ -221,7 +224,7 @@ class PluginManager(object):
 class Plugin(object):
 
     """
-    A set of functionality that interfaces with BeCareful.
+    A single unit that performs some helpful operation for the user.
 
     """
     def __init__(self, bundle, name, path, config={}):
@@ -233,3 +236,63 @@ class Plugin(object):
         self.path = path
         # Plugin-specific configuration
         self.config = config
+
+    def pre_commit(self, git_diff_index):
+        """
+        Runs the plugin's pre-commit script, passing in the diff.
+
+        ``git_diff_index`` is a :py:class:`becareful.diffconvert.GitDiffIndex`
+        object.
+
+        The pre-commit script will receive JSON data as standard input (stdin).
+        The JSON data is comprised of two main attributes: config and diff.
+
+        The ``config`` attribute represents the configuration for this plugin.
+        This is up to the plugin author but the values can be changed by the
+        user.
+
+        The ``diff`` attribute is a list of files and changes that have
+        occurred to them.  See :py:module:`becareful.diffconvert` for
+        information on what this object provides.
+        """
+        # Grab this plugin's settings
+        data_in = {
+            'config': self.config,
+            'files': git_diff_index}
+
+        script = join(self.path, PLUGIN_PRE_COMMIT_SCRIPT)
+        ph = Popen([script], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+
+        # Send the data to the script
+        stdout, stderr = ph.communicate(
+            json.dumps(data_in, indent=2, cls=PluginDataJSONEncoder))
+
+        retcode = ph.returncode
+
+        # And return the relevant stuff
+        return retcode, stdout, stderr
+
+
+class PluginDataJSONEncoder(json.JSONEncoder):
+
+    """
+    Converts the special data objects used when a plugin runs pre-commit.
+
+    """
+    def default(self, obj):
+        """
+        Implements JSONEncoder default method.
+        """
+        if isinstance(obj, GitDiffIndex):
+            files = [i for i in obj.files()]
+
+            obj = []
+            for f in files:
+                obj.append({
+                    'type': f['type'],
+                    'name': f['name'],
+                    'filename': f['filename'],
+                    'diff': [j for j in f['diff']]})
+
+            return obj
+        return super(PluginDataJSONEncoder, self).default(obj)

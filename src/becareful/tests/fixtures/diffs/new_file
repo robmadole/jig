@@ -1,0 +1,20 @@
+diff --git a/argument.txt b/argument.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..a006f4d6c2416c3dc899ce3f6f0132d28f2196a5
+--- /dev/null
++++ b/argument.txt
+@@ -0,0 +1,14 @@
++The cast:
++
++MAN
++  Michael Palin
++RECEPTIONIST
++  Rita Davies
++MR. BARNARD
++  Graham Chapman
++MR. VIBRATING
++  John Cleese
++COMPLAINER
++  Eric Idle
++SPREADERS
++  Terry Jones

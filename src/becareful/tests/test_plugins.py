@@ -1,11 +1,12 @@
+import json
 from os import rmdir
-from os.path import isfile, join
+from os.path import isfile, join, dirname
 from tempfile import mkdtemp
 from ConfigParser import ConfigParser
 
-from nose.plugins.attrib import attr
-
-from becareful.tests.testcase import BeCarefulTestCase
+from becareful.tests.testcase import BeCarefulTestCase, PluginTestCase
+from becareful.tests.utils import diffindexfrom
+from becareful.diffconvert import GitDiffIndex
 from becareful.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized, PluginError)
 from becareful.plugins import (initializer, get_bcconfig, set_bcconfig,
@@ -18,10 +19,6 @@ class TestPluginConfig(BeCarefulTestCase):
     Test plugin config file handling.
 
     """
-    @property
-    def plugins(self):
-        return get_bcconfig(self.gitrepodir)
-
     def test_not_git_repo(self):
         """
         Refuses to initialize a non-Git repo.
@@ -92,27 +89,12 @@ class TestPluginConfig(BeCarefulTestCase):
         set_bcconfig(self.gitrepodir, config=config)
 
 
-class TestPluginManager(BeCarefulTestCase):
+class TestPluginManager(PluginTestCase):
 
     """
     Test the plugin manager.
 
     """
-    def setUp(self):
-        super(TestPluginManager, self).setUp()
-
-        # Initialize the repo and grab it's config file
-        self.bcconfig = initializer(self.gitrepodir)
-
-    def _add_plugin(self, config, plugindir):
-        """
-        Adds the plugin to a main BeCareful config.
-        """
-        section = 'plugin:test01:{}'.format(plugindir)
-        config.add_section(section)
-        config.set(section, 'path',
-            join(self.fixturesdir, plugindir))
-
     def test_has_empty_plugin_list(self):
         """
         A freshly initialized repo has no plugins.
@@ -137,6 +119,9 @@ class TestPluginManager(BeCarefulTestCase):
         self.assertEqual('plugin01', plugin.name)
 
     def test_ignores_non_plugin_sections(self):
+        """
+        Other sections of the config do not get seen as a plugin.
+        """
         self._add_plugin(self.bcconfig, 'plugin01')
 
         self.bcconfig.add_section('nonplugin')
@@ -169,6 +154,9 @@ class TestPluginManager(BeCarefulTestCase):
         self.assertIn('Could not parse config file', str(ec.exception))
 
     def test_add_bad_plugin_config(self):
+        """
+        Adding a bad plugin catches parsing errors.
+        """
         pm = PluginManager(self.bcconfig)
 
         with self.assertRaises(PluginError) as ec:
@@ -213,7 +201,7 @@ class TestPluginManager(BeCarefulTestCase):
 
     def test_missing_bundle_and_name(self):
         """
-        Adds a plugin if it has no settings.
+        Will not add a plugin if it is missing a bundle or name.
         """
         pm = PluginManager(self.bcconfig)
 
@@ -235,3 +223,42 @@ class TestPluginManager(BeCarefulTestCase):
 
         self.assertEqual('The plugin is already installed.',
             str(ec.exception))
+
+
+class TestPlugin(PluginTestCase):
+
+    """
+    Test the individual plugins.
+
+    """
+    def setUp(self):
+        super(TestPlugin, self).setUp()
+
+        self.testrepodir = join(dirname(__file__), 'fixtures', 'repo01')
+
+    def _git_diff_index(self, fixture):
+        diffindex = diffindexfrom(fixture)
+
+        return GitDiffIndex(self.testrepodir, diffindex)
+
+    def test_new_file_pre_commit(self):
+        """
+        Test a new file pre-commit.
+        """
+        pm = PluginManager(self.bcconfig)
+
+        pm.add(join(self.fixturesdir, 'plugin01'))
+        gdi = self._git_diff_index('new_file')
+
+        retcode, stdout, stderr = pm.plugins[0].pre_commit(gdi)
+
+        data = json.loads(stdout)
+
+        # Everything should have gone splendidly
+        self.assertEqual(0, retcode)
+        # Should contain our file that was added
+        self.assertIn('argument.txt', data)
+        # And our first line should be a warning
+        self.assertEqual(
+            [1, u'warn', u'The cast: is horrible'],
+            data['argument.txt'][0])

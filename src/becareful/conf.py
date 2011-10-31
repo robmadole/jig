@@ -14,3 +14,7 @@ BC_PLUGIN_DIR = 'plugins'
 
 # Each plugin has a configuration file, the name is
 PLUGIN_CONFIG_FILENAME = 'config.cfg'
+
+# Name of the script to run inside the plugin directory that represents
+# the pre-commit script
+PLUGIN_PRE_COMMIT_SCRIPT = 'pre-commit'

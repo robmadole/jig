@@ -4,6 +4,7 @@ from os.path import join, dirname
 from subprocess import check_output, STDOUT, CalledProcessError
 
 from becareful.runner import Runner
+from becareful.plugins import initializer
 
 
 class BeCarefulTestCase(unittest.TestCase):
@@ -87,3 +88,25 @@ class RunnerTestCase(BeCarefulTestCase):
             return ''
 
         return self.runner.view._collect['stderr'].getvalue()
+
+
+class PluginTestCase(BeCarefulTestCase):
+
+    """
+    Base test case for plugin tests.
+
+    """
+    def setUp(self):
+        super(PluginTestCase, self).setUp()
+
+        # Initialize the repo and grab it's config file
+        self.bcconfig = initializer(self.gitrepodir)
+
+    def _add_plugin(self, config, plugindir):
+        """
+        Adds the plugin to a main BeCareful config.
+        """
+        section = 'plugin:test01:{}'.format(plugindir)
+        config.add_section(section)
+        config.set(section, 'path',
+            join(self.fixturesdir, plugindir))

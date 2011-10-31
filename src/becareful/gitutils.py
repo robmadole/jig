@@ -6,11 +6,19 @@ from stat import S_IXUSR, S_IXGRP, S_IXOTH
 from os import stat, chmod
 from os.path import isdir, isfile, join, realpath, dirname
 
+import git
+import gitdb
+import async
+import smmap
 from becareful.exc import NotGitRepo, PreCommitExists
 from becareful.conf import BC_DIR_NAME
 
-# Where is the BeCareful egg installed?
+# Dependencies to make BeCareful run
 BE_CAREFUL_DIR = realpath(join(dirname(__file__), '..'))
+GIT_PYTHON_DIR = realpath(join(dirname(git.__file__), '..'))
+GITDB_DIR = realpath(join(dirname(gitdb.__file__), '..'))
+ASYNC_DIR = realpath(join(dirname(async.__file__), '..'))
+SMMAP_DIR = realpath(join(dirname(smmap.__file__), '..'))
 
 PRE_COMMIT_HOOK_SCRIPT = \
 """#!{python_executable}
@@ -19,6 +27,10 @@ from os.path import dirname, join
 
 # Make sure that we can find the directory that BeCareful is installed
 path.append('{be_careful_dir}')
+path.append('{git_python_dir}')
+path.append('{gitdb_dir}')
+path.append('{async_dir}')
+path.append('{smmap_dir}')
 
 from becareful.runner import Runner
 
@@ -68,7 +80,11 @@ def hook(gitdir):
 
     script_kwargs = {
         'python_executable': sys.executable,
-        'be_careful_dir': BE_CAREFUL_DIR}
+        'be_careful_dir': BE_CAREFUL_DIR,
+        'git_python_dir': GIT_PYTHON_DIR,
+        'gitdb_dir': GITDB_DIR,
+        'async_dir': ASYNC_DIR,
+        'smmap_dir': SMMAP_DIR}
 
     with open(pc_filename, 'w') as fh:
         fh.write(PRE_COMMIT_HOOK_SCRIPT.format(**script_kwargs))

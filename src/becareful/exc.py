@@ -2,11 +2,22 @@
 Collection of :py:class:`Exception` subclasses used by BeCareful.
 """
 
-
 class BeCarefulException(Exception):
 
     """
     Base exception.
+
+    """
+    pass
+
+
+class RunnerExit(BeCarefulException):
+
+    """
+    Raised when execution of the runner should stop.
+
+    This exception is useful in testing. Typically the runner is configured to
+    not ``sys.exit()`` on exception so this object can be used in its place.
 
     """
     pass
@@ -52,6 +63,15 @@ class PluginError(BeCarefulException):
 
     """
     An error occured while working with a plugin.
+
+    """
+    pass
+
+
+class NoPluginsInstalled(BeCarefulException):
+
+    """
+    Raise this to indicate that the operation requires plugins to run.
 
     """
     pass

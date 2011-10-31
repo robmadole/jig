@@ -1,0 +1,52 @@
+diff --git a/argument.txt b/argument.txt
+index a006f4d6c2416c3dc899ce3f6f0132d28f2196a5..eb0b9745481a563acc4ccc4c8ca792c71bc2f1ae 100644
+--- a/argument.txt
++++ b/argument.txt
+@@ -1,14 +1,35 @@
++About the Sketch:
++-----------------
++
++This sketch not only appeared in the Flying Circus TV Show - Episode 29,
++it also performed live in the Movie - 'Live at the Hollywood Bowl'. It
++was also featured on their albums 'Monty Python's Previous Record',
++'Monty Python's Instant Record Collection (UK version)', 'The Monty
++Python Instant Record Collection' (US version), ''Monty Python's The
++Final Ripoff' and 'The Ultimate Monty Python Ripoff'. It was also
++performed live on their album - 'Monty Python live at the Theatre Royal
++Drury Lane'.
++
+ The cast:
++~~~~~~~~~
++
++People from Monty Python (you don't need to know the details)
++
++The sketch:
++~~~~~~~~~~~
++
++Man: Ah. I'd like to have an argument, please.
++
++Receptionist: Certainly sir. Have you been here before?
++
++Man: No, I haven't, this is my first time.
++
++Receptionist: I see. Well, do you want to have just one argument, or were you thinking of taking a course?
++
++Man: Well, what is the cost?
++
++Receptionist: Well, It's one pound for a five minute argument, but only eight pounds for a course of ten.
++
++Man: Well, I think it would be best if I perhaps started off with just the one and then see how it goes.
+ 
+-MAN
+-  Michael Palin
+-RECEPTIONIST
+-  Rita Davies
+-MR. BARNARD
+-  Graham Chapman
+-MR. VIBRATING
+-  John Cleese
+-COMPLAINER
+-  Eric Idle
+-SPREADERS
+-  Terry Jones
++Receptionist: Fine. Well, I'll see who's free at the moment.
