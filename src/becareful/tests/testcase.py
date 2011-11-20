@@ -1,10 +1,15 @@
 import shlex
 import unittest
+from os import makedirs
 from os.path import join, dirname
 from subprocess import check_output, STDOUT, CalledProcessError
 
+from git import Repo
+
 from becareful.runner import Runner
 from becareful.plugins import initializer
+from becareful.diffconvert import GitDiffIndex
+from becareful.tools import NumberedDirectoriesToGit
 
 
 class BeCarefulTestCase(unittest.TestCase):
@@ -35,6 +40,28 @@ class BeCarefulTestCase(unittest.TestCase):
             retcode = None
 
         return (retcode, output)
+
+    def repo_from_fixture(self, repo_name):
+        """
+        Creates a ``git.Repo`` from the given fixture.
+
+        The fixture should be a directory containing numbered directories
+        suitable for creating a ``NumberedDirectoriesToGit``.
+
+        Returns a tuple of 3 objects: repo, working_dir, diffs.
+        """
+        ndgit = NumberedDirectoriesToGit(
+            join(self.fixturesdir, repo_name))
+
+        repo = ndgit.repo
+
+        return (ndgit.repo, repo.working_dir, ndgit.diffs())
+
+    def git_diff_index(self, repo, diffs):
+        """
+        Retrieves the ``GitDiffIndex`` for the repository and diffs.
+        """
+        return GitDiffIndex(self.testrepodir, diffs)
 
 
 class RunnerTestCase(BeCarefulTestCase):
@@ -88,6 +115,54 @@ class RunnerTestCase(BeCarefulTestCase):
             return ''
 
         return self.runner.view._collect['stderr'].getvalue()
+
+    def create_file(self, gitrepodir, name, content):
+        """
+        Create or a file in the git repository.
+
+        The name of the file can contain directories, they will be created
+        automatically.
+
+        The directory ``gitrepodir`` represents the full path to the Git
+        repository. ``name`` will be a string like ``a/b/c.txt``. ``content``
+        will be written to the file.
+
+        Return ``True`` if it complete.
+        """
+        try:
+            makedirs(dirname(join(gitrepodir, name)))
+        except OSError:
+            # Directory may already exist
+            pass
+
+        with open(join(gitrepodir, name), 'w') as fh:
+            fh.write(content)
+
+        return True
+
+    def stage(self, gitrepodir, name, content):
+        """
+        Create or modify a file in a git repository and stage it in the index.
+
+        A ``git.Index`` object will be returned.
+        """
+        self.create_file(gitrepodir, name, content)
+
+        repo = Repo(gitrepodir)
+        repo.index.add([name])
+
+        return repo.index
+
+    def commit(self, gitrepodir, name, content):
+        """
+        Create or modify a file in a git repository and commit it.
+
+        A ``git.Commit`` object will be returned representing the commit.
+
+        """
+        index = self.stage(gitrepodir, name, content)
+
+        return index.commit(name)
 
 
 class PluginTestCase(BeCarefulTestCase):

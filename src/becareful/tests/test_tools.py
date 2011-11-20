@@ -1,8 +1,7 @@
 from os.path import join, dirname
 from unittest import TestCase
 
-from becareful.tests.utils import NumberedDirectoriesToGit
-from nose.plugins.attrib import attr
+from becareful.tools import NumberedDirectoriesToGit
 
 
 class TestNumberedDirectoriesToGit(TestCase):
@@ -11,6 +10,17 @@ class TestNumberedDirectoriesToGit(TestCase):
     Utility for converting snapshots into Git repos.
 
     """
+    def get_nd2g(self, name):
+        """
+        Gets a NumberedDirectoriesToGit object.
+
+        Where ``name`` is the basename of a directory in
+        :file:`src/becareful/tests/fixtures/numbereddirs`.
+        """
+        nd = join(dirname(__file__), 'fixtures', 'numbereddirs', name)
+
+        return NumberedDirectoriesToGit(nd)
+
     def get_group(self, name):
         """
         Gets a ``git.Repo`` from the group ``name``.
@@ -18,9 +28,7 @@ class TestNumberedDirectoriesToGit(TestCase):
         Where ``name`` is the basename of a directory in
         :file:`src/becareful/tests/fixtures/numbereddirs`.
         """
-        nd = join(dirname(__file__), 'fixtures', 'numbereddirs', name)
-
-        return NumberedDirectoriesToGit(nd).get_repo()
+        return self.get_nd2g(name).repo
 
     def test_bad_directory(self):
         """
@@ -129,11 +137,22 @@ class TestNumberedDirectoriesToGit(TestCase):
         self.assertEqual(None, diff[1].a_blob)
         self.assertEqual('b/b.txt', diff[1].b_blob.path)
 
+    def test_caches_repo(self):
+        """
+        Calling repo twice will return the same object.
+        """
+        nd2g = self.get_nd2g('group-a')
+
+        self.assertEqual(id(nd2g.repo), id(nd2g.repo))
+
     def test_lots_of_changes(self):
         """
         Numerous changesets.
         """
-        repo = self.get_group('group-g')
+        nd2g = self.get_nd2g('group-g')
 
         # Make sure we have the expected 5 commits
-        self.assertEqual(5, len(repo.iter_commits))
+        self.assertEqual(5, len(list(nd2g.repo.iter_commits())))
+
+        # And 4 diffs
+        self.assertEqual(4, len(nd2g.diffs()))

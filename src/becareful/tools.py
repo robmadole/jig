@@ -3,26 +3,7 @@ from os.path import join, dirname, isdir
 from tempfile import mkdtemp
 from shutil import copy2
 
-from git.test.lib import StringProcessAdapter
-from git import Repo, Diff
-
-
-def diffindexfrom(basename):
-    """
-    Creates a :py:class:`git.diff.DiffIndex` object from a fixture.
-
-    ``basename`` should be the name of a file in the
-    :file:`src/becareful/tests/fixtures` directory.
-    """
-    filename = join(dirname(__file__), 'fixtures', 'diffs', basename)
-    with open(filename, 'r') as fh:
-        data = fh.read()
-
-    spa = StringProcessAdapter(data)
-    repo = Repo(join(dirname(__file__), 'fixtures', 'repo01'))
-    diffs = Diff._index_from_patch_format(repo, spa.stdout)
-
-    return diffs
+from git import Repo
 
 
 class NumberedDirectoriesToGit(object):
@@ -60,17 +41,38 @@ class NumberedDirectoriesToGit(object):
 
         self.numdir = numdir
         self.target = mkdtemp()
+        self._repo = None
 
-    def get_repo(self):
+    @property
+    def repo(self):
         """
         Does the conversion and returns the ``git.Repo`` object.
         """
-        repo = Repo.init(self.target)
+        if not self._repo:
+            self._repo = Repo.init(self.target)
 
-        for d in sorted(listdir(self.numdir)):
-            self._commit(repo, join(self.numdir, d))
+            for d in sorted(listdir(self.numdir)):
+                self._commit(self._repo, join(self.numdir, d))
 
-        return repo
+        return self._repo
+
+    def diffs(self):
+        """
+        Get a list of diffs for all commits.
+        """
+        repo = self.repo
+
+        diffs = []
+        for commit in repo.iter_commits():
+            try:
+                diffs.append(commit.parents[0].diff(commit))
+            except IndexError:
+                pass
+
+        # Make the oldest first
+        diffs.reverse()
+
+        return diffs
 
     def _commit(self, repo, d):
         """

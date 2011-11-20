@@ -5,7 +5,7 @@ from tempfile import mkdtemp
 from ConfigParser import ConfigParser
 
 from becareful.tests.testcase import BeCarefulTestCase, PluginTestCase
-from becareful.tests.utils import diffindexfrom
+from becareful.tools import NumberedDirectoriesToGit
 from becareful.diffconvert import GitDiffIndex
 from becareful.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized, PluginError)
@@ -234,12 +234,11 @@ class TestPlugin(PluginTestCase):
     def setUp(self):
         super(TestPlugin, self).setUp()
 
-        self.testrepodir = join(dirname(__file__), 'fixtures', 'repo01')
+        repo, working_dir, diffs = self.repo_from_fixture('repo01')
 
-    def _git_diff_index(self, fixture):
-        diffindex = diffindexfrom(fixture)
-
-        return GitDiffIndex(self.testrepodir, diffindex)
+        self.testrepo = repo
+        self.testrepodir = working_dir
+        self.testdiffs = diffs
 
     def test_new_file_pre_commit(self):
         """
@@ -248,7 +247,7 @@ class TestPlugin(PluginTestCase):
         pm = PluginManager(self.bcconfig)
 
         pm.add(join(self.fixturesdir, 'plugin01'))
-        gdi = self._git_diff_index('new_file')
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[0])
 
         retcode, stdout, stderr = pm.plugins[0].pre_commit(gdi)
 

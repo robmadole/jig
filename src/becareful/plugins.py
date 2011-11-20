@@ -295,4 +295,5 @@ class PluginDataJSONEncoder(json.JSONEncoder):
                     'diff': [j for j in f['diff']]})
 
             return obj
+
         return super(PluginDataJSONEncoder, self).default(obj)

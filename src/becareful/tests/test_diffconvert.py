@@ -8,7 +8,7 @@ from operator import itemgetter
 from nose.plugins.attrib import attr
 
 from becareful.tests.testcase import BeCarefulTestCase
-from becareful.tests.utils import diffindexfrom
+from becareful.tools import NumberedDirectoriesToGit
 from becareful.diffconvert import GitDiffIndex, describe_diff
 
 
@@ -227,18 +227,17 @@ class TestGitDiffIndex(BeCarefulTestCase):
     def setUp(self):
         super(TestGitDiffIndex, self).setUp()
 
-        self.testrepodir = join(dirname(__file__), 'fixtures', 'repo01')
+        repo, working_dir, diffs = self.repo_from_fixture('repo01')
 
-    def _git_diff_index(self, fixture):
-        diffindex = diffindexfrom(fixture)
-
-        return GitDiffIndex(self.testrepodir, diffindex)
+        self.testrepo = repo
+        self.testrepodir = working_dir
+        self.testdiffs = diffs
 
     def test_new_file(self):
         """
         Handles new files.
         """
-        gdi = self._git_diff_index('new_file')
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[0])
 
         self.assertEqual(1, len(list(gdi.files())))
 
@@ -250,13 +249,13 @@ class TestGitDiffIndex(BeCarefulTestCase):
         self.assertEqual('added', file1['type'])
         # This one is the full path to the file
         self.assertEqual(realpath(join(self.testrepodir, 'argument.txt')),
-            file1['filename'])
+            realpath(file1['filename']))
 
     def test_modified(self):
         """
         Handles modified files.
         """
-        gdi = self._git_diff_index('modified_file')
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[1])
 
         self.assertEqual(1, len(list(gdi.files())))
 
@@ -280,7 +279,7 @@ class TestGitDiffIndex(BeCarefulTestCase):
         """
         Handles deleted files.
         """
-        gdi = self._git_diff_index('deleted_file')
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[2])
 
         self.assertEqual(1, len(list(gdi.files())))
 
@@ -302,7 +301,7 @@ class TestGitDiffIndex(BeCarefulTestCase):
         """
         Handles multiple files changed.
         """
-        gdi = self._git_diff_index('two_new_files')
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[3])
 
         self.assertEqual(2, len(list(gdi.files())))
 

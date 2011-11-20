@@ -112,20 +112,20 @@ class GitDiffIndex(object):
 
             try:
                 a_data = a_blob.data_stream.read()
-            except BadObject:
+            except (AttributeError, BadObject):
                 pass
 
             try:
                 b_data = b_blob.data_stream.read()
-            except BadObject:
+            except (AttributeError, BadObject):
                 pass
 
             linediff = describe_diff(a_data, b_data)
 
+            blob = a_blob or b_blob
+
             yield {
-                'filename': a_blob.abspath,
-                'name': a_blob.name,
+                'filename': blob.abspath,
+                'name': blob.name,
                 'diff': linediff,
                 'type': DiffType.for_diff(diff)}
-
-
