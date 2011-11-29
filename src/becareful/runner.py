@@ -1,12 +1,13 @@
 import json
+from collections import OrderedDict
 
 from git import Repo
 
 from becareful.exc import GitRepoNotInitialized, NoPluginsInstalled
-from becareful.output import ConsoleView
 from becareful.gitutils import repo_bcinitialized
 from becareful.diffconvert import GitDiffIndex
 from becareful.plugins import get_bcconfig, PluginManager
+from becareful.output import ConsoleView
 
 
 class Runner(object):
@@ -26,7 +27,7 @@ class Runner(object):
         """
         results = self.results(gitrepo)
 
-        import pdb; pdb.set_trace();
+        self.view.print_results(results)
 
     def results(self, gitrepo):
         """
@@ -54,7 +55,7 @@ class Runner(object):
             self.repo = Repo(gitrepo)
 
             try:
-                diff = self.repo.head.commit.diff(None)
+                diff = self.repo.head.commit.diff()
             except ValueError:
                 # No diff on head, no commits have been written yet
                 out.append('This repository is empty, BeCareful needs at least '
@@ -75,7 +76,7 @@ class Runner(object):
         gdi = GitDiffIndex(self.gitrepo, diff)
 
         # Go through the plugins and gather up the results
-        results = {}
+        results = OrderedDict()
         for plugin in pm.plugins:
             retcode, stdout, stderr = plugin.pre_commit(gdi)
 
@@ -89,3 +90,5 @@ class Runner(object):
             results[plugin] = (retcode, data, stderr)
 
         return results
+
+

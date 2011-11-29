@@ -1,21 +1,51 @@
 from shutil import rmtree
 from os.path import join
 
-from nose.plugins.attrib import attr
+from mock import patch
 
 from becareful.tests.testcase import RunnerTestCase, PluginTestCase
+from becareful.tests.mocks import MockPlugin
 from becareful.exc import RunnerExit
-from becareful.plugins import set_bcconfig
+from becareful.plugins import set_bcconfig, Plugin
 
 
 class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
 
     """
-    Test the interface to the BeCareful system.
+    Runner hook is used by the command line script to run BeCareful.
 
     """
     def setUp(self):
         super(TestRunnerFromHook, self).setUp()
+
+        repo, working_dir, diffs = self.repo_from_fixture('repo01')
+
+        self.testrepo = repo
+        self.testrepodir = working_dir
+        self.testdiffs = diffs
+
+    def test_no_results(self):
+        with patch.object(self.runner, 'results'):
+            plugin = MockPlugin()
+            # Empty results
+            self.runner.results.return_value = {plugin:
+                (0, '', '')}
+
+            self.runner.fromhook(self.gitrepodir)
+
+            self.assertEqual(
+                'Ran 1 plugin, nothing to report',
+                self.output)
+
+
+class TestRunnerResults(RunnerTestCase, PluginTestCase):
+
+    """
+    Can the runner iterate over the plugins and gather results.
+
+    """
+    def setUp(self):
+        super(TestRunnerResults, self).setUp()
 
         repo, working_dir, diffs = self.repo_from_fixture('repo01')
 
@@ -50,7 +80,6 @@ class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
             'install to add some',
             self.error)
 
-    @attr('focus')
     def test_empty_repository(self):
         """
         If BC is ran on a repository that hasn't had any commits
@@ -116,7 +145,7 @@ class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
             name='a.txt',
             content='a')
 
-        # We've created this but not added it to the index
+        # Create a new file an stage it to the index
         self.stage(self.gitrepodir,
             name='b.txt',
             content='b')
@@ -134,18 +163,107 @@ class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
         # The return code is 0
         self.assertEqual(0, retcode)
         # We auto-convert to an object
-        self.assertEqual({u'b.txt': []}, stdout)
+        self.assertEqual({u'b.txt': [[1, u'warn', u'b is +']]}, stdout)
         # And no errors occurred here
         self.assertEqual('', stderr)
 
     def test_modified_one_file(self):
-        pass
+        """
+        One modified and staged file.
+        """
+        self._add_plugin(self.bcconfig, 'plugin01')
+        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+
+        # Add the first commit because we have to have it
+        self.commit(self.gitrepodir,
+            name='a.txt',
+            content='a')
+
+        # We've created this but not added it to the index
+        self.stage(self.gitrepodir,
+            name='a.txt',
+            content='aaa')
+
+        results = self.runner.results(self.gitrepodir)
+
+        _, stdout, _ = results.items()[0][1]
+
+        self.assertEqual({u'a.txt': [[1, u'warn', u'a is -'], [1, u'warn',
+            u'aaa is +']]}, stdout)
 
     def test_deleted_one_file(self):
-        pass
+        """
+        Delete one file.
+        """
+        self._add_plugin(self.bcconfig, 'plugin01')
+        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+
+        self.commit(self.gitrepodir,
+            name='a.txt',
+            content='a')
+
+        # Now stage a file for removal
+        self.stage_remove(self.gitrepodir, name='a.txt')
+
+        results = self.runner.results(self.gitrepodir)
+
+        _, stdout, _ = results.items()[0][1]
+
+        # We should see it being removed
+        self.assertEqual({u'a.txt': [[1, u'warn', u'a is -']]}, stdout)
 
     def test_handles_non_json_stdout(self):
-        pass
+        """
+        Supports non-JSON output from the plugin.
+        """
+        with patch.object(Plugin, 'pre_commit'):
+            Plugin.pre_commit.return_value = (
+                0, 'Test non-JSON output', '')
+
+            self._add_plugin(self.bcconfig, 'plugin01')
+            set_bcconfig(self.gitrepodir, config=self.bcconfig)
+
+            self.commit(self.gitrepodir,
+                name='a.txt',
+                content='a')
+
+            self.stage(self.gitrepodir,
+                name='b.txt',
+                content='b')
+
+            results = self.runner.results(self.gitrepodir)
+
+            _, stdout, _ = results.items()[0][1]
+
+        # And we can still get the output even though it's not JSON
+        self.assertEqual('Test non-JSON output',
+            stdout)
 
     def test_handles_retcode_1_with_stderr(self):
-        pass
+        """
+        Supports non-JSON output from the plugin.
+        """
+        with patch.object(Plugin, 'pre_commit'):
+            Plugin.pre_commit.return_value = (
+                1, '', 'Something went horribly wrong')
+
+            self._add_plugin(self.bcconfig, 'plugin01')
+            set_bcconfig(self.gitrepodir, config=self.bcconfig)
+
+            self.commit(self.gitrepodir,
+                name='a.txt',
+                content='a')
+
+            self.stage(self.gitrepodir,
+                name='b.txt',
+                content='b')
+
+            results = self.runner.results(self.gitrepodir)
+
+            retcode, _, stderr = results.items()[0][1]
+
+        self.assertEqual(1, retcode)
+        self.assertEqual('Something went horribly wrong',
+            stderr)
+
+

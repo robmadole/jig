@@ -63,6 +63,65 @@ class BeCarefulTestCase(unittest.TestCase):
         """
         return GitDiffIndex(self.testrepodir, diffs)
 
+    def create_file(self, gitrepodir, name, content):
+        """
+        Create or a file in the git repository.
+
+        The name of the file can contain directories, they will be created
+        automatically.
+
+        The directory ``gitrepodir`` represents the full path to the Git
+        repository. ``name`` will be a string like ``a/b/c.txt``. ``content``
+        will be written to the file.
+
+        Return ``True`` if it complete.
+        """
+        try:
+            makedirs(dirname(join(gitrepodir, name)))
+        except OSError:
+            # Directory may already exist
+            pass
+
+        with open(join(gitrepodir, name), 'w') as fh:
+            fh.write(content)
+
+        return True
+
+    def stage(self, gitrepodir, name, content):
+        """
+        Create or modify a file in a git repository and stage it in the index.
+
+        A ``git.Index`` object will be returned.
+        """
+        self.create_file(gitrepodir, name, content)
+
+        repo = Repo(gitrepodir)
+        repo.index.add([name])
+
+        return repo.index
+
+    def stage_remove(self, gitrepodir, name):
+        """
+        Stage a file for removal from the git repository.
+
+        Where ``name`` is the path to the file.
+        """
+        repo = Repo(gitrepodir)
+        repo.index.remove([name])
+
+        return repo.index
+
+    def commit(self, gitrepodir, name, content):
+        """
+        Create or modify a file in a git repository and commit it.
+
+        A ``git.Commit`` object will be returned representing the commit.
+
+        """
+        index = self.stage(gitrepodir, name, content)
+
+        return index.commit(name)
+
 
 class RunnerTestCase(BeCarefulTestCase):
 
@@ -115,54 +174,6 @@ class RunnerTestCase(BeCarefulTestCase):
             return ''
 
         return self.runner.view._collect['stderr'].getvalue()
-
-    def create_file(self, gitrepodir, name, content):
-        """
-        Create or a file in the git repository.
-
-        The name of the file can contain directories, they will be created
-        automatically.
-
-        The directory ``gitrepodir`` represents the full path to the Git
-        repository. ``name`` will be a string like ``a/b/c.txt``. ``content``
-        will be written to the file.
-
-        Return ``True`` if it complete.
-        """
-        try:
-            makedirs(dirname(join(gitrepodir, name)))
-        except OSError:
-            # Directory may already exist
-            pass
-
-        with open(join(gitrepodir, name), 'w') as fh:
-            fh.write(content)
-
-        return True
-
-    def stage(self, gitrepodir, name, content):
-        """
-        Create or modify a file in a git repository and stage it in the index.
-
-        A ``git.Index`` object will be returned.
-        """
-        self.create_file(gitrepodir, name, content)
-
-        repo = Repo(gitrepodir)
-        repo.index.add([name])
-
-        return repo.index
-
-    def commit(self, gitrepodir, name, content):
-        """
-        Create or modify a file in a git repository and commit it.
-
-        A ``git.Commit`` object will be returned representing the commit.
-
-        """
-        index = self.stage(gitrepodir, name, content)
-
-        return index.commit(name)
 
 
 class PluginTestCase(BeCarefulTestCase):

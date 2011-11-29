@@ -259,5 +259,5 @@ class TestPlugin(PluginTestCase):
         self.assertIn('argument.txt', data)
         # And our first line should be a warning
         self.assertEqual(
-            [1, u'warn', u'The cast: is horrible'],
+            [1, u'warn', u'The cast: is +'],
             data['argument.txt'][0])
