@@ -3,12 +3,33 @@ from functools import wraps
 from StringIO import StringIO
 from contextlib import contextmanager
 
-from becareful.exc import RunnerExit
+from becareful.exc import ForcedExit
 
 # Message types
 INFO = u'info'
 WARN = u'warn'
 STOP = u'stop'
+
+
+def green_bold(payload):
+    """
+    Format payload as green.
+    """
+    return u'\x1b[32;1m{}\x1b[39;22m'.format(payload)
+
+
+def yellow_bold(payload):
+    """
+    Format payload as yellow.
+    """
+    return u'\x1b[33;1m{}\x1b[39;22m'.format(payload)
+
+
+def red_bold(payload):
+    """
+    Format payload as red.
+    """
+    return u'\x1b[31;1m{}\x1b[39;22m'.format(payload)
 
 
 def lookup_type(strtype):
@@ -18,25 +39,25 @@ def lookup_type(strtype):
     For example::
 
         >>> lookup_type('Info')
-        1
+        u'info'
         >>> lookup_type('warn')
-        2
+        u'warn'
         >>> lookup_type('s')
-        3
+        u'stop'
 
     It will default to ``INFO``.
 
         >>> lookup_type('unknown'):
-        1   # which is INFO
+        u'info'
 
     """
-    strtype = strtype or ''
+    strtype = unicode(strtype) or u''
     mt = strtype.lower()
-    if mt.startswith('i'):
+    if mt.startswith(u'i'):
         return INFO
-    if mt.startswith('w'):
+    if mt.startswith(u'w'):
         return WARN
-    if mt.startswith('s'):
+    if mt.startswith(u's'):
         return STOP
 
     # Default to INFO
@@ -56,7 +77,7 @@ class Message(object):
         All messages must be associated with the Plugin ``plugin`` that was
         responsible for creating them.
         """
-        self._plugin = plugin
+        self.plugin = plugin
 
         self.type = type
         self.body = body
@@ -136,10 +157,10 @@ class ConsoleView(View):
             fo = self._collect['stdout'] if self.collect_output else sys.stdout
 
             for line in collected:
-                fo.write(str(line))
+                fo.write(unicode(line) + u'\n')
         except Exception as e:
             fo = self._collect['stderr'] if self.collect_output else sys.stderr
-            fo.write(str(e))
+            fo.write(unicode(e) + u'\n')
 
             try:
                 retcode = e.retcode
@@ -150,24 +171,90 @@ class ConsoleView(View):
             if self.exit_on_exception:
                 sys.exit(retcode)
             else:
-                raise RunnerExit(retcode)
+                raise ForcedExit(retcode)
 
     def print_results(self, results):
         """
         Format and print plugins results.
         """
+        if not results:
+            return
+
         collater = ResultsCollater(results)
 
         plugins = collater.plugins
         reporters = collater.reporters
 
+        form = u'plugin' if len(plugins) == 1 else u'plugins'
+
         if len(reporters) == 0:
             # Nothing to report
             with self.out() as out:
-                form = 'plugin' if len(plugins) == 1 else 'plugins'
-                out.append('Ran {plen} {form}, nothing to report'.format(
+                form = u'plugin' if len(plugins) == 1 else u'plugins'
+                out.append(u'Ran {plen} {form}, nothing to report'.format(
                     plen=len(plugins), form=form))
                 return
+
+        # Gather the distinct message types from the results
+        cm, fm, lm = collater.messages
+
+        # Order them from least specific to most specific
+        messages = cm + fm + lm
+
+        # How do our message types map to a symbol
+        type_to_symbol = {
+            INFO: green_bold(u'\u2713'),
+            WARN: yellow_bold(u'\u26a0'),
+            STOP: red_bold(u'\u2715')}
+
+        with self.out() as out:
+            last_plugin = None
+            for msg in messages:
+                if last_plugin != msg.plugin:
+                    out.append(u'\u25be  {}'.format(msg.plugin.name))
+                    out.append('')
+                    last_plugin = msg.plugin
+                colorized = u'{}  {}'.format(
+                    type_to_symbol[msg.type], self._format_message(msg))
+                out.extend(colorized.splitlines())
+                out.append('')
+
+            out.append(u'Ran {plen} {form}'.format(
+                plen=len(plugins), form=form))
+
+            ic, wc, sc = [i[1] for i in collater.counts.items()]
+            info = green_bold(ic) if ic else ic
+            warn = yellow_bold(wc) if wc else wc
+            stop = red_bold(sc) if sc else sc
+
+            out.append(u'    Info {ic} Warn {wc} Stop {sc}'.format(
+                ic=info, wc=warn, sc=stop))
+
+    def _format_message(self, msg):
+        """
+        Formats a single message to a string.
+        """
+        out = []
+        header = u''
+        body = u''
+
+        if msg.line:
+            header += u'line {}: '.format(msg.line)
+
+        if msg.file:
+            header += msg.file
+
+        if header:
+            body = u'    {}'.format(msg.body)
+        else:
+            body = u'{}'.format(msg.body)
+
+        if header:
+            out.append(header)
+
+        out.append(body)
+
+        return '\n'.join(out)
 
 
 class ResultsCollater(object):
@@ -188,6 +275,7 @@ class ResultsCollater(object):
         self._results = results
         self._plugins = set()
         self._reporters = set()
+        self._counts = {INFO: 0, WARN: 0, STOP: 0}
         self._errors = []
 
         # Pre-compute our messages (collate)
@@ -235,6 +323,17 @@ class ResultsCollater(object):
         return self._reporters
 
     @property
+    def counts(self):
+        """
+        Tally of the type of messages from the results.
+
+        Returns a dictionary like::
+
+            {u'info': 5, u'warn': 0, u'stop', 1}
+        """
+        return self._counts
+
+    @property
     def errors(self):
         """
         Errors that were generated during collation.
@@ -272,6 +371,7 @@ class ResultsCollater(object):
                         self._errors.append(message)
                         continue
                     self._reporters.add(plugin)
+                    self._counts[message.type] += 1
                     yield message
 
         return wrapper

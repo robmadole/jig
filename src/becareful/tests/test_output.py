@@ -1,11 +1,106 @@
+# coding=utf-8
 from collections import OrderedDict
 
-from becareful.tests.testcase import RunnerTestCase
+from becareful.tests.testcase import BeCarefulTestCase, ViewTestCase
 from becareful.tests.mocks import MockPlugin
-from becareful.output import Message, ResultsCollater
+from becareful.output import ConsoleView, Message, ResultsCollater
 
 
-class TestResultsCollater(RunnerTestCase):
+class TestConsoleView(ViewTestCase):
+
+    """
+    With plugin results we can format them to the console.
+
+    """
+    def setUp(self):
+        self.view = ConsoleView()
+
+        self.view.collect_output = True
+        self.view.exit_on_exception = False
+
+    def test_commit_specific_message(self):
+        plugin = MockPlugin()
+        plugin.name = 'Plugin 1'
+
+        self.view.print_results({
+            plugin: (0, 'commit', '')})
+
+        self.assertResults(u"""
+            ▾  Plugin 1
+
+            ✓  commit
+
+            Ran 1 plugin
+                Info 1 Warn 0 Stop 0
+            """, self.output)
+
+    def test_file_specific_message(self):
+        plugin = MockPlugin()
+        plugin.name = 'Plugin 1'
+
+        self.view.print_results({
+            plugin: (0, {u'a.txt': [[None, u'w', 'file']]}, '')})
+
+        self.assertResults(u"""
+            ▾  Plugin 1
+
+            ⚠  a.txt
+                file
+
+            Ran 1 plugin
+                Info 0 Warn 1 Stop 0
+            """, self.output)
+
+    def test_line_specific_message(self):
+        plugin = MockPlugin()
+        plugin.name = 'Plugin 1'
+
+        self.view.print_results({
+            plugin: (0, {u'a.txt': [[1, 's', 'stop']]}, '')})
+
+        self.assertResults(u"""
+            ▾  Plugin 1
+
+            ✕  line 1: a.txt
+                stop
+
+            Ran 1 plugin
+                Info 0 Warn 0 Stop 1
+            """, self.output)
+
+    def test_two_plugins(self):
+        plugin1 = MockPlugin()
+        plugin1.name = 'Plugin 1'
+
+        plugin2 = MockPlugin()
+        plugin2.name = 'Plugin 2'
+
+        results = OrderedDict()
+
+        results[plugin1] = (0, ['a', 'b'], '')
+        results[plugin2] = (0, ['a', 'b'], '')
+
+        self.view.print_results(results)
+
+        self.assertResults(u"""
+            ▾  Plugin 1
+
+            ✓  a
+
+            ✓  b
+
+            ▾  Plugin 2
+
+            ✓  a
+
+            ✓  b
+
+            Ran 2 plugins
+                Info 4 Warn 0 Stop 0
+            """, self.output)
+
+
+class TestResultsCollater(BeCarefulTestCase):
 
     """
     Collate results into digestible summaries.
@@ -56,6 +151,9 @@ class TestResultsCollater(RunnerTestCase):
         self.assertEqual(Message(None, type='warn', body='warning'),
             messages[1])
 
+        # And our type counts should be 1 info 1 warning
+        self.assertEqual({u'info': 1, u'warn': 1, u'stop': 0}, rc.counts)
+
         # The rest of these should be empty
         self.assertEqual([], fm)
         self.assertEqual([], lm)
@@ -86,6 +184,8 @@ class TestResultsCollater(RunnerTestCase):
         results[MockPlugin()] = (0, stdout3, '')
 
         rc = ResultsCollater(results)
+
+        self.assertEqual({u'info': 1, u'warn': 3, u'stop': 1}, rc.counts)
 
         cm, messages, lm = rc.messages
 
@@ -138,6 +238,8 @@ class TestResultsCollater(RunnerTestCase):
 
         rc = ResultsCollater(results)
 
+        self.assertEqual({u'info': 1, u'warn': 1, u'stop': 1}, rc.counts)
+
         cm, fm, messages = rc.messages
 
         self.assertEqual(
@@ -164,6 +266,8 @@ class TestResultsCollater(RunnerTestCase):
             MockPlugin(): (0, {u'a.txt': [[1, None, u'L']]}, '')}
 
         rc = ResultsCollater(results)
+
+        self.assertEqual({u'info': 3, u'warn': 0, u'stop': 0}, rc.counts)
 
         cm, fm, lm = rc.messages
 

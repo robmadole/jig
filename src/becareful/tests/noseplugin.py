@@ -1,13 +1,13 @@
 """
 A nose plugin to ease some testing pain.
 """
-import sys
 from os import makedirs
 from os.path import dirname, join, isdir, realpath
 from shutil import rmtree
 from subprocess import call, PIPE
 
 from nose.plugins.base import Plugin
+
 
 
 class TestSetupError(Exception):
@@ -36,13 +36,16 @@ class TestSetup(Plugin):
         """
         Required by Nose to add options.
         """
-        pass
+        parser.add_option('--unicodenazi', default=False,
+            action='store_true', help='Turn unicode-nazi on')
 
     def configure(self, options, conf):
         """
         Required by Nose to configure the plugin.
         """
-        pass
+        if options.unicodenazi:
+            # Turn on unicode-nazi to catch unicode/str comparisons
+            __import__(unicodenazi)
 
     def beforeTest(self, test):
         """

@@ -61,13 +61,14 @@ def hook(gitdir):
     The hook will be configured to run using the version of Python that was
     used to install BeCareful.
 
-    Returns the full path to the 
+    Returns the full path to the newly created post-commit hook.
+
     Raises :py:exc:`NotGitRepo` if the directory given is not a Git repository.
     Raises :py:exc:`PreCommitExists` if there is already a Git hook for
     pre-commit present.
     """
     if not is_git_repo(gitdir):
-        raise NotGitRepo('{} is not a git repository.'.format(
+        raise NotGitRepo('{} is not a Git repository.'.format(
             gitdir))
 
     pc_filename = realpath(join(gitdir, '.git', 'hooks', 'pre-commit'))
@@ -76,7 +77,7 @@ def hook(gitdir):
     if isfile(pc_filename):
         raise PreCommitExists('{} already exists and we will not overwrite '
             'it. If you want to use BeCareful you\'ll have to sort this out '
-            'yourself.')
+            'yourself.'.format(pc_filename))
 
     script_kwargs = {
         'python_executable': sys.executable,

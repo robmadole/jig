@@ -7,6 +7,7 @@ from becareful.exc import GitRepoNotInitialized, NoPluginsInstalled
 from becareful.gitutils import repo_bcinitialized
 from becareful.diffconvert import GitDiffIndex
 from becareful.plugins import get_bcconfig, PluginManager
+from becareful.commands import get_command
 from becareful.output import ConsoleView
 
 
@@ -16,8 +17,8 @@ class Runner(object):
     Runs BeCareful in a Git repo.
 
     """
-    def __init__(self):
-        self.view = ConsoleView()
+    def __init__(self, view=None):
+        self.view = view or ConsoleView()
 
     def fromhook(self, gitrepo):
         """
@@ -28,6 +29,25 @@ class Runner(object):
         results = self.results(gitrepo)
 
         self.view.print_results(results)
+
+    def fromconsole(self, argv):
+        """
+        Console entry point for the becareful script.
+
+        Where ``argv`` is ``sys.argv``.
+        """
+        # Quick copy
+        argv = argv[:]
+        # Our script is the first element
+        argv.pop(0)
+
+        try:
+            # Next argument is the command
+            command = get_command(argv.pop(0))
+            command(argv)
+        except (ImportError, IndexError):
+            # If it's empty
+            self.view.print_help()
 
     def results(self, gitrepo):
         """

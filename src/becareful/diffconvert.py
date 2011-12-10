@@ -1,7 +1,21 @@
 """
-Convert changes in a Git repository to JSON.
+Git object converter
+====================
+
+`GitPython`_ does an excellent job of presenting native Git objects in Python
+objects that can be manipulated and used. However, the format is not ideal for
+our purposes.
+
+What is useful to a BeCareful plugin author is the following:
+
+    1. What files changed
+    2. What's the simple diff for modified files
+
+This module aims process :py:class:`git.DiffIndex` objects and does exactly
+above.
+
+.. _GitPython: https://github.com/gitpython-developers/GitPython
 """
-import json
 from difflib import SequenceMatcher
 
 from git.exc import BadObject
@@ -9,21 +23,24 @@ from git.exc import BadObject
 
 def describe_diff(a, b):
     """
-    Takes two strings and calculates the diff between them.
+    Takes two strings and calculates the difference between them.
 
-    Output format is::
+    Output format is a list of::
 
-        (line_number, type, line)
+        (line_number, diff_type, line)
 
-    ``type`` is one of: ``' '``, ``'-'``, ``'+'``.
+    ``diff_type`` can be:
+        * ``' '``
+        * ``'-'``
+        * ``'+'``
 
     Example::
 
-        >>> list(describe_diff('a\nb\nc', 'a\nc\nd'))
+        >>> list(describe_diff('a\\nb\\nc', 'a\\nc\\nd'))
         [(1, ' ', 'a'),
-         (2, '-', 'b'),
-         (2, ' ', 'c'),
-         (3, '+', 'd')]
+        (2, '-', 'b'),
+        (2, ' ', 'c'),
+        (3, '+', 'd')]
     """
     a = a.splitlines()
     b = b.splitlines()

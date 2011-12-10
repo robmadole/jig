@@ -221,7 +221,7 @@ class TestDescribeDiff(TestCase):
 class TestGitDiffIndex(BeCarefulTestCase):
 
     """
-    Test converting git changes to JSON.
+    Test converting Git changes to JSON.
 
     """
     def setUp(self):
@@ -243,7 +243,7 @@ class TestGitDiffIndex(BeCarefulTestCase):
 
         file1 = gdi.files().next()
 
-        # This one is relative to the git repo
+        # This one is relative to the Git repo
         self.assertEqual('argument.txt', file1['name'])
         # It should be added because this is a new file
         self.assertEqual('added', file1['type'])

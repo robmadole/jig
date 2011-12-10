@@ -5,7 +5,7 @@ from mock import patch
 
 from becareful.tests.testcase import RunnerTestCase, PluginTestCase
 from becareful.tests.mocks import MockPlugin
-from becareful.exc import RunnerExit
+from becareful.exc import ForcedExit
 from becareful.plugins import set_bcconfig, Plugin
 
 
@@ -24,7 +24,7 @@ class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
         self.testrepodir = working_dir
         self.testdiffs = diffs
 
-    def test_no_results(self):
+    def test_simple_integration(self):
         with patch.object(self.runner, 'results'):
             plugin = MockPlugin()
             # Empty results
@@ -34,7 +34,7 @@ class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
             self.runner.fromhook(self.gitrepodir)
 
             self.assertEqual(
-                'Ran 1 plugin, nothing to report',
+                'Ran 1 plugin, nothing to report\n',
                 self.output)
 
 
@@ -60,24 +60,24 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         # Remove the .bc directory, effectively un-initializing our repository
         rmtree(join(self.gitrepodir, '.bc'))
 
-        with self.assertRaises(RunnerExit) as ec:
+        with self.assertRaises(ForcedExit) as ec:
             self.runner.results(self.gitrepodir)
 
         self.assertEqual(1, ec.exception.message)
         self.assertEqual('This repository has not been initialized. Run '
-            'becareful init GITREPO to set it up',
+            'becareful init GITREPO to set it up\n',
             self.error)
 
     def test_no_plugins(self):
         """
         If there is a BC directory without any plugins.
         """
-        with self.assertRaises(RunnerExit) as ec:
+        with self.assertRaises(ForcedExit) as ec:
             self.runner.results(self.gitrepodir)
 
         self.assertEqual(1, ec.exception.message)
         self.assertEqual('There are no plugins installed, use becareful '
-            'install to add some',
+            'install to add some\n',
             self.error)
 
     def test_empty_repository(self):
@@ -90,7 +90,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.runner.results(self.gitrepodir)
 
         self.assertEqual('This repository is empty, BeCareful needs at '
-            'least 1 commit to continue',
+            'least 1 commit to continue\n',
             self.output)
 
     def test_no_diff(self):
@@ -107,7 +107,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.runner.results(self.gitrepodir)
 
         self.assertEqual('No staged changes in the repository, skipping '
-            'BeCareful',
+            'BeCareful\n',
             self.output)
 
     def test_unstaged_one_file(self):
@@ -130,7 +130,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.runner.results(self.gitrepodir)
 
         self.assertEqual('No staged changes in the repository, skipping '
-            'BeCareful',
+            'BeCareful\n',
             self.output)
 
     def test_staged_one_file(self):
@@ -265,5 +265,3 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.assertEqual(1, retcode)
         self.assertEqual('Something went horribly wrong',
             stderr)
-
-

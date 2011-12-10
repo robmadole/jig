@@ -3,7 +3,7 @@ import sys, os
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
-NEWS = open(os.path.join(here, 'NEWS.txt')).read()
+NEWS = open(os.path.join(here, 'NEWS.rst')).read()
 
 
 version = '0.1.0'
@@ -14,7 +14,7 @@ install_requires = [
 
 setup(name='becareful',
     version=version,
-    description="Check your code for stuff before you git commit",
+    description="Check your code for stuff before you `git commit`",
     long_description=README + '\n\n' + NEWS,
     classifiers=[
       # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers

@@ -1,4 +1,8 @@
-# Example package with a console entry point
+import sys
+
+from becareful.runner import Runner
+
 
 def main():
-    print "Hello World"
+    bc = Runner()
+    bc.fromconsole(sys.argv)

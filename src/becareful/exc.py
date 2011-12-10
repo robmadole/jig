@@ -11,10 +11,10 @@ class BeCarefulException(Exception):
     pass
 
 
-class RunnerExit(BeCarefulException):
+class ForcedExit(BeCarefulException):
 
     """
-    Raised when execution of the runner should stop.
+    Raised when execution of should stop.
 
     This exception is useful in testing. Typically the runner is configured to
     not ``sys.exit()`` on exception so this object can be used in its place.
@@ -26,7 +26,7 @@ class RunnerExit(BeCarefulException):
 class NotGitRepo(BeCarefulException):
 
     """
-    A directory provided does not appear to be a git repository.
+    A directory provided does not appear to be a Git repository.
 
     """
     pass
