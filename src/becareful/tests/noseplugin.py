@@ -1,13 +1,13 @@
 """
 A nose plugin to ease some testing pain.
 """
-from os import makedirs
-from os.path import dirname, join, isdir, realpath
+from os import listdir
+from os.path import dirname, join, realpath
+from tempfile import mkdtemp
 from shutil import rmtree
 from subprocess import call, PIPE
 
 from nose.plugins.base import Plugin
-
 
 
 class TestSetupError(Exception):
@@ -31,6 +31,9 @@ class TestSetup(Plugin):
 
     def __init__(self):
         super(TestSetup, self).__init__()
+
+        testrepos = ['..'] * 3 + ['.testrepos']
+        self.repo_harness_dir = join(dirname(__file__), *testrepos)
 
     def options(self, parser, env):
         """
@@ -65,15 +68,23 @@ class TestSetup(Plugin):
         """
         rmtree(test.test.gitrepodir)
 
-    def _create_git_repo(self):
-        testrepos = ['..'] * 3 + ['.testrepos']
-        repo_harness_dir = join(dirname(__file__), *testrepos)
+    def finalize(self, result):
+        """
+        Called after all tests have ran and output is collected.
+        """
+        for path in listdir(self.repo_harness_dir):
+            rmtree(join(self.repo_harness_dir, path))
 
+        return None
+
+    def _create_git_repo(self):
+        """
+        Create an empty Git repository in the .testrepos directory.
+
+        Returns the full path to the newly created directory.
+        """
         try:
-            repo = join(repo_harness_dir, 'repo')
-            if isdir(repo):
-                rmtree(repo)
-            makedirs(repo)
+            repo = mkdtemp(dir=realpath(self.repo_harness_dir))
         except:
             raise TestSetupError('Tried to create a directory to hold '
                 'the test repositories and could not')
@@ -85,4 +96,4 @@ class TestSetup(Plugin):
             raise TestSetupError('Could not initialize a Git repository to '
                 'run tests, is Git installed?')
 
-        return realpath(repo)
+        return repo

@@ -6,15 +6,11 @@ from becareful.runner import Runner
 _parser = argparse.ArgumentParser(
     description='Run all plugins and show the results')
 
-_parser.add_argument('path', default='.', help='Path the Git repository')
+_parser.add_argument('path', nargs='?', default='.',
+    help='Path to the Git repository')
 
 
 class Command(BaseCommand):
-
-    """
-    Performs the same actions as the pre-commit hook, without committing
-
-    """
     parser = _parser
 
     def process(self, argv):

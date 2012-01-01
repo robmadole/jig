@@ -1,2 +1,3 @@
 include README.rst
 include NEWS.rst
+recursive-include src/becareful/data *.*

@@ -8,15 +8,10 @@ _parser = argparse.ArgumentParser(
     description='Initialize a Git repository for use with BeCareful')
 
 _parser.add_argument('path', default='.', nargs='?',
-    help='Path the Git repository')
+    help='Path to the Git repository')
 
 
 class Command(BaseCommand):
-
-    """
-    Initialize a Git repository for use with BeCareful.
-
-    """
     parser = _parser
 
     def process(self, argv):

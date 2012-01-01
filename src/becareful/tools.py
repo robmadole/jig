@@ -1,9 +1,27 @@
+import re
+from unicodedata import normalize
 from os import listdir, walk, makedirs, unlink
 from os.path import join, dirname, isdir
 from tempfile import mkdtemp
 from shutil import copy2
 
 from git import Repo
+
+_punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
+
+
+def slugify(text, delim=u'-'):
+    """
+    Generates a an ASCII-only slug.
+
+    .. Author Armin Ronacher: http://flask.pocoo.org/snippets/5/
+    """
+    result = []
+    for word in _punct_re.split(unicode(text).lower()):
+        word = normalize('NFKD', word).encode('ascii', 'ignore')
+        if word:
+            result.append(word)
+    return unicode(delim.join(result))
 
 
 class NumberedDirectoriesToGit(object):

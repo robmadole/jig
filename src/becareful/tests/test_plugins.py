@@ -1,16 +1,15 @@
 import json
-from os import rmdir
-from os.path import isfile, join, dirname
+from os import rmdir, stat
+from os.path import isfile, join
+from textwrap import dedent
 from tempfile import mkdtemp
 from ConfigParser import ConfigParser
 
 from becareful.tests.testcase import BeCarefulTestCase, PluginTestCase
-from becareful.tools import NumberedDirectoriesToGit
-from becareful.diffconvert import GitDiffIndex
 from becareful.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized, PluginError)
 from becareful.plugins import (initializer, get_bcconfig, set_bcconfig,
-    PluginManager)
+    PluginManager, create_plugin)
 
 
 class TestPluginConfig(BeCarefulTestCase):
@@ -131,7 +130,7 @@ class TestPluginManager(PluginTestCase):
 
         self.assertEqual(1, len(pm.plugins))
 
-    def test_can_add_plugin(self):
+    def test_add_plugin(self):
         """
         Test the add method on the plugin manager.
         """
@@ -141,8 +140,9 @@ class TestPluginManager(PluginTestCase):
         pm.add(join(self.fixturesdir, 'plugin01'))
 
         self.assertEqual(1, len(pm.plugins))
+        self.assertTrue(pm.config.has_section('plugin:test01:plugin01'))
 
-    def test_detects_bad_plugin_config(self):
+    def test_could_not_parse(self):
         """
         Tests a bad plugin config from the main config.
         """
@@ -153,7 +153,7 @@ class TestPluginManager(PluginTestCase):
 
         self.assertIn('Could not parse config file', str(ec.exception))
 
-    def test_add_bad_plugin_config(self):
+    def test_contains_parsing_errors(self):
         """
         Adding a bad plugin catches parsing errors.
         """
@@ -224,6 +224,33 @@ class TestPluginManager(PluginTestCase):
         self.assertEqual('The plugin is already installed.',
             str(ec.exception))
 
+    def test_remove_plugin(self):
+        """
+        Remove a plugin.
+        """
+        pm = PluginManager(self.bcconfig)
+
+        pm.add(join(self.fixturesdir, 'plugin01'))
+
+        self.assertTrue(pm.config.has_section('plugin:test01:plugin01'))
+
+        pm.remove('test01', 'plugin01')
+
+        self.assertFalse(pm.config.has_section('plugin:test01:plugin01'))
+        self.assertEqual([], pm.plugins)
+
+    def test_remove_non_existent_section(self):
+        """
+        Try to remove a plugin that does not exist.
+        """
+        pm = PluginManager(self.bcconfig)
+
+        with self.assertRaises(PluginError) as ec:
+            pm.remove('bundle', 'name')
+
+        self.assertEqual('This plugin does not exist.',
+            str(ec.exception))
+
 
 class TestPlugin(PluginTestCase):
 
@@ -261,3 +288,65 @@ class TestPlugin(PluginTestCase):
         self.assertEqual(
             [1, u'warn', u'The cast: is +'],
             data['argument.txt'][0])
+
+
+class TestCreatePlugin(PluginTestCase):
+
+    """
+    Test the plugin creation utility.
+
+    """
+    def setUp(self):
+        super(TestCreatePlugin, self).setUp()
+
+        self.plugindir = mkdtemp()
+
+    def test_missing_directory(self):
+        """
+        Will not try to create a plugin in a missing directory.
+        """
+        # Remove this so the create_plugin function has nowhere to go.
+        rmdir(self.plugindir)
+
+        with self.assertRaises(ValueError):
+            create_plugin(self.plugindir, template='python',
+                bundle='test', name='plugin')
+
+    def test_creates_plugin(self):
+        """
+        Can create a plugin.
+        """
+        plugin_dir = create_plugin(self.plugindir, template='python',
+            bundle='test', name='plugin')
+
+        pre_commit_file = join(plugin_dir, 'pre-commit')
+
+        # We have a pre-commit file
+        self.assertTrue(isfile(pre_commit_file))
+
+        # And it's executable
+        sinfo = stat(pre_commit_file)
+        self.assertEqual(33261, sinfo.st_mode)
+
+        self.assertEqual(dedent("""
+            [plugin]
+            bundle = test
+            name = plugin
+
+            [settings]
+            """).strip(),
+            open(join(plugin_dir, 'config.cfg')).read().strip())
+
+    def test_new_plugin_compat_plugin_manager(self):
+        """
+        New plugins are compatible with the :py:class:`PluginManager`
+        """
+        plugin_dir = create_plugin(self.plugindir, template='python',
+            bundle='test', name='plugin')
+
+        pm = PluginManager(self.bcconfig)
+
+        pm.add(plugin_dir)
+
+        self.assertEqual(1, len(pm.plugins))
+        self.assertEqual('plugin', pm.plugins[0].name)

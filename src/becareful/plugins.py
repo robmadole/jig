@@ -1,6 +1,7 @@
 import json
-from os import mkdir
-from os.path import join, isfile
+from os import mkdir, stat, chmod
+from os.path import join, isfile, isdir
+from stat import S_IXUSR, S_IXGRP, S_IXOTH
 from subprocess import Popen, PIPE
 from functools import wraps
 from ConfigParser import SafeConfigParser
@@ -11,9 +12,11 @@ from collections import OrderedDict
 from becareful.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized, PluginError)
 from becareful.conf import (BC_DIR_NAME, BC_PLUGIN_CONFIG_FILENAME,
-    BC_PLUGIN_DIR, PLUGIN_CONFIG_FILENAME, PLUGIN_PRE_COMMIT_SCRIPT)
+    BC_PLUGIN_DIR, PLUGIN_CONFIG_FILENAME, PLUGIN_PRE_COMMIT_SCRIPT,
+    PLUGIN_PRE_COMMIT_TEMPLATE_DIR)
 from becareful.gitutils import is_git_repo, repo_bcinitialized
 from becareful.diffconvert import GitDiffIndex
+from becareful.tools import slugify
 
 
 def _git_check(func):
@@ -96,6 +99,51 @@ def get_bcconfig(gitrepo):
         plugins.readfp(fh)
 
         return plugins
+
+
+def create_plugin(in_dir, bundle, name, template='python'):
+    """
+    Creates a plugin in the given directory.
+
+    The directory ``in_dir`` must already exist.
+
+    The plugin will be created with the given ``bundle`` and ``name``. These
+    will be used in the plugin configuration file.
+
+    The ``template`` specifies what scripting language will be used for the
+    pre-commit executable. Existing templates can be found in the
+    :file:`data/pre-commits` directory.
+    """
+    if not isdir(in_dir):
+        raise ValueError('{} must be a directory.'.format(in_dir))
+
+    # Create our plugin configuration
+    config = SafeConfigParser()
+    config.add_section('plugin')
+    config.add_section('settings')
+    config.set('plugin', 'bundle', bundle)
+    config.set('plugin', 'name', name)
+
+    # Create a safe directory name from the plugin name
+    plugin_dir = join(in_dir, slugify(name))
+    config_filename = join(plugin_dir, PLUGIN_CONFIG_FILENAME)
+    pre_commit_filename = join(plugin_dir, PLUGIN_PRE_COMMIT_SCRIPT)
+
+    # Create the directory and files
+    mkdir(plugin_dir)
+
+    with open(config_filename, 'w') as fh:
+        config.write(fh)
+
+    with open(pre_commit_filename, 'w') as fh:
+        fh.write(open(join(PLUGIN_PRE_COMMIT_TEMPLATE_DIR, template)).read())
+
+    # And make it executable
+    sinfo = stat(pre_commit_filename)
+    mode = sinfo.st_mode | S_IXUSR | S_IXGRP | S_IXOTH
+    chmod(pre_commit_filename, mode)
+
+    return plugin_dir
 
 
 class PluginManager(object):
@@ -220,6 +268,25 @@ class PluginManager(object):
         # Re-initialize the self.plugins list
         self._plugins = self._init_plugins(self.config)
 
+    def remove(self, bundle, name):
+        """
+        Remove a plugin from the list and config.
+
+        Both ``bundle`` and ``name`` are required. A
+        :py:exception:`PluginError` will be raised if the plugin does not
+        exist.
+        """
+        section_name = 'plugin:{bundle}:{name}'.format(
+            bundle=bundle, name=name)
+
+        if not self.config.has_section(section_name):
+            raise PluginError('This plugin does not exist.')
+
+        self.config.remove_section(section_name)
+
+        # Again, re-initialize the self.plugins list
+        self._plugins = self._init_plugins(self.config)
+
 
 class Plugin(object):
 
@@ -283,17 +350,14 @@ class PluginDataJSONEncoder(json.JSONEncoder):
         """
         Implements JSONEncoder default method.
         """
-        if isinstance(obj, GitDiffIndex):
-            files = [i for i in obj.files()]
+        files = [i for i in obj.files()]
 
-            obj = []
-            for f in files:
-                obj.append({
-                    'type': f['type'],
-                    'name': f['name'],
-                    'filename': f['filename'],
-                    'diff': [j for j in f['diff']]})
+        obj = []
+        for f in files:
+            obj.append({
+                'type': f['type'],
+                'name': f['name'],
+                'filename': f['filename'],
+                'diff': [j for j in f['diff']]})
 
-            return obj
-
-        return super(PluginDataJSONEncoder, self).default(obj)
+        return obj

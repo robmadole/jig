@@ -1,3 +1,4 @@
+from os.path import dirname, join
 ## BeCareful settings
 
 # Name of the directory to create to hold BeCareful data
@@ -18,3 +19,7 @@ PLUGIN_CONFIG_FILENAME = 'config.cfg'
 # Name of the script to run inside the plugin directory that represents
 # the pre-commit script
 PLUGIN_PRE_COMMIT_SCRIPT = 'pre-commit'
+
+# Where can plugin pre-commit examples be found
+PLUGIN_PRE_COMMIT_TEMPLATE_DIR = \
+    join(dirname(__file__), 'data', 'pre-commits')

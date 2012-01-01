@@ -1,9 +1,10 @@
 # coding=utf-8
 import shlex
 import unittest
-from os import makedirs
+from os import getcwd, chdir, makedirs
 from os.path import join, dirname
 from subprocess import check_output, STDOUT, CalledProcessError
+from functools import wraps
 from textwrap import dedent
 
 from mock import patch
@@ -29,6 +30,27 @@ def strip_paint(payload):
     for paint in strip:
         payload = payload.replace(paint, '')
     return payload
+
+
+def cd_gitrepo(func):
+    """
+    Change the current working directory to the test case's Git repository.
+
+    This uses ``self.gitrepodir`` which is created by the
+    :py:module:`becareful.tests.noseplugin`.
+    """
+    @wraps(func)
+    def wrapper(testcase, *args, **kwargs):
+        original_dir = getcwd()
+
+        try:
+            chdir(testcase.gitrepodir)
+
+            func(testcase, *args, **kwargs)
+        finally:
+            chdir(original_dir)
+
+    return wrapper
 
 
 class BeCarefulTestCase(unittest.TestCase):
@@ -264,11 +286,13 @@ class CommandTestCase(ViewTestCase):
     Base test case for command tests.
 
     """
-    def run_command(self, command):
+    def run_command(self, command=None):
         """
         Run a subcommand.
         """
         with patch('becareful.commands.base.create_view') as cv:
+            # We hijack the create_view function so we can tell it to collect
+            # output and not exit on exception.
             view = ConsoleView()
 
             # Collect, don't print
@@ -281,4 +305,4 @@ class CommandTestCase(ViewTestCase):
             # Keep a reference to this so output() and error() will work
             self.view = view
 
-            return self.command(shlex.split(command))
+            return self.command(shlex.split(command or ''))
