@@ -137,10 +137,12 @@ class TestPluginManager(PluginTestCase):
         # Config is empty
         pm = PluginManager(self.bcconfig)
 
-        pm.add(join(self.fixturesdir, 'plugin01'))
+        plugin = pm.add(join(self.fixturesdir, 'plugin01'))
 
         self.assertEqual(1, len(pm.plugins))
         self.assertTrue(pm.config.has_section('plugin:test01:plugin01'))
+        self.assertEqual('plugin01', plugin.name)
+        self.assertEqual('test01', plugin.bundle)
 
     def test_could_not_parse(self):
         """

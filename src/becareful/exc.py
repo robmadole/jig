@@ -75,3 +75,12 @@ class NoPluginsInstalled(BeCarefulException):
 
     """
     pass
+
+
+class CommandError(BeCarefulException):
+
+    """
+    Raise when an error occurs while using any command line tool.
+
+    """
+    pass

@@ -1,6 +1,5 @@
 # coding=utf-8
 from tempfile import mkdtemp
-from unittest import SkipTest
 
 from nose.plugins.attrib import attr
 
@@ -156,7 +155,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         self._add_plugin(create_plugin(self.plugindir, template='python',
             bundle='test03', name='plugin03'))
 
-        self.run_command('list {}'.format(self.gitrepodir))
+        self.run_command('list -r {}'.format(self.gitrepodir))
 
         self.assertResults(u'''
             Installed plugins
@@ -178,7 +177,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         self._add_plugin(create_plugin(self.plugindir, template='python',
             bundle='test', name='plugin03'))
 
-        self.run_command('list {}'.format(self.gitrepodir))
+        self.run_command('list -r {}'.format(self.gitrepodir))
 
         self.assertResults(u'''
             Installed plugins
@@ -201,7 +200,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         self._add_plugin(create_plugin(self.plugindir, template='python',
             bundle='a', name='a'))
 
-        self.run_command('list {}'.format(self.gitrepodir))
+        self.run_command('list -r {}'.format(self.gitrepodir))
 
         self.assertResults('''
             Installed plugins
@@ -211,3 +210,97 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             b........................ b
             c........................ c
             ''', self.output)
+
+    @cd_gitrepo
+    def test_add_bad_plugin(self):
+        """
+        Only adds a plugin if it's valid.
+        """
+        # This is not a valid plugin directory, it's empty
+        tmp_dir = mkdtemp()
+
+        with self.assertRaises(ForcedExit):
+            self.run_command('add {}'.format(tmp_dir))
+
+        self.assertRegexpMatches(self.error,
+            u'The plugin file (.+)config.cfg is missing')
+
+    @cd_gitrepo
+    def test_add_plugin(self):
+        """
+        Adds a valid plugin.
+        """
+        plugin_dir = create_plugin(self.plugindir, template='python',
+            bundle='a', name='a')
+
+        # We are going to test whether it defaults --gitrepo to cwd
+        self.run_command('add {}'.format(plugin_dir))
+
+        self.assertEqual(
+            u'Added plugin a in bundle a to the repository.\n',
+            self.output)
+
+    def test_add_plugin_to_git_repo(self):
+        """
+        Add a plugin when not inside the Git repository.
+        """
+        plugin_dir = create_plugin(self.plugindir, template='python',
+            bundle='a', name='a')
+
+        self.run_command('add --gitrepo {} {}'.format(
+            self.gitrepodir, plugin_dir))
+
+    @cd_gitrepo
+    def test_remove_bad_plugin(self):
+        """
+        Only removes a plugin that has been installed.
+        """
+        with self.assertRaises(ForcedExit):
+            self.run_command('remove a')
+
+        self.assertEqual(
+            u'This plugin does not exist.\n',
+            self.error)
+
+    @cd_gitrepo
+    def test_remove_plugin(self):
+        """
+        Removes an installed plugin.
+        """
+        plugin_dir = create_plugin(self.plugindir, template='python',
+            bundle='bundle', name='name')
+
+        self.run_command('add -r {} {}'.format(self.gitrepodir, plugin_dir))
+
+        # Remove with the --gitrepo defaulting to cwd again
+        self.run_command('remove name bundle')
+
+        self.assertEqual(
+            u'Removed plugin name\n',
+            self.output)
+
+    @attr('focus')
+    def test_remove_plugin_same_name(self):
+        """
+        Exits because more than one plugin has the same name.
+
+        If the bundle is not specified and more than one plugin has the same
+        name, we can't assume which plugin they wish to remove. Error out and
+        suggest they use the list command.
+        """
+        plugin_dir1 = create_plugin(mkdtemp(), template='python',
+            bundle='bundle1', name='name')
+        plugin_dir2 = create_plugin(mkdtemp(), template='python',
+            bundle='bundle2', name='name')
+
+        self.run_command('add -r {} {}'.format(self.gitrepodir, plugin_dir1))
+        self.run_command('add -r {} {}'.format(self.gitrepodir, plugin_dir2))
+
+        with self.assertRaises(ForcedExit):
+            # Leave the bundle out, this should make our command error out
+            self.run_command('remove -r {} name'.format(self.gitrepodir))
+
+        self.assertEqual(
+            u'More than one plugin has the name of name. Use the list '
+            u'command to see installed plugins.\n',
+            self.error)

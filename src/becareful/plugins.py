@@ -268,6 +268,11 @@ class PluginManager(object):
         # Re-initialize the self.plugins list
         self._plugins = self._init_plugins(self.config)
 
+        # And return the plugin once we find it
+        for plugin in self._plugins:
+            if plugin.name == name and plugin.bundle == bundle:
+                return plugin
+
     def remove(self, bundle, name):
         """
         Remove a plugin from the list and config.
