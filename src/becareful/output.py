@@ -230,6 +230,26 @@ class ConsoleView(View):
             out.append(u'    Info {ic} Warn {wc} Stop {sc}'.format(
                 ic=info, wc=warn, sc=stop))
 
+    def print_help(self, commands):
+        with self.out() as out:
+            out.append('usage: becareful [-h] COMMAND')
+            out.append('')
+
+            out.append('optional arguments:')
+            out.append('  -h, --help  show this help message and exit')
+            out.append('')
+
+            out.append('BeCareful commands:')
+            for command in commands:
+                name = command.__module__.split('.')[-1]
+                description = command.parser.description
+
+                out.append('  {name:12}{description}'.format(
+                    name=name, description=description))
+
+            out.append('')
+            out.append('See `becareful COMMAND --help` for more information')
+
     def _format_message(self, msg):
         """
         Formats a single message to a string.

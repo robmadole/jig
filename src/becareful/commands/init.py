@@ -5,7 +5,8 @@ from becareful.gitutils import hook
 from becareful.plugins import initializer
 
 _parser = argparse.ArgumentParser(
-    description='Initialize a Git repository for use with BeCareful')
+    description='Initialize a Git repository for use with BeCareful',
+    usage='%(prog)s init [-h] path')
 
 _parser.add_argument('path', default='.', nargs='?',
     help='Path to the Git repository')

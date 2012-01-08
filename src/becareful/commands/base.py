@@ -1,4 +1,26 @@
+from os import listdir
+from os.path import join, dirname, isdir
+
 from becareful.output import ConsoleView
+
+_commands_dir = dirname(__file__)
+
+
+def list_commands():
+    """
+    List the commands available.
+    """
+    commands = []
+    for f in listdir(_commands_dir):
+        if isdir(join(_commands_dir, f)):
+            continue
+        if not f.endswith('.py'):
+            continue
+        try:
+            commands.append(get_command(f.split('.')[0]))
+        except (ImportError, AttributeError):
+            continue
+    return commands
 
 
 def get_command(name):

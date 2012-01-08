@@ -1,5 +1,5 @@
 import json
-from os import mkdir, stat, chmod
+from os import mkdir, stat, chmod, listdir
 from os.path import join, isfile, isdir
 from stat import S_IXUSR, S_IXGRP, S_IXOTH
 from subprocess import Popen, PIPE
@@ -144,6 +144,18 @@ def create_plugin(in_dir, bundle, name, template='python'):
     chmod(pre_commit_filename, mode)
 
     return plugin_dir
+
+
+def available_templates():
+    """
+    Provide a list of available pre-commit templates for plugin creation.
+
+    Templates are in :file:`becareful/data`.
+
+    This can be provided to :py:function:`create_plugin` as the :py:arg:`template`
+    argument.
+    """
+    return listdir(PLUGIN_PRE_COMMIT_TEMPLATE_DIR)
 
 
 class PluginManager(object):

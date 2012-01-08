@@ -9,7 +9,7 @@ from becareful.tests.testcase import BeCarefulTestCase, PluginTestCase
 from becareful.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized, PluginError)
 from becareful.plugins import (initializer, get_bcconfig, set_bcconfig,
-    PluginManager, create_plugin)
+    PluginManager, create_plugin, available_templates)
 
 
 class TestPluginConfig(BeCarefulTestCase):
@@ -302,6 +302,12 @@ class TestCreatePlugin(PluginTestCase):
         super(TestCreatePlugin, self).setUp()
 
         self.plugindir = mkdtemp()
+
+    def test_list_available_templates(self):
+        """
+        List available templates for creating plugins.
+        """
+        self.assertEqual(['python'], available_templates())
 
     def test_missing_directory(self):
         """

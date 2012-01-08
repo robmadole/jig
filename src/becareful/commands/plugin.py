@@ -1,8 +1,10 @@
 import argparse
+import errno
 
 from becareful.commands.base import BaseCommand
 from becareful.exc import CommandError
-from becareful.plugins import get_bcconfig, set_bcconfig, PluginManager
+from becareful.plugins import (get_bcconfig, set_bcconfig, PluginManager,
+    create_plugin, available_templates)
 
 _parser = argparse.ArgumentParser(
     description='Manage BeCareful plugins',
@@ -34,6 +36,19 @@ _removeparser.add_argument('bundle', nargs='?', default=None,
 _removeparser.add_argument('--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _removeparser.set_defaults(subcommand='remove')
+
+_createparser = _subparsers.add_parser('create',
+    help='create a new plugin')
+_createparser.add_argument('name',
+    help='Plugin name')
+_createparser.add_argument('bundle',
+    help='Bundle name')
+_createparser.add_argument('--language', '-l', dest='template',
+    default='python', help='Scripting language: {}'.format(
+        ', '.join(available_templates())))
+_createparser.add_argument('--dir', '-d', default='.',
+    help='Create in this directory')
+_createparser.set_defaults(subcommand='create')
 
 
 class Command(BaseCommand):
@@ -147,6 +162,7 @@ class Command(BaseCommand):
 
             plugins = self._plugins(pm)
 
+            # Find the bundle if it's not specified
             if name in plugins and not bundle:
                 if len(plugins[name]) > 1:
                     # There are more than one plugin by this name
@@ -154,8 +170,36 @@ class Command(BaseCommand):
                         '{}. Use the list command to see installed '
                         'plugins.'.format(name))
 
-                bundle = plugins[name].bundle
+                bundle = plugins[name][0].bundle
 
             pm.remove(bundle, name)
 
             out.append('Removed plugin {}'.format(name))
+
+    def create(self, argv):
+        """
+        Create a new plugin.
+        """
+        name = argv.name
+        bundle = argv.bundle
+        template = argv.template
+        save_dir = argv.dir
+
+        with self.out() as out:
+            if template not in available_templates():
+                raise CommandError('Language {} is not supported yet, you '
+                    'can for this project and add it though!'.format(
+                        template))
+
+            try:
+                plugin_dir = create_plugin(save_dir, bundle, name,
+                    template=template)
+
+                out.append('Created plugin as {}'.format(plugin_dir))
+            except OSError as ose:
+                if ose.errno == errno.EEXIST:
+                    # File exists
+                    raise CommandError('A plugin with this name already '
+                        'exists in this directory: {}'.format(save_dir))
+                # Something else, raise it again
+                raise ose

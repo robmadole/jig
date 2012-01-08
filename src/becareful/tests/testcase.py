@@ -6,6 +6,7 @@ from os.path import join, dirname
 from subprocess import check_output, STDOUT, CalledProcessError
 from functools import wraps
 from textwrap import dedent
+from contextlib import contextmanager
 
 from mock import patch
 from git import Repo
@@ -32,6 +33,27 @@ def strip_paint(payload):
     return payload
 
 
+@contextmanager
+def cwd_bounce(dir):
+    """
+    Temporarily changes to a directory and changes back in the end.
+
+    Where ``dir`` is the directory you wish to change to. When the context
+    manager exits it will change back to the original working directory.
+
+    Context manager will yield the original working directory and make that
+    available to the context manager's assignment target.
+    """
+    original_dir = getcwd()
+
+    try:
+        chdir(dir)
+
+        yield original_dir
+    finally:
+        chdir(original_dir)
+
+
 def cd_gitrepo(func):
     """
     Change the current working directory to the test case's Git repository.
@@ -41,14 +63,8 @@ def cd_gitrepo(func):
     """
     @wraps(func)
     def wrapper(testcase, *args, **kwargs):
-        original_dir = getcwd()
-
-        try:
-            chdir(testcase.gitrepodir)
-
+        with cwd_bounce(testcase.gitrepodir):
             func(testcase, *args, **kwargs)
-        finally:
-            chdir(original_dir)
 
     return wrapper
 

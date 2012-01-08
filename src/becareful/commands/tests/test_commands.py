@@ -1,10 +1,11 @@
 # coding=utf-8
+from os.path import dirname, isdir, isfile, join
 from tempfile import mkdtemp
 
 from nose.plugins.attrib import attr
 
 from becareful.tests.testcase import (CommandTestCase, PluginTestCase,
-    cd_gitrepo)
+    cd_gitrepo, cwd_bounce)
 from becareful.exc import ForcedExit
 from becareful.plugins import (set_bcconfig, get_bcconfig, create_plugin,
     PluginManager)
@@ -279,7 +280,23 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             u'Removed plugin name\n',
             self.output)
 
-    @attr('focus')
+    @cd_gitrepo
+    def test_remove_plugin_guesses_bundle(self):
+        """
+        Removes an installed plugin.
+        """
+        plugin_dir = create_plugin(self.plugindir, template='python',
+            bundle='bundle', name='name')
+
+        self.run_command('add -r {} {}'.format(self.gitrepodir, plugin_dir))
+
+        # Leave the bundle name off so it can be guessed.
+        self.run_command('remove name')
+
+        self.assertEqual(
+            u'Removed plugin name\n',
+            self.output)
+
     def test_remove_plugin_same_name(self):
         """
         Exits because more than one plugin has the same name.
@@ -304,3 +321,63 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             u'More than one plugin has the name of name. Use the list '
             u'command to see installed plugins.\n',
             self.error)
+
+    def test_create_with_bad_language(self):
+        """
+        Cannot create a plugin if the language is unavailable
+        """
+        with self.assertRaises(ForcedExit):
+            # We just created a plugin in this directory, so it should fail
+            self.run_command('create -l php name bundle')
+
+        self.assertEqual(
+            u'Language php is not supported yet, you can for this '
+            u'project and add it though!\n',
+            self.error)
+
+    def test_create_plugin_already_exists(self):
+        """
+        Cannot create a plugin if the destination already exists.
+        """
+        save_dir = dirname(create_plugin(mkdtemp(), template='python',
+            bundle='bundle', name='name'))
+
+        with self.assertRaises(ForcedExit):
+            # We just created a plugin in this directory, so it should fail
+            self.run_command('create --dir {} name bundle'.format(save_dir))
+
+        self.assertEqual(
+            u'A plugin with this name already exists in this '
+            u'directory: {}\n'.format(save_dir),
+            self.error)
+
+    def test_create_plugin(self):
+        """
+        Can create a plugin.
+        """
+        with cwd_bounce(self.plugindir):
+            self.run_command('create name bundle')
+
+        self.assertTrue(isdir(join(self.plugindir, 'name')))
+        self.assertTrue(isfile(join(self.plugindir, 'name', 'config.cfg')))
+
+    def test_create_plugin_in_directory(self):
+        """
+        Creates a plugin in a given directory.
+        """
+        self.run_command('create --dir {} name bundle'.format(self.plugindir))
+
+        self.assertTrue(isdir(join(self.plugindir, 'name')))
+
+    def test_create_plugin_defaults_python(self):
+        """
+        Creates a plugin with the default language of python.
+        """
+        self.run_command(
+            'create --dir {} --language python name bundle'.format(
+                self.plugindir))
+
+        with open(join(self.plugindir, 'name', 'pre-commit')) as fh:
+            pre_commit = fh.readlines()
+
+        self.assertEqual('#!/usr/bin/env python\n', pre_commit[0])

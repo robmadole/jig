@@ -7,7 +7,7 @@ from becareful.exc import GitRepoNotInitialized, NoPluginsInstalled
 from becareful.gitutils import repo_bcinitialized
 from becareful.diffconvert import GitDiffIndex
 from becareful.plugins import get_bcconfig, PluginManager
-from becareful.commands import get_command
+from becareful.commands import get_command, list_commands
 from becareful.output import ConsoleView
 
 
@@ -47,7 +47,7 @@ class Runner(object):
             command(argv)
         except (ImportError, IndexError):
             # If it's empty
-            self.view.print_help()
+            self.view.print_help(list_commands())
 
     def results(self, gitrepo):
         """
