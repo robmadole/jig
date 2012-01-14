@@ -8,12 +8,13 @@ class MockPlugin(Mock):
 
     """
     def __init__(self, *args, **kwargs):
-        self.name = kwargs.get('name', 'Unnamed')
-
+        name = 'Unnamed'
         if 'name' in kwargs:
+            name = kwargs['name']
             del kwargs['name']
 
         super(MockPlugin, self).__init__(*args, **kwargs)
+        self.name = name
 
     @property
     def name(self):

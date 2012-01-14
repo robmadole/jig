@@ -1,9 +1,11 @@
 # coding=utf-8
 from collections import OrderedDict
 
+from nose.plugins.attrib import attr
+
 from becareful.tests.testcase import BeCarefulTestCase, ViewTestCase
 from becareful.tests.mocks import MockPlugin
-from becareful.output import ConsoleView, Message, ResultsCollater
+from becareful.output import ConsoleView, Message, Error, ResultsCollater
 
 
 class TestConsoleView(ViewTestCase):
@@ -100,12 +102,56 @@ class TestConsoleView(ViewTestCase):
             """, self.output)
 
 
+class TestMessage(BeCarefulTestCase):
+
+    """
+    Test Message which is responsible for representing output from plugins.
+
+    """
+    def test_representation(self):
+        """
+        Object's representation is correct.
+        """
+        message = Message(None, type='w', file='a.txt', body='body', line=1)
+
+        self.assertEqual(
+            '<Message type="warn", body="body", file=a.txt, line=1>',
+            repr(message))
+
+    def test_equality(self):
+        """
+        Messages with the same content are considered equal.
+        """
+        message1= Message(MockPlugin(), type='w', file='a.txt', body='body', line=1)
+        message2= Message(MockPlugin(), type='w', file='a.txt', body='body', line=1)
+        message3= Message(MockPlugin(), type='w', file='b.txt', body='bbbb', line=9)
+
+        self.assertTrue(message1 == message2)
+        self.assertFalse(message2 == message3)
+        self.assertFalse(message3 == {})
+
+
 class TestResultsCollater(BeCarefulTestCase):
 
     """
     Collate results into digestible summaries.
 
     """
+    def test_plugin_error(self):
+        """
+        Results with non-zero exit codes create error messages.
+        """
+        results = {
+            MockPlugin(): (1, '', 'Plugin failed')}
+
+        rc = ResultsCollater(results)
+
+        cm, fm, lm = rc.messages
+
+        self.assertEqual(
+            [Error(None, type='stop', body='Plugin failed')],
+            rc.errors)
+
     def test_no_results(self):
         """
         We have results but no real content.
@@ -114,6 +160,7 @@ class TestResultsCollater(BeCarefulTestCase):
             MockPlugin(): (0, None, ''),
             MockPlugin(): (0, '', ''),
             MockPlugin(): (0, [''], ''),
+            MockPlugin(): (0, [['w', '']], ''),
             MockPlugin(): (0, {u'a.txt': u''}, ''),
             MockPlugin(): (0, {u'a.txt': [[]]}, ''),
             MockPlugin(): (0, {u'a.txt': [[u'']]}, ''),
@@ -284,6 +331,56 @@ class TestResultsCollater(BeCarefulTestCase):
         self.assertEqual(
             Message(None, type="info", body="L", file=u'a.txt', line=1),
             lm[0])
+
+    @attr('focus')
+    def test_completely_misunderstood(self):
+        """
+        An object is completely misunderstood.
+        """
+        anon_obj = object()
+
+        # Commit-specific
+        #results = {
+        #    MockPlugin(): (0, anon_obj, '')}
+        #self.assertEqual(
+        #    [Error(None, type='s', body=anon_obj)],
+        #    ResultsCollater(results).errors)
+
+        # File-specific
+        #results = {
+        #    MockPlugin(): (0, {'a.txt': anon_obj}, '')}
+        #self.assertEqual(
+        #    [Error(None, type='s', file='a.txt', body=anon_obj)],
+        #    ResultsCollater(results).errors)
+
+        # Line-specific
+        results = {
+            MockPlugin(): (0, {'a.txt': [1, 'w', anon_obj]}, '')}
+        self.assertEqual(
+            [Error(None, type='s', file='a.txt', body=anon_obj)],
+            ResultsCollater(results).errors)
+
+    def test_error_conditions(self):
+        """
+        Test objects that produce errors.
+        """
+        anon_obj = object()
+
+        # Commit-specific
+        results = {
+            MockPlugin(): (0, [[1, 2, 3, 4, 5]], '')}
+
+        self.assertEqual(
+            [Error(None, type='s', body=[1, 2, 3, 4, 5])],
+            ResultsCollater(results).errors)
+
+        # File-specific
+        results = {
+            MockPlugin(): (0, {'a.txt': anon_obj}, '')}
+
+        self.assertEqual(
+            [Error(None, type='s', file='a.txt', body=anon_obj)],
+            ResultsCollater(results).errors)
 
     def test_plugin_count(self):
         rc1 = ResultsCollater({})

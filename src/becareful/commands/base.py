@@ -75,4 +75,4 @@ class BaseCommand(object):
         """
         Perform whatever operation this command is supposed to do.
         """
-        raise NotImplemented()
+        raise NotImplementedError

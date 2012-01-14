@@ -118,23 +118,15 @@ class Error(Message):
     An error message related to a plugin's results.
 
     """
-    pass
+    def __init__(self, *args, **kwargs):
+        if 'type' not in kwargs:
+            # Default to stop for errors
+            kwargs['type'] = 'stop'
+
+        super(Error, self).__init__(*args, **kwargs)
 
 
-class View(object):
-
-    """
-    Base View all other sub views inherit from.
-
-    """
-    def format_results(self):
-        """
-        Abstract method for formatting plugin results.
-        """
-        raise NotImplemented()
-
-
-class ConsoleView(View):
+class ConsoleView(object):
 
     """
     Main view used to handle output to the console.
@@ -169,7 +161,7 @@ class ConsoleView(View):
                 retcode = 1
 
             if self.exit_on_exception:
-                sys.exit(retcode)
+                sys.exit(retcode)   # pragma: no cover
             else:
                 raise ForcedExit(retcode)
 
@@ -231,6 +223,9 @@ class ConsoleView(View):
                 ic=info, wc=warn, sc=stop))
 
     def print_help(self, commands):
+        """
+        Format and print help for using the console script.
+        """
         with self.out() as out:
             out.append('usage: becareful [-h] COMMAND')
             out.append('')
@@ -376,6 +371,7 @@ class ResultsCollater(object):
         """
         @wraps(func)
         def wrapper(*args, **kwargs):
+            import pdb; pdb.set_trace();
             for plugin, result in self._results.items():
                 self._plugins.add(plugin)
 
@@ -385,10 +381,16 @@ class ResultsCollater(object):
                     error = Error(plugin)
                     error.body = stderr
                     self._errors.append(error)
+                    # Remove this plugin since it's an error. If we don't do
+                    # this we'll end up reporting on this 3 times.
+                    del self._results[plugin]
+                    continue
 
                 for message in list(func(plugin, stdout)):
                     if isinstance(message, Error):
                         self._errors.append(message)
+                        import pdb; pdb.set_trace();
+                        del self._results[plugin]
                         continue
                     self._reporters.add(plugin)
                     self._counts[message.type] += 1
@@ -506,6 +508,7 @@ class ResultsCollater(object):
         to pinpoint the problem much quicker than file or commit specific
         messages.
         """
+        import pdb; pdb.set_trace();
         if not isinstance(obj, dict):
             # This is not a file specific messages
             return
