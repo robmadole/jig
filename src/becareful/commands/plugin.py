@@ -202,4 +202,4 @@ class Command(BaseCommand):
                     raise CommandError('A plugin with this name already '
                         'exists in this directory: {}'.format(save_dir))
                 # Something else, raise it again
-                raise ose
+                raise ose   # pragma: no cover

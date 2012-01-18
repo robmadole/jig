@@ -9,14 +9,14 @@ from becareful.exc import ForcedExit
 from becareful.plugins import set_bcconfig, Plugin
 
 
-class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
+class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
 
     """
     Runner hook is used by the command line script to run BeCareful.
 
     """
     def setUp(self):
-        super(TestRunnerFromHook, self).setUp()
+        super(TestRunnerEntryPoints, self).setUp()
 
         repo, working_dir, diffs = self.repo_from_fixture('repo01')
 
@@ -25,6 +25,9 @@ class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
         self.testdiffs = diffs
 
     def test_simple_integration(self):
+        """
+        Will run the hook.
+        """
         with patch.object(self.runner, 'results'):
             plugin = MockPlugin()
             # Empty results

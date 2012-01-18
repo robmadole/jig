@@ -44,7 +44,7 @@ class Runner(object):
         try:
             # Next argument is the command
             command = get_command(argv.pop(0))
-            command(argv)
+            command(argv)   # pragma: no cover
         except (ImportError, IndexError):
             # If it's empty
             self.view.print_help(list_commands())

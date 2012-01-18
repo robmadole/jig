@@ -79,7 +79,10 @@ class DiffType(object):
         elif diff.deleted_file:
             return cls.D
         elif diff.renamed:
-            return cls.R
+            # Through testing, I was never able to create the condition that
+            # would give back a renamed diff type. However, leaving this here
+            # for completeness and forward compatibility.
+            return cls.R   # pragma: no cover
         elif diff.a_blob and diff.b_blob and diff.a_blob != diff.b_blob:
             return cls.M
 

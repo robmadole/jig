@@ -139,9 +139,6 @@ class NumberedDirectoriesToGit(object):
 
         If ``strip`` is not provided it defaults to ``d``.
         """
-        if not strip:
-            strip = d
-
         for (dirpath, dirname, filenames) in walk(d):
             for fn in filenames:
                 sdir = dirpath.replace('{}'.format(strip), '').lstrip('/')
