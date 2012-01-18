@@ -371,7 +371,6 @@ class ResultsCollater(object):
         """
         @wraps(func)
         def wrapper(*args, **kwargs):
-            import pdb; pdb.set_trace();
             for plugin, result in self._results.items():
                 self._plugins.add(plugin)
 
@@ -389,7 +388,6 @@ class ResultsCollater(object):
                 for message in list(func(plugin, stdout)):
                     if isinstance(message, Error):
                         self._errors.append(message)
-                        import pdb; pdb.set_trace();
                         del self._results[plugin]
                         continue
                     self._reporters.add(plugin)
@@ -476,17 +474,20 @@ class ResultsCollater(object):
                     continue
                 if len(msg) == 1:
                     # Should default to info type
-                    if not msg[0]: continue
+                    if not msg[0]:
+                        continue
                     yield Message(plugin, body=msg[0], file=filename)
                     continue
                 if len(msg) == 2:
-                    if not msg[1]: continue
+                    if not msg[1]:
+                        continue
                     # In the format of [TYPE, BODY]
                     yield Message(plugin, body=msg[1], type=msg[0],
                         file=filename)
                     continue
                 if len(msg) == 3:
-                    if not msg[2]: continue
+                    if not msg[2]:
+                        continue
                     # In the format of [LINE, TYPE, BODY]
                     if msg[0] is not None:
                         # This is line specific, skip this
@@ -507,37 +508,34 @@ class ResultsCollater(object):
         the existence of ``console.log`` on line 45. This allows the developer
         to pinpoint the problem much quicker than file or commit specific
         messages.
+
+        There is a lack of error handling in this method. The commit and file
+        specific handlers take care of error handling for us. This method gets
+        to be pretty clean.
         """
-        import pdb; pdb.set_trace();
         if not isinstance(obj, dict):
-            # This is not a file specific messages
+            # This is not a file or line specific messages
             return
 
         for filename, group in obj.items():
             if isinstance(group, basestring):
                 group = [group]
 
-            if not isinstance(group, list):
-                yield Error(plugin, body=group, file=filename)
-                continue
-
             for msg in group:
                 if isinstance(msg, basestring):
                     msg = [msg]
 
-                if not isinstance(msg, list):
-                    yield Error(plugin, body=msg, file=filename)
-                    continue
                 if 0 <= len(msg) <= 2:
                     # There is nothing here of interest
                     continue
                 if len(msg) == 3:
-                    if msg[0] is None: continue
-                    if not msg[2]: continue
+                    if msg[0] is None:
+                        # This is not line specific
+                        continue
+                    if not msg[2]:
+                        # The body is empty
+                        continue
                     # In the format of [LINE, TYPE, BODY]
                     yield Message(plugin, body=msg[2], type=msg[1],
                         file=filename, line=msg[0])
                     continue
-
-                # This object is not understood
-                yield Error(plugin, body=obj)

@@ -1,8 +1,8 @@
 """
 A nose plugin to ease some testing pain.
 """
-from os import listdir
-from os.path import dirname, join, realpath
+from os import listdir, mkdir
+from os.path import dirname, join, realpath, isdir
 from tempfile import mkdtemp
 from shutil import rmtree
 from subprocess import call, PIPE
@@ -54,8 +54,6 @@ class TestSetup(Plugin):
         """
         Called before each test is ran.
         """
-        testmethod = getattr(test.test, test.test._testMethodName)
-
         try:
             setattr(test.test, 'gitrepodir',
                 self._create_git_repo())
@@ -84,7 +82,10 @@ class TestSetup(Plugin):
         Returns the full path to the newly created directory.
         """
         try:
-            repo = mkdtemp(dir=realpath(self.repo_harness_dir))
+            rhd = realpath(self.repo_harness_dir)
+            if not isdir(rhd):
+                mkdir(rhd)
+            repo = mkdtemp(dir=rhd)
         except:
             raise TestSetupError('Tried to create a directory to hold '
                 'the test repositories and could not')

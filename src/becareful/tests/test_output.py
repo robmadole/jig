@@ -332,54 +332,46 @@ class TestResultsCollater(BeCarefulTestCase):
             Message(None, type="info", body="L", file=u'a.txt', line=1),
             lm[0])
 
-    @attr('focus')
-    def test_completely_misunderstood(self):
+    def test_commit_specific_errors(self):
         """
-        An object is completely misunderstood.
+        Exercise the errors related to commit specific messages.
         """
         anon_obj = object()
 
-        # Commit-specific
-        #results = {
-        #    MockPlugin(): (0, anon_obj, '')}
-        #self.assertEqual(
-        #    [Error(None, type='s', body=anon_obj)],
-        #    ResultsCollater(results).errors)
-
-        # File-specific
-        #results = {
-        #    MockPlugin(): (0, {'a.txt': anon_obj}, '')}
-        #self.assertEqual(
-        #    [Error(None, type='s', file='a.txt', body=anon_obj)],
-        #    ResultsCollater(results).errors)
-
-        # Line-specific
         results = {
-            MockPlugin(): (0, {'a.txt': [1, 'w', anon_obj]}, '')}
+            MockPlugin(): (0, anon_obj, '')}
         self.assertEqual(
-            [Error(None, type='s', file='a.txt', body=anon_obj)],
+            [Error(None, type='s', body=anon_obj)],
             ResultsCollater(results).errors)
 
-    def test_error_conditions(self):
-        """
-        Test objects that produce errors.
-        """
-        anon_obj = object()
-
-        # Commit-specific
         results = {
             MockPlugin(): (0, [[1, 2, 3, 4, 5]], '')}
-
         self.assertEqual(
             [Error(None, type='s', body=[1, 2, 3, 4, 5])],
             ResultsCollater(results).errors)
 
-        # File-specific
+    def test_file_specific_errors(self):
+        """
+        Exercise the errors related to file specific messages.
+        """
+        anon_obj = object()
+
         results = {
             MockPlugin(): (0, {'a.txt': anon_obj}, '')}
-
         self.assertEqual(
             [Error(None, type='s', file='a.txt', body=anon_obj)],
+            ResultsCollater(results).errors)
+
+        results = {
+            MockPlugin(): (0, {'a.txt': [anon_obj]}, '')}
+        self.assertEqual(
+            [Error(None, type='s', file='a.txt', body=anon_obj)],
+            ResultsCollater(results).errors)
+
+        results = {
+            MockPlugin(): (0, {'a.txt': [[1, 2, 3, 4, 5]]}, '')}
+        self.assertEqual(
+            [Error(None, type='s', body={'a.txt': [[1, 2, 3, 4, 5]]})],
             ResultsCollater(results).errors)
 
     def test_plugin_count(self):
