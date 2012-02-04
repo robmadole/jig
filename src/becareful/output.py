@@ -32,6 +32,21 @@ def red_bold(payload):
     return u'\x1b[31;1m{}\x1b[39;22m'.format(payload)
 
 
+def strip_paint(payload):
+    """
+    Removes any console specific color characters.
+
+    Where ``payload`` is a string containing special characters used to print
+    colored output to the terminal.
+
+    Returns a unicode string without the paint.
+    """
+    strip = [u'\x1b[31;1m', u'\x1b[32;1m', u'\x1b[33;1m', u'\x1b[39;22m']
+    for paint in strip:
+        payload = payload.replace(paint, '')
+    return payload
+
+
 def lookup_type(strtype):
     """
     Returns the actual type for a string message representation of it.
@@ -132,12 +147,13 @@ class ConsoleView(object):
     Main view used to handle output to the console.
 
     """
-    def __init__(self):
+    def __init__(self, collect_output=False, exit_on_exception=True,
+            stdout=None, stderr=None):
         # Do we collect output? False means we print it out
-        self.collect_output = False
-        self.exit_on_exception = True
+        self.collect_output = collect_output
+        self.exit_on_exception = exit_on_exception
         self._collect = {
-            'stdout': StringIO(), 'stderr': StringIO()}
+            'stdout': stdout or StringIO(), 'stderr': stderr or StringIO()}
 
     @contextmanager
     def out(self):
@@ -528,14 +544,14 @@ class ResultsCollater(object):
                 if 0 <= len(msg) <= 2:
                     # There is nothing here of interest
                     continue
-                if len(msg) == 3:
-                    if msg[0] is None:
-                        # This is not line specific
-                        continue
-                    if not msg[2]:
-                        # The body is empty
-                        continue
-                    # In the format of [LINE, TYPE, BODY]
-                    yield Message(plugin, body=msg[2], type=msg[1],
-                        file=filename, line=msg[0])
+
+                if msg[0] is None:
+                    # This is not line specific
                     continue
+                if not msg[2]:
+                    # The body is empty
+                    continue
+                # In the format of [LINE, TYPE, BODY]
+                yield Message(plugin, body=msg[2], type=msg[1],
+                    file=filename, line=msg[0])
+                continue

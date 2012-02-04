@@ -76,8 +76,7 @@ class TestBaseCommand(CommandTestCase):
             parser = Mock()
 
         with self.assertRaises(NotImplementedError):
-            command = MissingProcessCommand([])
-            command.process()
+            MissingProcessCommand([])
 
 
 class TestInitCommand(CommandTestCase):

@@ -15,22 +15,7 @@ from becareful.runner import Runner
 from becareful.plugins import initializer
 from becareful.diffconvert import GitDiffIndex
 from becareful.tools import NumberedDirectoriesToGit
-from becareful.output import ConsoleView
-
-
-def strip_paint(payload):
-    """
-    Removes any console specific color characters.
-
-    Where ``payload`` is a string containing special characters used to print
-    colored output to the terminal.
-
-    Returns a unicode string without the paint.
-    """
-    strip = [u'\x1b[31;1m', u'\x1b[32;1m', u'\x1b[33;1m', u'\x1b[39;22m']
-    for paint in strip:
-        payload = payload.replace(paint, '')
-    return payload
+from becareful.output import strip_paint, ConsoleView
 
 
 @contextmanager

@@ -2,6 +2,7 @@
 Collection of :py:class:`Exception` subclasses used by BeCareful.
 """
 
+
 class BeCarefulException(Exception):
 
     """
@@ -81,6 +82,42 @@ class CommandError(BeCarefulException):
 
     """
     Raise when an error occurs while using any command line tool.
+
+    """
+    pass
+
+
+class ExpectationError(BeCarefulException):
+
+    """
+    Base class for all error dealing with plugin expectations.
+
+    """
+    pass
+
+
+class ExpectationNoTests(ExpectationError):
+
+    """
+    Raise when no tests (numbered directories) are found for a plugin.
+
+    """
+    pass
+
+
+class ExpectationFileNotFound(ExpectationError):
+
+    """
+    Raised when the expectation file should be present but is not.
+
+    """
+    pass
+
+
+class ExpectationParsingError(ExpectationError):
+
+    """
+    Raised when errors are found while parsing reStructuredText expectations.
 
     """
     pass

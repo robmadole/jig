@@ -74,7 +74,7 @@ class Command(BaseCommand):
                 bundles[plugin.bundle] = []
             bundles[plugin.bundle].append(plugin)
 
-        return bundles;
+        return bundles
 
     def _plugins(self, pm):
         """
@@ -116,7 +116,6 @@ class Command(BaseCommand):
 
             sort_bundles = sorted(bundles.items(), key=lambda b: b[0])
 
-
             for name, plugins in sort_bundles:
                 sort_plugins = sorted(plugins, key=lambda p: p.name)
 
@@ -140,8 +139,9 @@ class Command(BaseCommand):
 
             set_bcconfig(path, pm.config)
 
-            out.append('Added plugin {} in bundle {} to the repository.'.format(
-                p.name, p.bundle))
+            out.append(
+                'Added plugin {} in bundle {} to the repository.'.format(
+                    p.name, p.bundle))
 
     def remove(self, argv):
         """

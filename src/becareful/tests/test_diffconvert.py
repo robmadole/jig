@@ -1,15 +1,14 @@
-from os.path import dirname, join, realpath
+from os.path import join, realpath
 from unittest import TestCase
 from functools import wraps
 from textwrap import dedent
 from pprint import PrettyPrinter
 from operator import itemgetter
 
-from nose.plugins.attrib import attr
+from mock import Mock
 
 from becareful.tests.testcase import BeCarefulTestCase
-from becareful.tools import NumberedDirectoriesToGit
-from becareful.diffconvert import GitDiffIndex, describe_diff
+from becareful.diffconvert import describe_diff, DiffType
 
 
 def assertDiff(func):
@@ -216,6 +215,69 @@ class TestDescribeDiff(TestCase):
             (4, '-', 'three-and-a-smidge'),
             (5, '+', ''),
             (6, ' ', 'four')]
+
+
+class TestDiffType(BeCarefulTestCase):
+
+    """
+    Detect diff type from :py:class:`Git.Diff` objects.
+
+    """
+    def test_add(self):
+        """
+        Add type.
+        """
+        diff = Mock()
+        diff.new_file = True
+
+        self.assertEqual(DiffType.A, DiffType.for_diff(diff))
+
+    def test_deleted(self):
+        """
+        Deleted type.
+        """
+        diff = Mock()
+        diff.new_file = False
+        diff.deleted_file = True
+
+        self.assertEqual(DiffType.D, DiffType.for_diff(diff))
+
+    def test_renamed(self):
+        """
+        Renamed type.
+        """
+        diff = Mock()
+        diff.new_file = False
+        diff.deleted_file = False
+        diff.renamed = True
+
+        self.assertEqual(DiffType.R, DiffType.for_diff(diff))
+
+    def test_modified(self):
+        """
+        Modified type.
+        """
+        diff = Mock()
+        diff.new_file = False
+        diff.deleted_file = False
+        diff.renamed = False
+        diff.a_blob = 'blob a'
+        diff.b_blob = 'blob b'
+
+        self.assertEqual(DiffType.M, DiffType.for_diff(diff))
+
+    def test_unknown(self):
+        """
+        Unknown type.
+        """
+        diff = Mock()
+        diff.new_file = False
+        diff.deleted_file = False
+        diff.renamed = False
+        diff.a_blob = False
+        diff.b_blob = False
+
+        self.assertEqual(DiffType.U, DiffType.for_diff(diff))
 
 
 class TestGitDiffIndex(BeCarefulTestCase):

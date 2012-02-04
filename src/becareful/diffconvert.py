@@ -45,7 +45,7 @@ def describe_diff(a, b):
     a = a.splitlines()
     b = b.splitlines()
 
-    for tag, i1, i2, j1, j2 in SequenceMatcher(None,a,b).get_opcodes():
+    for tag, i1, i2, j1, j2 in SequenceMatcher(None, a, b).get_opcodes():
         if tag == 'equal':
             for idx, line in enumerate(b[j1:j2]):
                 yield (idx + j1 + 1, ' ', line)
@@ -68,6 +68,7 @@ class DiffType(object):
     D = 'deleted'
     R = 'renamed'
     M = 'modified'
+    U = 'unknown'
 
     @classmethod
     def for_diff(cls, diff):
@@ -79,12 +80,11 @@ class DiffType(object):
         elif diff.deleted_file:
             return cls.D
         elif diff.renamed:
-            # Through testing, I was never able to create the condition that
-            # would give back a renamed diff type. However, leaving this here
-            # for completeness and forward compatibility.
-            return cls.R   # pragma: no cover
+            return cls.R
         elif diff.a_blob and diff.b_blob and diff.a_blob != diff.b_blob:
             return cls.M
+
+        return cls.U
 
 
 class GitDiffIndex(object):

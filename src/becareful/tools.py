@@ -127,9 +127,9 @@ class NumberedDirectoriesToGit(object):
 
         # Delete
         for path in paths_to_del:
-           repo.index.remove([join(self.target, path)])
+            repo.index.remove([join(self.target, path)])
 
-           unlink(join(self.target, path))
+            unlink(join(self.target, path))
 
         repo.index.commit('Commit from numbered directory {}'.format(d))
 

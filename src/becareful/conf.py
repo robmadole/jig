@@ -1,4 +1,11 @@
 from os.path import dirname, join
+
+## General settings
+
+# What codec to use when dealing with unicode conversion
+CODEC = 'utf8'
+
+
 ## BeCareful settings
 
 # Name of the directory to create to hold BeCareful data
@@ -23,3 +30,6 @@ PLUGIN_PRE_COMMIT_SCRIPT = 'pre-commit'
 # Where can plugin pre-commit examples be found
 PLUGIN_PRE_COMMIT_TEMPLATE_DIR = \
     join(dirname(__file__), 'data', 'pre-commits')
+
+# Name of the file that serves as both documentation and tests for a plugin
+PLUGIN_EXPECTATIONS_FILENAME = 'expect.rst'

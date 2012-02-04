@@ -78,8 +78,8 @@ class Runner(object):
                 diff = self.repo.head.commit.diff()
             except ValueError:
                 # No diff on head, no commits have been written yet
-                out.append('This repository is empty, BeCareful needs at least '
-                    '1 commit to continue')
+                out.append('This repository is empty, BeCareful needs at '
+                    'least 1 commit to continue')
                 # Let execution continue so they *can* commit that first
                 # changeset.
                 return
@@ -110,5 +110,3 @@ class Runner(object):
             results[plugin] = (retcode, data, stderr)
 
         return results
-
-

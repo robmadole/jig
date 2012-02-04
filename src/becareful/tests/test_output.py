@@ -1,8 +1,6 @@
 # coding=utf-8
 from collections import OrderedDict
 
-from nose.plugins.attrib import attr
-
 from becareful.tests.testcase import BeCarefulTestCase, ViewTestCase
 from becareful.tests.mocks import MockPlugin
 from becareful.output import ConsoleView, Message, Error, ResultsCollater
@@ -122,9 +120,12 @@ class TestMessage(BeCarefulTestCase):
         """
         Messages with the same content are considered equal.
         """
-        message1= Message(MockPlugin(), type='w', file='a.txt', body='body', line=1)
-        message2= Message(MockPlugin(), type='w', file='a.txt', body='body', line=1)
-        message3= Message(MockPlugin(), type='w', file='b.txt', body='bbbb', line=9)
+        message1 = Message(MockPlugin(),
+            type='w', file='a.txt', body='body', line=1)
+        message2 = Message(MockPlugin(),
+            type='w', file='a.txt', body='body', line=1)
+        message3 = Message(MockPlugin(),
+            type='w', file='b.txt', body='bbbb', line=9)
 
         self.assertTrue(message1 == message2)
         self.assertFalse(message2 == message3)
