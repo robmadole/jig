@@ -18,10 +18,12 @@ def slugify(text, delim=u'-'):
     """
     result = []
     for word in _punct_re.split(unicode(text).lower()):
-        word = normalize('NFKD', word).encode('ascii', 'ignore')
-        if word:
-            result.append(word)
-    return unicode(delim.join(result))
+        nword = normalize('NFKD', word).encode('ascii', 'ignore')
+        if nword:
+            # Filter out non-printable
+            pword = ''.join([i for i in nword if ord(i) > 31])
+            result.append(pword)
+    return unicode(delim.join(filter(bool, result)))
 
 
 class NumberedDirectoriesToGit(object):

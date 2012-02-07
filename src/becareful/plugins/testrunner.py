@@ -13,14 +13,19 @@ from becareful.exc import (ExpectationNoTests, ExpectationFileNotFound,
     ExpectationParsingError)
 from becareful.conf import CODEC, PLUGIN_EXPECTATIONS_FILENAME
 from becareful.tools import NumberedDirectoriesToGit
-from becareful.output import ConsoleView, strip_paint
+from becareful.diffconvert import describe_diff
+from becareful.output import ConsoleView, strip_paint, green_bold, red_bold
 from becareful.plugins import PluginManager
 from becareful.diffconvert import GitDiffIndex
-
 
 # What docutil nodes signify a structural or sectional break
 DOCUTILS_DIFFERENT_SECTION_NODES = (nodes.Root, nodes.Structural,
     nodes.Titular)
+
+# How wide do we want the columns to be when we report test output
+REPORTER_COLUMN_WIDTH = 80
+# A horizontal dividing line to separate content
+REPORTER_HORIZONTAL_DIVIDER = u''.join([u'·'] * REPORTER_COLUMN_WIDTH)
 
 
 def get_expectations(input_string):
@@ -155,7 +160,7 @@ class PluginTestRunner(object):
                 PLUGIN_EXPECTATIONS_FILENAME)
 
             with open(expect_filename, 'r', CODEC) as fh:
-                expectation_text = fh.read()
+                expectation_text = fh.read()   # pragma: no branch
 
             self.expectations = list(get_expectations(expectation_text))
         except (IOError, OSError):
@@ -232,6 +237,64 @@ class PluginTestRunner(object):
         return results
 
 
+class PluginTestReporter(object):
+
+    """
+    Formats a list of test results into human-readable format.
+
+    The list must contain :py:class:`SuccessResult` or
+    :py:class:`FailureResult' objects.
+
+    """
+    def __init__(self, results):
+        self.results = results
+
+    def dumps(self):
+        """
+        Formats a list of test results to unicode.
+        """
+        out = []
+
+        for result in self.results:
+            exprange = result.expectation.range
+            if isinstance(result, SuccessResult):
+                out.append(green_bold(u'{0:02d} – {1:02d} Pass'.format(
+                    exprange[0], exprange[1])))
+                out.append(u'')
+                continue
+
+            out.append(red_bold(u'{0:02d} – {1:02d} Fail'.format(
+                exprange[0], exprange[1])))
+
+            out.append(u'')
+
+            out.append(u'Actual')
+            out.append(REPORTER_HORIZONTAL_DIVIDER)
+            out.append(u'')
+            out.extend(result.actual.splitlines())
+            out.append(u'')
+
+            out.append(u'Diff')
+            out.append(REPORTER_HORIZONTAL_DIVIDER)
+            out.append(u'')
+
+            diff = describe_diff(result.expectation.output, result.actual)
+            for (_, diff_type, line) in diff:
+                if diff_type == '-':
+                    decorator = red_bold
+                elif diff_type == '+':
+                    decorator = green_bold
+                else:
+                    # No operation but return
+                    decorator = lambda a: a
+
+                out.append(decorator('{} {}'.format(diff_type, line)))
+
+            out.append(u'')
+
+        return u'\n'.join(out)
+
+
 Expectation = namedtuple('Expectation', 'range settings output')
 
 
@@ -262,8 +325,8 @@ class PluginSettingsDirective(Directive):
 
         .. plugin-settings::
 
-            underscore_in_filenames = false
-            capital_letters_in_filenames = false
+            underscore_in_filenames = no
+            capital_letters_in_filenames = no
     """
 
     has_content = True

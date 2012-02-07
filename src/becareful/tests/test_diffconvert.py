@@ -45,7 +45,7 @@ def assertDiff(func):
         b = dedent(b).strip()
 
         actual = [i for i in describe_diff(a, b)]
-        if not expected == actual:
+        if not expected == actual:   # pragma: no cover
             self.fail('Diff does not match:\nexpected\n{}\nactual\n{}'.format(
                 pp(expected),
                 pp(actual)))

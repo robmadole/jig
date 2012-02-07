@@ -25,7 +25,7 @@ class TestAddingHook(BeCarefulTestCase):
         badrepo = mkdtemp()
 
         try:
-            with self.assertRaises(NotGitRepo) as c:
+            with self.assertRaises(NotGitRepo):
                 hook(badrepo)
         finally:
             rmdir(badrepo)
@@ -38,7 +38,7 @@ class TestAddingHook(BeCarefulTestCase):
         with open(self.pc_filename, 'w') as fh:
             fh.write('#!/bin/sh')
 
-        with self.assertRaises(PreCommitExists) as c:
+        with self.assertRaises(PreCommitExists):
             hook(self.gitrepodir)
 
     def test_successfully_hooks(self):
@@ -60,4 +60,4 @@ class TestAddingHook(BeCarefulTestCase):
 
         self.assertEqual(1, retcode)
         self.assertEqual('This repository has not been initialized. Run '
-            'becareful init GITREPO to set it up\n', output)
+            'becareful init GITREPO to set it up.\n', output)

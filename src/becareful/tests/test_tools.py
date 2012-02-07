@@ -1,7 +1,33 @@
+# coding=utf-8
 from os.path import join, dirname
 from unittest import TestCase
 
-from becareful.tools import NumberedDirectoriesToGit
+from becareful.tools import NumberedDirectoriesToGit, slugify
+
+
+class TestSlugify(TestCase):
+
+    """
+    Converting strings into slugs.
+
+    """
+    def test_nothing(self):
+        """
+        An empty string is given.
+        """
+        self.assertEqual(u'', slugify(u''))
+
+    def test_normal_ascii_string(self):
+        """
+        ASCII string.
+        """
+        self.assertEqual(u'abc-def-ghi', slugify(u'Abc & Def Ghi'))
+
+    def test_special_characters(self):
+        """
+        Special characters in the string.
+        """
+        self.assertEqual(u'abc-def-ghi', slugify(u'Abç \u0000 Def Ghi'))
 
 
 class TestNumberedDirectoriesToGit(TestCase):

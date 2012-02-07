@@ -11,8 +11,8 @@ What is useful to a BeCareful plugin author is the following:
     1. What files changed
     2. What's the simple diff for modified files
 
-This module aims process :py:class:`git.DiffIndex` objects and does exactly
-above.
+This module manipulates :py:class:`git.DiffIndex` objects and provides other
+utilities for discovering differences between two strings.
 
 .. _GitPython: https://github.com/gitpython-developers/GitPython
 """

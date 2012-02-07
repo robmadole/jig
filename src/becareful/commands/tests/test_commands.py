@@ -141,7 +141,7 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
         self.run_command(self.gitrepodir)
 
         self.assertEqual(u'No staged changes in the repository, '
-            'skipping BeCareful\n', self.output)
+            'skipping BeCareful.\n', self.output)
 
     def test_changes(self):
         """
@@ -174,7 +174,7 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
             self.run_command(mkdtemp())
 
         self.assertIn(u'This repository has not been initialized. Run '
-            'becareful init GITREPO to set it up\n', self.error)
+            'becareful init GITREPO to set it up.\n', self.error)
 
 
 class TestPluginCommand(CommandTestCase, PluginTestCase):

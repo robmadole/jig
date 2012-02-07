@@ -5,14 +5,18 @@ from os.path import join, dirname
 from tempfile import mkdtemp
 from textwrap import dedent
 
+from mock import patch
+
 from becareful.exc import (ExpectationNoTests, ExpectationFileNotFound,
     ExpectationParsingError)
+from becareful.tests.mocks import MockPlugin
 from becareful.conf import CODEC
 from becareful.tools import NumberedDirectoriesToGit
-from becareful.plugins import create_plugin
+from becareful.plugins import create_plugin, Plugin
 from becareful.tests.testcase import PluginTestCase
-from becareful.plugins.testrunner import (PluginTestRunner, get_expectations,
-    Expectation, SuccessResult, FailureResult)
+from becareful.plugins.testrunner import (PluginTestRunner,
+    PluginTestReporter, get_expectations, Expectation, SuccessResult,
+    FailureResult, REPORTER_HORIZONTAL_DIVIDER)
 
 
 class TestPluginTestRunner(PluginTestCase):
@@ -46,8 +50,10 @@ class TestPluginTestRunner(PluginTestCase):
             except OSError:
                 pass
             with open(path, 'w', CODEC) as fh:
-                fh.write(content)
-            self.timeline_iter += 1
+                fh.write(content)   # pragma: no branch
+
+        # Next run of the command will start a new numbered directory
+        self.timeline_iter += 1
 
     def add_expectation(self, plugin_dir, content):
         """
@@ -204,13 +210,219 @@ class TestPluginTestRunner(PluginTestCase):
         self.assertIsInstance(results[0], SuccessResult)
 
     def test_non_json_stdout(self):
-        pass
+        """
+        Still processes if the plugin returns something other than JSON data.
+        """
+        plugin_dir = create_plugin(self.plugindir, 'bundle', 'plugin')
+
+        self.add_timeline(plugin_dir, [('a.txt', 'a\n')])
+        self.add_timeline(plugin_dir, [('a.txt', 'aa\n')])
+
+        self.add_expectation(plugin_dir, u'''
+            .. expectation::
+                :from: 01
+                :to: 02
+
+                Output''')
+
+        ptr = PluginTestRunner(plugin_dir)
+
+        with patch.object(Plugin, 'pre_commit'):
+            Plugin.pre_commit.return_value = (0, 'Non-JSON', '')
+
+            results = ptr.run()
+
+        self.assertResults(u'''
+            ▾  plugin
+
+            ✓  Non-JSON
+
+            Ran 1 plugin
+                Info 1 Warn 0 Stop 0
+            ''', results[0].actual)
 
     def test_non_zero_exit_code(self):
-        pass
+        """
+        If the exit code is non-zero, gets stderr instead.
+        """
+        plugin_dir = create_plugin(self.plugindir, 'bundle', 'plugin')
+
+        self.add_timeline(plugin_dir, [('a.txt', 'a\n')])
+        self.add_timeline(plugin_dir, [('a.txt', 'aa\n')])
+
+        self.add_expectation(plugin_dir, u'''
+            .. expectation::
+                :from: 01
+                :to: 02
+
+                Output''')
+
+        ptr = PluginTestRunner(plugin_dir)
+
+        with patch.object(Plugin, 'pre_commit'):
+            Plugin.pre_commit.return_value = (1, '', 'Error')
+
+            results = ptr.run()
+
+        self.assertResults(u'Error', results[0].actual)
 
     def test_multiple_expectations(self):
-        pass
+        """
+        Multiple tests can be ran.
+        """
+        plugin_dir = create_plugin(self.plugindir, 'bundle', 'plugin',
+            settings={'verbose': 'no'})
+
+        self.add_timeline(plugin_dir, [
+            ('src/a.txt', 'a\n')])
+        self.add_timeline(plugin_dir, [
+            ('src/a.txt', 'aa\n')])
+        self.add_timeline(plugin_dir, [
+            ('src/a.txt', 'aaa\n')])
+        self.add_timeline(plugin_dir, [
+            ('src/a.txt', 'aaa\n'),
+            ('src/b.txt', 'bbb\n')])
+
+        self.add_expectation(plugin_dir, u'''
+            .. expectation::
+                :from: 01
+                :to: 02
+
+                ▾  plugin
+
+                ✓  a.txt
+                    File has been modified
+
+                Ran 1 plugin
+                    Info 1 Warn 0 Stop 0
+
+            .. expectation::
+                :from: 02
+                :to: 03
+
+                ▾  plugin
+
+                ✓  a.txt
+                    File has been modified
+
+                Ran 1 plugin
+                    Info 1 Warn 0 Stop 0
+
+            .. expectation::
+                :from: 03
+                :to: 04
+
+                ▾  plugin
+
+                ✓  b.txt
+                    File has been modified
+
+                Ran 1 plugin
+                    Info 1 Warn 0 Stop 0''')
+
+        ptr = PluginTestRunner(plugin_dir)
+
+        results = ptr.run()
+
+        success = [isinstance(i, SuccessResult) for i in results]
+
+        self.assertTrue(all(success))
+
+
+class TestPluginTestReporter(PluginTestCase):
+
+    """
+    Results from a test run can be formatted for output.
+
+    """
+    def test_no_results(self):
+        """
+        No results reports nothing.
+        """
+        results = []
+
+        ptr = PluginTestReporter(results)
+
+        self.assertEqual(u'', ptr.dumps())
+
+    def test_single_failure(self):
+        """
+        Reports a single failure.
+        """
+        expectation = Expectation((1, 2), None, u'aaa')
+        results = [
+            FailureResult(actual=u'bbb', expectation=expectation,
+                plugin=MockPlugin())]
+
+        ptr = PluginTestReporter(results)
+
+        self.assertResults(u'''
+            01 – 02 Fail
+
+            Actual
+            {0}
+
+            bbb
+
+            Diff
+            {0}
+
+            - aaa
+            + bbb'''.format(REPORTER_HORIZONTAL_DIVIDER),
+            ptr.dumps())
+
+    def test_single_success(self):
+        """
+        Report a single success.
+        """
+        expectation = Expectation((1, 2), None, u'aaa')
+        results = [
+            SuccessResult(actual=u'aaa', expectation=expectation,
+                plugin=MockPlugin())]
+
+        ptr = PluginTestReporter(results)
+
+        self.assertResults(u'01 – 02 Pass', ptr.dumps())
+
+    def test_failure_within_success(self):
+        """
+        Multiple results.
+        """
+        expectation1 = Expectation((1, 2), None, u'aaa')
+        expectation2 = Expectation((2, 3), None, u'b\nb\nb\n')
+        expectation3 = Expectation((3, 4), None, u'ccc')
+        results = [
+            SuccessResult(actual=u'aaa', expectation=expectation1,
+                plugin=MockPlugin()),
+            FailureResult(actual=u'b\nB\nb\n', expectation=expectation2,
+                plugin=MockPlugin()),
+            SuccessResult(actual=u'ccc', expectation=expectation3,
+                plugin=MockPlugin())]
+
+        ptr = PluginTestReporter(results)
+
+        self.assertResults(u'''
+            01 – 02 Pass
+
+            02 – 03 Fail
+
+            Actual
+            {0}
+
+            b
+            B
+            b
+
+            Diff
+            {0}
+
+              b
+            + B
+              b
+            - b
+
+            03 – 04 Pass'''.format(REPORTER_HORIZONTAL_DIVIDER),
+            ptr.dumps())
 
 
 class TestGetExpectations(PluginTestCase):

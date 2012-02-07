@@ -31,8 +31,8 @@ setup(name='becareful',
     zip_safe=False,
     install_requires=install_requires,
     entry_points={
-        'console_scripts':
-            ['becareful=becareful.entrypoints:main'],
-        'nose.plugins.0.10':
-             ['becareful = becareful.tests.noseplugin:TestSetup']}
+        'console_scripts': [
+            'becareful = becareful.entrypoints:main'],
+        'nose.plugins.0.10': [
+            'becareful = becareful.tests.noseplugin:TestSetup']}
 )

@@ -68,7 +68,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
         self.assertEqual(1, ec.exception.message)
         self.assertEqual('This repository has not been initialized. Run '
-            'becareful init GITREPO to set it up\n',
+            'becareful init GITREPO to set it up.\n',
             self.error)
 
     def test_no_plugins(self):
@@ -80,7 +80,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
         self.assertEqual(1, ec.exception.message)
         self.assertEqual('There are no plugins installed, use becareful '
-            'install to add some\n',
+            'install to add some.\n',
             self.error)
 
     def test_empty_repository(self):
@@ -93,7 +93,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.runner.results(self.gitrepodir)
 
         self.assertEqual('This repository is empty, BeCareful needs at '
-            'least 1 commit to continue\n',
+            'least 1 commit to continue.\n',
             self.output)
 
     def test_no_diff(self):
@@ -110,7 +110,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.runner.results(self.gitrepodir)
 
         self.assertEqual('No staged changes in the repository, skipping '
-            'BeCareful\n',
+            'BeCareful.\n',
             self.output)
 
     def test_unstaged_one_file(self):
@@ -133,7 +133,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.runner.results(self.gitrepodir)
 
         self.assertEqual('No staged changes in the repository, skipping '
-            'BeCareful\n',
+            'BeCareful.\n',
             self.output)
 
     def test_staged_one_file(self):

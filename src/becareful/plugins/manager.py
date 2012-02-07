@@ -49,7 +49,7 @@ class PluginManager(object):
             with open(plugin_cfg) as fh:
                 plugin_config = SafeConfigParser()
                 try:
-                    plugin_config.readfp(fh)
+                    plugin_config.readfp(fh)   # pragma: no branch
                 except ConfigParserError:
                     # Something happened when parsing the config
                     raise PluginError('Could not parse config file for '
@@ -133,7 +133,7 @@ class PluginManager(object):
         self._plugins = self._init_plugins(self.config)
 
         # And return the plugin once we find it
-        for plugin in self._plugins:
+        for plugin in self._plugins:   # pragma: no branch
             if plugin.name == name and plugin.bundle == bundle:
                 return plugin
 
