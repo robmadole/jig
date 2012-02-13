@@ -69,15 +69,6 @@ class PluginError(BeCarefulException):
     pass
 
 
-class NoPluginsInstalled(BeCarefulException):
-
-    """
-    Raise this to indicate that the operation requires plugins to run.
-
-    """
-    pass
-
-
 class CommandError(BeCarefulException):
 
     """

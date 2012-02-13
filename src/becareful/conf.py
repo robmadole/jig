@@ -31,5 +31,8 @@ PLUGIN_PRE_COMMIT_SCRIPT = 'pre-commit'
 PLUGIN_PRE_COMMIT_TEMPLATE_DIR = \
     join(dirname(__file__), 'data', 'pre-commits')
 
+# The directory inside of the plugins directory that contains tests
+PLUGIN_TESTS_DIRECTORY = 'tests'
+
 # Name of the file that serves as both documentation and tests for a plugin
 PLUGIN_EXPECTATIONS_FILENAME = 'expect.rst'

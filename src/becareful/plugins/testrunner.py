@@ -11,8 +11,9 @@ from docutils.parsers.rst import Directive, directives
 
 from becareful.exc import (ExpectationNoTests, ExpectationFileNotFound,
     ExpectationParsingError)
-from becareful.conf import CODEC, PLUGIN_EXPECTATIONS_FILENAME
-from becareful.tools import NumberedDirectoriesToGit
+from becareful.conf import (CODEC, PLUGIN_EXPECTATIONS_FILENAME,
+    PLUGIN_TESTS_DIRECTORY)
+from becareful.tools import NumberedDirectoriesToGit, cwd_bounce
 from becareful.diffconvert import describe_diff
 from becareful.output import ConsoleView, strip_paint, green_bold, red_bold
 from becareful.plugins import PluginManager
@@ -149,14 +150,14 @@ class PluginTestRunner(object):
         self.expectations = None
 
         try:
-            test_directory = join(plugin_dir, 'tests')
+            test_directory = join(plugin_dir, PLUGIN_TESTS_DIRECTORY)
             self.timeline = NumberedDirectoriesToGit(test_directory)
         except ValueError:
             raise ExpectationNoTests('Could not find any tests: {}'.format(
                 test_directory))
 
         try:
-            expect_filename = join(plugin_dir, 'tests',
+            expect_filename = join(plugin_dir, PLUGIN_TESTS_DIRECTORY,
                 PLUGIN_EXPECTATIONS_FILENAME)
 
             with open(expect_filename, 'r', CODEC) as fh:
@@ -205,8 +206,13 @@ class PluginTestRunner(object):
             gdi = GitDiffIndex(self.timeline.repo.working_dir,
                 self.timeline.diffs()[exp.range[0] - 1])
 
-            # Now run the actual pre_commit hook for this plugin
-            retcode, stdout, stderr = plugin.pre_commit(gdi)
+            wd = join(self.plugin_dir, PLUGIN_TESTS_DIRECTORY,
+                '{0:02d}'.format(exp.range[1]))
+            with cwd_bounce(wd):
+                # Now run the actual pre_commit hook for this plugin
+                res = plugin.pre_commit(gdi)
+                # Break apart into its pieces
+                retcode, stdout, stderr = res   # pragma: no branch
 
             try:
                 # Is it JSON data?
@@ -220,7 +226,10 @@ class PluginTestRunner(object):
                 # console.
                 view.print_results({plugin: (retcode, data, stderr)})
             else:
-                results.append(FailureResult(exp, stderr, plugin))
+                results.append(FailureResult(exp,
+                    'Exit code: {}\n\nStd out:\n{}\n\nStd err:\n{}'.format(
+                        retcode, stdout or '(none)', stderr or '(none)'),
+                    plugin))
                 continue
 
             # Now remove the color character sequences to make things a little
@@ -255,7 +264,9 @@ class PluginTestReporter(object):
         """
         out = []
 
-        for result in self.results:
+        results = self.results
+
+        for result in results:
             exprange = result.expectation.range
             if isinstance(result, SuccessResult):
                 out.append(green_bold(u'{0:02d} – {1:02d} Pass'.format(
@@ -288,9 +299,14 @@ class PluginTestReporter(object):
                     # No operation but return
                     decorator = lambda a: a
 
-                out.append(decorator('{} {}'.format(diff_type, line)))
+                out.append(decorator(u'{} {}'.format(diff_type, line)))
 
             out.append(u'')
+
+        pass_count = len([i for i in results if isinstance(i, SuccessResult)])
+        fail_count = len([i for i in results if isinstance(i, FailureResult)])
+
+        out.append(u'Pass {}, Fail {}'.format(pass_count, fail_count))
 
         return u'\n'.join(out)
 

@@ -18,13 +18,38 @@ class TestConsoleView(ViewTestCase):
         self.view.collect_output = True
         self.view.exit_on_exception = False
 
-    def test_commit_specific_message(self):
+    def test_error(self):
+        """
+        The plugin exits with something other than 0.
+        """
         plugin = MockPlugin()
         plugin.name = 'Plugin 1'
 
-        self.view.print_results({
+        counts = self.view.print_results({
+            plugin: (1, '', 'An error occurred')})
+
+        self.assertEqual((0, 0, 0), counts)
+        self.assertResults(u'''
+            ▾  Plugin 1
+
+            ✕  An error occurred
+
+            Ran 1 plugin
+                Info 0 Warn 0 Stop 0
+                (1 plugin reported errors)
+            ''', self.output)
+
+    def test_commit_specific_message(self):
+        """
+        Messages generalized for the entire commit.
+        """
+        plugin = MockPlugin()
+        plugin.name = 'Plugin 1'
+
+        counts = self.view.print_results({
             plugin: (0, 'commit', '')})
 
+        self.assertEqual((1, 0, 0), counts)
         self.assertResults(u"""
             ▾  Plugin 1
 
@@ -35,12 +60,16 @@ class TestConsoleView(ViewTestCase):
             """, self.output)
 
     def test_file_specific_message(self):
+        """
+        Messages specific to the file being committed.
+        """
         plugin = MockPlugin()
         plugin.name = 'Plugin 1'
 
-        self.view.print_results({
+        counts = self.view.print_results({
             plugin: (0, {u'a.txt': [[None, u'w', 'file']]}, '')})
 
+        self.assertEqual((0, 1, 0), counts)
         self.assertResults(u"""
             ▾  Plugin 1
 
@@ -52,12 +81,16 @@ class TestConsoleView(ViewTestCase):
             """, self.output)
 
     def test_line_specific_message(self):
+        """
+        Messages specific to a single line.
+        """
         plugin = MockPlugin()
         plugin.name = 'Plugin 1'
 
-        self.view.print_results({
+        counts = self.view.print_results({
             plugin: (0, {u'a.txt': [[1, 's', 'stop']]}, '')})
 
+        self.assertEqual((0, 0, 1), counts)
         self.assertResults(u"""
             ▾  Plugin 1
 
@@ -69,6 +102,9 @@ class TestConsoleView(ViewTestCase):
             """, self.output)
 
     def test_two_plugins(self):
+        """
+        Formats messages (more than one) correctly.
+        """
         plugin1 = MockPlugin()
         plugin1.name = 'Plugin 1'
 
@@ -80,8 +116,9 @@ class TestConsoleView(ViewTestCase):
         results[plugin1] = (0, ['a', 'b'], '')
         results[plugin2] = (0, ['a', 'b'], '')
 
-        self.view.print_results(results)
+        counts = self.view.print_results(results)
 
+        self.assertEqual((4, 0, 0), counts)
         self.assertResults(u"""
             ▾  Plugin 1
 

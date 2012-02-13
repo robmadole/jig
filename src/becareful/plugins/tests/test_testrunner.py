@@ -264,7 +264,14 @@ class TestPluginTestRunner(PluginTestCase):
 
             results = ptr.run()
 
-        self.assertResults(u'Error', results[0].actual)
+        self.assertResults(u'''
+            Exit code: 1
+
+            Std out:
+            (none)
+
+            Std err:
+            Error''', results[0].actual)
 
     def test_multiple_expectations(self):
         """
@@ -337,13 +344,13 @@ class TestPluginTestReporter(PluginTestCase):
     """
     def test_no_results(self):
         """
-        No results reports nothing.
+        No results reports nothing but the count.
         """
         results = []
 
         ptr = PluginTestReporter(results)
 
-        self.assertEqual(u'', ptr.dumps())
+        self.assertEqual(u'Pass 0, Fail 0', ptr.dumps())
 
     def test_single_failure(self):
         """
@@ -368,7 +375,9 @@ class TestPluginTestReporter(PluginTestCase):
             {0}
 
             - aaa
-            + bbb'''.format(REPORTER_HORIZONTAL_DIVIDER),
+            + bbb
+
+            Pass 0, Fail 1'''.format(REPORTER_HORIZONTAL_DIVIDER),
             ptr.dumps())
 
     def test_single_success(self):
@@ -382,7 +391,10 @@ class TestPluginTestReporter(PluginTestCase):
 
         ptr = PluginTestReporter(results)
 
-        self.assertResults(u'01 – 02 Pass', ptr.dumps())
+        self.assertResults(u'''
+            01 – 02 Pass
+
+            Pass 1, Fail 0''', ptr.dumps())
 
     def test_failure_within_success(self):
         """
@@ -421,7 +433,9 @@ class TestPluginTestReporter(PluginTestCase):
               b
             - b
 
-            03 – 04 Pass'''.format(REPORTER_HORIZONTAL_DIVIDER),
+            03 – 04 Pass
+
+            Pass 2, Fail 1'''.format(REPORTER_HORIZONTAL_DIVIDER),
             ptr.dumps())
 
 

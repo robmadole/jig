@@ -1,9 +1,10 @@
 import re
 from unicodedata import normalize
-from os import listdir, walk, makedirs, unlink
+from os import listdir, walk, makedirs, unlink, chdir, getcwd
 from os.path import join, dirname, isdir
 from tempfile import mkdtemp
 from shutil import copy2
+from contextlib import contextmanager
 
 from git import Repo
 
@@ -24,6 +25,27 @@ def slugify(text, delim=u'-'):
             pword = ''.join([i for i in nword if ord(i) > 31])
             result.append(pword)
     return unicode(delim.join(filter(bool, result)))
+
+
+@contextmanager
+def cwd_bounce(dir):
+    """
+    Temporarily changes to a directory and changes back in the end.
+
+    Where ``dir`` is the directory you wish to change to. When the context
+    manager exits it will change back to the original working directory.
+
+    Context manager will yield the original working directory and make that
+    available to the context manager's assignment target.
+    """
+    original_dir = getcwd()
+
+    try:
+        chdir(dir)
+
+        yield original_dir
+    finally:
+        chdir(original_dir)
 
 
 class NumberedDirectoriesToGit(object):

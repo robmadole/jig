@@ -23,4 +23,4 @@ class Command(BaseCommand):
             initializer(path)
 
             out.append('Git repository has been initialized for use '
-                'with BeCareful')
+                'with BeCareful.')

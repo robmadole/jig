@@ -191,11 +191,12 @@ class ConsoleView(object):
         collater = ResultsCollater(results)
 
         plugins = collater.plugins
+        errors = collater.errors
         reporters = collater.reporters
 
         form = u'plugin' if len(plugins) == 1 else u'plugins'
 
-        if len(reporters) == 0:
+        if len(reporters) == 0 and len(errors) == 0:
             # Nothing to report
             with self.out() as out:
                 form = u'plugin' if len(plugins) == 1 else u'plugins'
@@ -206,8 +207,8 @@ class ConsoleView(object):
         # Gather the distinct message types from the results
         cm, fm, lm = collater.messages
 
-        # Order them from least specific to most specific
-        messages = cm + fm + lm
+        # Order them from least specific to most specific, put the errors last
+        messages = cm + fm + lm + errors
 
         # How do our message types map to a symbol
         type_to_symbol = {
@@ -215,6 +216,7 @@ class ConsoleView(object):
             WARN: yellow_bold(u'\u26a0'),
             STOP: red_bold(u'\u2715')}
 
+        ic, wc, sc = (0, 0, 0)
         with self.out() as out:
             last_plugin = None
             for msg in messages:
@@ -237,6 +239,13 @@ class ConsoleView(object):
 
             out.append(u'    Info {ic} Warn {wc} Stop {sc}'.format(
                 ic=info, wc=warn, sc=stop))
+
+            if len(errors):
+                out.append(u'    ({ec} {form} reported errors)'.format(
+                    ec=len(errors), form=form))
+
+        # Return the counts for the different types of messages
+        return (ic, wc, sc)
 
     def print_help(self, commands):
         """

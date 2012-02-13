@@ -1,5 +1,5 @@
 import json
-from os.path import join, isfile
+from os.path import join, isfile, realpath
 from subprocess import Popen, PIPE
 from ConfigParser import SafeConfigParser
 from ConfigParser import Error as ConfigParserError
@@ -169,7 +169,7 @@ class Plugin(object):
         # What is the name of this plugin?
         self.name = name
         # Where does this plugin live
-        self.path = path
+        self.path = realpath(path)
         # Plugin-specific configuration
         self.config = config
 

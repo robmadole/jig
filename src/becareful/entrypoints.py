@@ -39,4 +39,4 @@ def coverage():
     cov.stop()
 
     cov.report()
-    cov.html_report()
+    cov.html_report(directory='cover')

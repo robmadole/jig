@@ -2,9 +2,10 @@ import argparse
 import errno
 
 from becareful.commands.base import BaseCommand
-from becareful.exc import CommandError
+from becareful.exc import CommandError, ExpectationError
 from becareful.plugins import (get_bcconfig, set_bcconfig, PluginManager,
     create_plugin, available_templates)
+from becareful.plugins.testrunner import PluginTestRunner, PluginTestReporter
 
 _parser = argparse.ArgumentParser(
     description='Manage BeCareful plugins',
@@ -49,6 +50,12 @@ _createparser.add_argument('--language', '-l', dest='template',
 _createparser.add_argument('--dir', '-d', default='.',
     help='Create in this directory')
 _createparser.set_defaults(subcommand='create')
+
+_testparser = _subparsers.add_parser('test',
+    help='run a suite of plugin tests')
+_testparser.add_argument('plugin', nargs='?', default='.',
+    help='Path to the plugin directory')
+_testparser.set_defaults(subcommand='test')
 
 
 class Command(BaseCommand):
@@ -200,6 +207,24 @@ class Command(BaseCommand):
                 if ose.errno == errno.EEXIST:
                     # File exists
                     raise CommandError('A plugin with this name already '
-                        'exists in this directory: {}'.format(save_dir))
+                        'exists in this directory: {}.'.format(save_dir))
                 # Something else, raise it again
                 raise ose   # pragma: no cover
+
+    def test(self, argv):
+        """
+        Run the tests for a plugin.
+        """
+        plugin = argv.plugin
+
+        with self.out() as out:
+            try:
+                ptr = PluginTestRunner(plugin)
+
+                results = ptr.run()
+
+                reporter = PluginTestReporter(results)
+
+                out.extend(reporter.dumps().splitlines())
+            except ExpectationError as e:
+                raise CommandError(e.message)

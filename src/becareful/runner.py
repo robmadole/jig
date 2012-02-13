@@ -1,9 +1,10 @@
 import json
+import sys
 from collections import OrderedDict
 
 from git import Repo
 
-from becareful.exc import GitRepoNotInitialized, NoPluginsInstalled
+from becareful.exc import GitRepoNotInitialized
 from becareful.gitutils import repo_bcinitialized
 from becareful.diffconvert import GitDiffIndex
 from becareful.plugins import get_bcconfig, PluginManager
@@ -28,7 +29,13 @@ class Runner(object):
         """
         results = self.results(gitrepo)
 
-        self.view.print_results(results)
+        report_counts = self.view.print_results(results)
+
+        if sum(report_counts):
+            answer = raw_input(
+                'Commit anyway (hit enter), or "c" to cancel the commit')
+            if answer.lower() == 'c':
+                sys.exit(1)
 
     def fromconsole(self, argv):
         """
@@ -69,8 +76,9 @@ class Runner(object):
         # Check to make sure we have some plugins to run
         with self.view.out() as out:
             if len(pm.plugins) == 0:
-                raise NoPluginsInstalled('There are no plugins installed, '
+                out.append('There are no plugins installed, '
                     'use becareful install to add some.')
+                return
 
             self.repo = Repo(gitrepo)
 

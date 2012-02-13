@@ -4,13 +4,16 @@ from os.path import dirname, isdir, isfile, join
 from tempfile import mkdtemp
 
 from mock import Mock, patch
+from nose.plugins.attrib import attr
 
 from becareful.entrypoints import main
 from becareful.tests.testcase import (ViewTestCase, CommandTestCase,
     PluginTestCase, cd_gitrepo, cwd_bounce)
+from becareful.tests.mocks import MockPlugin
 from becareful.exc import ForcedExit
 from becareful.plugins import (set_bcconfig, get_bcconfig, create_plugin,
     PluginManager)
+from becareful.plugins.testrunner import Expectation, SuccessResult
 from becareful.commands import init, runnow, plugin
 from becareful.commands.base import list_commands, create_view, BaseCommand
 
@@ -94,7 +97,7 @@ class TestInitCommand(CommandTestCase):
         self.run_command(self.gitrepodir)
 
         self.assertEqual(
-            u'Git repository has been initialized for use with BeCareful\n',
+            u'Git repository has been initialized for use with BeCareful.\n',
             self.output)
 
     @cd_gitrepo
@@ -107,7 +110,7 @@ class TestInitCommand(CommandTestCase):
         self.run_command()
 
         self.assertEqual(
-            u'Git repository has been initialized for use with BeCareful\n',
+            u'Git repository has been initialized for use with BeCareful.\n',
             self.output)
 
     def test_handles_error(self):
@@ -415,7 +418,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
         self.assertEqual(
             u'A plugin with this name already exists in this '
-            u'directory: {}\n'.format(save_dir),
+            u'directory: {}.\n'.format(save_dir),
             self.error)
 
     def test_create_plugin(self):
@@ -448,3 +451,63 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             pre_commit = fh.readlines()
 
         self.assertEqual('#!/usr/bin/env python\n', pre_commit[0])
+
+    def test_plugin_tests_none_found(self):
+        """
+        Run tests for a plugin where no tests are found.
+        """
+        plugin_dir = create_plugin(mkdtemp(), template='python',
+            bundle='bundle', name='name')
+
+        with self.assertRaises(ForcedExit):
+            self.run_command('test {}'.format(plugin_dir))
+
+        self.assertIn('Could not find any tests:', self.error)
+        self.assertIn('{}/tests'.format(plugin_dir), self.error)
+
+    def test_formats_results(self):
+        """
+        Will return test results.
+        """
+        plugin_dir = create_plugin(mkdtemp(), template='python',
+            bundle='bundle', name='name')
+
+        expectation = Expectation((1, 2), None, u'aaa')
+        results = [
+            SuccessResult(actual=u'aaa', expectation=expectation,
+                plugin=MockPlugin())]
+
+        with patch('becareful.commands.plugin.PluginTestRunner') as ptr:
+            ptr.return_value = Mock()
+            ptr.return_value.run = Mock(return_value=results)
+
+            self.run_command('test {}'.format(plugin_dir))
+
+        self.assertResults(u'''
+            01 – 02 Pass
+
+            Pass 1, Fail 0''', self.output)
+
+    def test_plugin_defaults_to_cwd(self):
+        """
+        Running the plugins tests defaults to the current working directory.
+        """
+        plugin_dir = create_plugin(mkdtemp(), template='python',
+            bundle='bundle', name='name')
+
+        expectation = Expectation((1, 2), None, u'aaa')
+        results = [
+            SuccessResult(actual=u'aaa', expectation=expectation,
+                plugin=MockPlugin())]
+
+        with patch('becareful.commands.plugin.PluginTestRunner') as ptr:
+            ptr.return_value = Mock()
+            ptr.return_value.run = Mock(return_value=results)
+
+            with cwd_bounce(plugin_dir):
+                self.run_command('test')
+
+        self.assertResults(u'''
+            01 – 02 Pass
+
+            Pass 1, Fail 0''', self.output)

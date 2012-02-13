@@ -75,13 +75,11 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         """
         If there is a BC directory without any plugins.
         """
-        with self.assertRaises(ForcedExit) as ec:
-            self.runner.results(self.gitrepodir)
+        self.runner.results(self.gitrepodir)
 
-        self.assertEqual(1, ec.exception.message)
         self.assertEqual('There are no plugins installed, use becareful '
             'install to add some.\n',
-            self.error)
+            self.output)
 
     def test_empty_repository(self):
         """
@@ -244,7 +242,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
     def test_handles_retcode_1_with_stderr(self):
         """
-        Supports non-JSON output from the plugin.
+        Handles non-zero return codes and data written to stderr.
         """
         with patch.object(Plugin, 'pre_commit'):
             Plugin.pre_commit.return_value = (
