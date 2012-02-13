@@ -2,6 +2,7 @@
 import sys
 from os.path import dirname, isdir, isfile, join
 from tempfile import mkdtemp
+from contextlib import nested
 
 from mock import Mock, patch
 from nose.plugins.attrib import attr
@@ -157,7 +158,19 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
         self.commit(self.gitrepodir, 'a.txt', 'a')
         self.stage(self.gitrepodir, 'b.txt', 'b')
 
-        self.run_command(self.gitrepodir)
+        with nested(
+            patch('becareful.runner.raw_input', create=True),
+            patch('becareful.runner.sys')
+        ) as (ri, r_sys):
+            # Fake the raw_input call to return 'c'
+            ri.return_value = 'c'
+
+            self.run_command(self.gitrepodir)
+
+        # Since we chose to cancel the commit by providing 'c', this should
+        # exit with 1 which will indicate to Git that it needs to abort the
+        # commit.
+        r_sys.exit.assert_called_once_with(1)
 
         self.assertResults(u"""
             ▾  plugin01

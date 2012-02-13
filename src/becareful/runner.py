@@ -31,6 +31,10 @@ class Runner(object):
 
         report_counts = self.view.print_results(results)
 
+        if not report_counts:
+            # No report counts came back
+            return
+
         if sum(report_counts):
             answer = raw_input(
                 'Commit anyway (hit enter), or "c" to cancel the commit')
