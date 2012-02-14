@@ -19,4 +19,4 @@ class Command(BaseCommand):
         # Make the runner use our view
         runner = Runner(view=self.view)
 
-        runner.fromhook(path)
+        runner.fromhook(path, interactive=False)

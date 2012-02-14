@@ -142,7 +142,10 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
         # Create the first commit
         self.commit(self.gitrepodir, 'a.txt', 'a')
 
-        self.run_command(self.gitrepodir)
+        with self.assertRaises(SystemExit) as ec:
+            self.run_command(self.gitrepodir)
+
+        self.assertEqual(0, ec.exception.code)
 
         self.assertEqual(u'No staged changes in the repository, '
             'skipping BeCareful.\n', self.output)
@@ -160,10 +163,13 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
 
         with nested(
             patch('becareful.runner.raw_input', create=True),
-            patch('becareful.runner.sys')
-        ) as (ri, r_sys):
+            patch('becareful.runner.sys'),
+            self.assertRaises(SystemExit)
+        ) as (ri, r_sys, ec):
             # Fake the raw_input call to return 'c'
             ri.return_value = 'c'
+            # Raise the error to halt execution like the real sys.exit would
+            r_sys.exit.side_effect = SystemExit
 
             self.run_command(self.gitrepodir)
 

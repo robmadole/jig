@@ -1,12 +1,15 @@
 from shutil import rmtree
 from os.path import join
+from contextlib import nested
 
+from nose.plugins.attrib import attr
 from mock import patch
 
 from becareful.tests.testcase import RunnerTestCase, PluginTestCase
 from becareful.tests.mocks import MockPlugin
 from becareful.exc import ForcedExit
 from becareful.plugins import set_bcconfig, Plugin
+from becareful.runner import Runner
 
 
 class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
@@ -34,11 +37,90 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
             self.runner.results.return_value = {plugin:
                 (0, '', '')}
 
-            self.runner.fromhook(self.gitrepodir)
+            with self.assertRaises(SystemExit) as ec:
+                self.runner.fromhook(self.gitrepodir)  # pragma: no branch
+
+            self.assertEqual(0, ec.exception.code)
 
             self.assertEqual(
                 'Ran 1 plugin, nothing to report\n',
                 self.output)
+
+    def test_will_not_prompt_if_no_messages(self):
+        """
+        No prompt is presented if there are no messages to communicate.
+        """
+        with patch.object(Runner, 'results'):
+            # No results came back from any plugin
+            Runner.results.return_value = []
+
+            with nested(
+                patch('becareful.runner.raw_input', create=True),
+                patch('becareful.runner.sys'),
+                self.assertRaises(SystemExit)
+            ) as (ri, r_sys, ec):
+                r_sys.exit.side_effect = SystemExit
+                self.runner.fromhook(self.gitrepodir)
+
+        # Make sure that the call to raw_input never happened
+        self.assertFalse(ri.called)
+
+        # And we exited with 0 because there is no reason to stop the commit
+        r_sys.exit.assert_called_once_with(0)
+
+    def test_will_prompt_user(self):
+        """
+        User sees a prompt if there are messages.
+        """
+        self._add_plugin(self.bcconfig, 'plugin01')
+        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+
+        # Create staged changes
+        self.commit(self.gitrepodir, 'a.txt', 'a')
+        self.stage(self.gitrepodir, 'b.txt', 'b')
+
+        with nested(
+            patch('becareful.runner.raw_input', create=True),
+            patch('becareful.runner.sys'),
+            self.assertRaises(SystemExit)
+        ) as (ri, r_sys, ec):
+            # Fake the raw_input call to return 'c'
+            r_sys.exit.side_effect = SystemExit
+            ri.return_value = 'c'
+
+            self.runner.fromhook(self.gitrepodir)
+
+        # The user was prompted about committing or canceling
+        ri.assert_called_once_with('\nCommit anyway (hit enter), '
+            'or "c" to cancel the commit\n')
+        # When they said cancel we exited with non-zero
+        r_sys.exit.assert_called_once_with(1)
+
+    def test_will_prompt_but_continue_anyway(self):
+        """
+        The user can choose to continue with the commit anyway.
+        """
+        self._add_plugin(self.bcconfig, 'plugin01')
+        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+
+        # Create staged changes
+        self.commit(self.gitrepodir, 'a.txt', 'a')
+        self.stage(self.gitrepodir, 'b.txt', 'b')
+
+        with nested(
+            patch('becareful.runner.raw_input', create=True),
+            patch('becareful.runner.sys')
+        ) as (ri, r_sys):
+            # Fake the raw_input call to return 'c'
+            ri.return_value = ''
+
+            self.runner.fromhook(self.gitrepodir)
+
+        # The user was prompted about committing or canceling
+        ri.assert_called_once_with('\nCommit anyway (hit enter), '
+            'or "c" to cancel the commit\n')
+        # When they said cancel we exited with non-zero
+        r_sys.exit.assert_called_once_with(0)
 
 
 class TestRunnerResults(RunnerTestCase, PluginTestCase):
