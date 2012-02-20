@@ -1,8 +1,8 @@
 * This is currently a work in progress, this documentation is fake; I haven't
   written the code that makes any of this work.
 
-BeCareful
-=========
+Jig
+===
 
 Check your code before you commit.
 

@@ -1,52 +1,52 @@
 Developer API
 =============
 
-Objects used internally by BeCareful to interface with Git.
+Objects used internally by Jig to interface with Git.
 
-becareful.diffconvert
----------------------
+jig.diffconvert
+---------------
 
-.. automodule:: becareful.diffconvert
+.. automodule:: jig.diffconvert
    :members:
 
-becareful.conf
---------------
+jig.conf
+--------
 
-.. automodule:: becareful.conf
+.. automodule:: jig.conf
    :members:
 
-becareful.exc
---------------
+jig.exc
+-------
 
-.. automodule:: becareful.exc
+.. automodule:: jig.exc
    :members:
 
-becareful.gitutils
-------------------
+jig.gitutils
+------------
 
-.. automodule:: becareful.gitutils
+.. automodule:: jig.gitutils
    :members:
 
-becareful.output
-------------------
+jig.output
+----------
 
-.. automodule:: becareful.output
+.. automodule:: jig.output
    :members:
 
-becareful.plugins
-------------------
+jig.plugins
+-----------
 
-.. automodule:: becareful.plugins
+.. automodule:: jig.plugins
    :members:
 
-becareful.runner
-------------------
+jig.runner
+----------
 
-.. automodule:: becareful.runner
+.. automodule:: jig.runner
    :members:
 
-becareful.tools
-------------------
+jig.tools
+---------
 
-.. automodule:: becareful.tools
+.. automodule:: jig.tools
    :members:

@@ -13,7 +13,7 @@ install_requires = [
     'docutils==0.8.1']
 
 
-setup(name='becareful',
+setup(name='jig',
     version=version,
     description="Check your code for stuff before you `git commit`",
     long_description=README + '\n\n' + NEWS,
@@ -32,7 +32,7 @@ setup(name='becareful',
     install_requires=install_requires,
     entry_points={
         'console_scripts': [
-            'becareful = becareful.entrypoints:main'],
+            'jig = jig.entrypoints:main'],
         'nose.plugins.0.10': [
-            'becareful = becareful.tests.noseplugin:TestSetup']}
+            'jig = jig.tests.noseplugin:TestSetup']}
 )

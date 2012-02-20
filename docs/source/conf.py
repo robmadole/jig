@@ -40,8 +40,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'BeCareful'
-copyright = u'2011, Rob Madole'
+project = u'Jig'
+copyright = u'2012, Rob Madole'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -164,7 +164,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'BeCarefuldoc'
+htmlhelp_basename = 'JigDoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -178,7 +178,7 @@ htmlhelp_basename = 'BeCarefuldoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'BeCareful.tex', u'BeCareful Documentation',
+  ('index', 'Jig.tex', u'Jig Documentation',
    u'Rob Madole', 'manual'),
 ]
 
@@ -211,6 +211,6 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'becareful', u'BeCareful Documentation',
+    ('index', 'jig', u'Jig Documentation',
      [u'Rob Madole'], 1)
 ]
