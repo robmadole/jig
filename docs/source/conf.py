@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# BeCareful documentation build configuration file, created by
+# Jig documentation build configuration file, created by
 # sphinx-quickstart on Sun Sep 18 10:59:32 2011.
 #
 # This file is execfile()d with the current directory set to its containing dir.
