@@ -5,9 +5,9 @@ from collections import OrderedDict
 from git import Repo
 
 from jig.exc import GitRepoNotInitialized
-from jig.gitutils import repo_bcinitialized
+from jig.gitutils import repo_jiginitialized
 from jig.diffconvert import GitDiffIndex
-from jig.plugins import get_bcconfig, PluginManager
+from jig.plugins import get_jigconfig, PluginManager
 from jig.commands import get_command, list_commands
 from jig.output import ConsoleView
 
@@ -72,11 +72,11 @@ class Runner(object):
 
         # Is this repository initialized to use jig on?
         with self.view.out() as out:
-            if not repo_bcinitialized(self.gitrepo):
+            if not repo_jiginitialized(self.gitrepo):
                 raise GitRepoNotInitialized('This repository has not been '
                     'initialized. Run jig init GITREPO to set it up.')
 
-        pm = PluginManager(get_bcconfig(self.gitrepo))
+        pm = PluginManager(get_jigconfig(self.gitrepo))
 
         # Check to make sure we have some plugins to run
         with self.view.out() as out:

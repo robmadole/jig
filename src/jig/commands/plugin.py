@@ -3,7 +3,7 @@ import errno
 
 from jig.commands.base import BaseCommand
 from jig.exc import CommandError, ExpectationError
-from jig.plugins import (get_bcconfig, set_bcconfig, PluginManager,
+from jig.plugins import (get_jigconfig, set_jigconfig, PluginManager,
     create_plugin, available_templates)
 from jig.plugins.testrunner import PluginTestRunner, PluginTestReporter
 
@@ -106,7 +106,7 @@ class Command(BaseCommand):
         path = argv.path
 
         with self.out() as out:
-            config = get_bcconfig(path)
+            config = get_jigconfig(path)
 
             pm = PluginManager(config)
 
@@ -138,13 +138,13 @@ class Command(BaseCommand):
         plugin = argv.plugin
 
         with self.out() as out:
-            config = get_bcconfig(path)
+            config = get_jigconfig(path)
 
             pm = PluginManager(config)
 
             p = pm.add(plugin)
 
-            set_bcconfig(path, pm.config)
+            set_jigconfig(path, pm.config)
 
             out.append(
                 'Added plugin {} in bundle {} to the repository.'.format(
@@ -163,7 +163,7 @@ class Command(BaseCommand):
         bundle = argv.bundle
 
         with self.out() as out:
-            config = get_bcconfig(path)
+            config = get_jigconfig(path)
 
             pm = PluginManager(config)
 

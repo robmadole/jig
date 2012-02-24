@@ -11,7 +11,7 @@ import gitdb
 import async
 import smmap
 from jig.exc import NotGitRepo, PreCommitExists
-from jig.conf import BC_DIR_NAME
+from jig.conf import JIG_DIR_NAME
 
 # Dependencies to make jig run
 BE_CAREFUL_DIR = realpath(join(dirname(__file__), '..'))
@@ -35,8 +35,8 @@ path.append('{smmap_dir}')
 from jig.runner import Runner
 
 # Start up the runner, passing in the repo directory
-bc = Runner()
-bc.fromhook(join(dirname(__file__), '..', '..'))
+jig = Runner()
+jig.fromhook(join(dirname(__file__), '..', '..'))
 """
 
 
@@ -47,11 +47,11 @@ def is_git_repo(gitdir):
     return isdir(join(gitdir, '.git'))
 
 
-def repo_bcinitialized(gitdir):
+def repo_jiginitialized(gitdir):
     """
     Returns boolean ``True`` if ``jig init GITDIR`` has been ran.
     """
-    return isdir(join(gitdir, BC_DIR_NAME))
+    return isdir(join(gitdir, JIG_DIR_NAME))
 
 
 def hook(gitdir):

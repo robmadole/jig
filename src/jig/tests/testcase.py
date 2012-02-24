@@ -247,7 +247,7 @@ class PluginTestCase(jigTestCase):
         super(PluginTestCase, self).setUp()
 
         # Initialize the repo and grab it's config file
-        self.bcconfig = initializer(self.gitrepodir)
+        self.jigconfig = initializer(self.gitrepodir)
 
     def _add_plugin(self, config, plugindir):
         """

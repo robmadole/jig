@@ -12,7 +12,7 @@ from jig.tests.testcase import (ViewTestCase, CommandTestCase,
     PluginTestCase, cd_gitrepo, cwd_bounce)
 from jig.tests.mocks import MockPlugin
 from jig.exc import ForcedExit
-from jig.plugins import (set_bcconfig, get_bcconfig, create_plugin,
+from jig.plugins import (set_jigconfig, get_jigconfig, create_plugin,
     PluginManager)
 from jig.plugins.testrunner import Expectation, SuccessResult
 from jig.commands import init, runnow, plugin
@@ -136,8 +136,8 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
         """
         No changes have been made to the Git repository.
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
-        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         # Create the first commit
         self.commit(self.gitrepodir, 'a.txt', 'a')
@@ -154,8 +154,8 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
         """
         Changes are made and the plugin runs and gives us output.
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
-        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         # Create staged changes
         self.commit(self.gitrepodir, 'a.txt', 'a')
@@ -216,10 +216,10 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Adds a plugin to the jig initialized Git repository.
         """
-        config = get_bcconfig(self.gitrepodir)
+        config = get_jigconfig(self.gitrepodir)
         pm = PluginManager(config)
         pm.add(plugin_dir)
-        set_bcconfig(self.gitrepodir, pm.config)
+        set_jigconfig(self.gitrepodir, pm.config)
 
     @cd_gitrepo
     def test_list_no_plugins(self):

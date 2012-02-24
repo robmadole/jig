@@ -9,8 +9,8 @@ def main():
     """
     from jig.runner import Runner
 
-    bc = Runner()
-    bc.fromconsole(sys.argv)
+    jig = Runner()
+    jig.fromconsole(sys.argv)
 
 
 def test():

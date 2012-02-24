@@ -10,12 +10,12 @@ CODEC = 'utf8'
 
 # Name of the directory to create to hold jig data
 # This will be created in the root of the Git repository
-BC_DIR_NAME = '.bc'
+JIG_DIR_NAME = '.jig'
 
 # Name of the file that will be created to manage a list of plugins and
 # settings for them
-BC_PLUGIN_CONFIG_FILENAME = 'plugins.cfg'
-BC_PLUGIN_DIR = 'plugins'
+JIG_PLUGIN_CONFIG_FILENAME = 'plugins.cfg'
+JIG_PLUGIN_DIR = 'plugins'
 
 
 ## Plugin specific settings

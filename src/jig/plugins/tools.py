@@ -6,10 +6,10 @@ from ConfigParser import SafeConfigParser
 
 from jig.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized)
-from jig.conf import (BC_DIR_NAME, BC_PLUGIN_CONFIG_FILENAME,
-    BC_PLUGIN_DIR, PLUGIN_CONFIG_FILENAME, PLUGIN_PRE_COMMIT_SCRIPT,
+from jig.conf import (JIG_DIR_NAME, JIG_PLUGIN_CONFIG_FILENAME,
+    JIG_PLUGIN_DIR, PLUGIN_CONFIG_FILENAME, PLUGIN_PRE_COMMIT_SCRIPT,
     PLUGIN_PRE_COMMIT_TEMPLATE_DIR)
-from jig.gitutils import is_git_repo, repo_bcinitialized
+from jig.gitutils import is_git_repo, repo_jiginitialized
 from jig.tools import slugify
 
 
@@ -42,53 +42,53 @@ def initializer(gitrepo):
     files (plugins) and configuration.
     """
     # If it's already initialized, refuse to run
-    if repo_bcinitialized(gitrepo):
+    if repo_jiginitialized(gitrepo):
         raise AlreadyInitialized('The repository is already initialized.')
 
     # Create the container for all things jig
-    bc_dir = join(gitrepo, BC_DIR_NAME)
+    jig_dir = join(gitrepo, JIG_DIR_NAME)
 
-    mkdir(bc_dir)
-    mkdir(join(bc_dir, BC_PLUGIN_DIR))
+    mkdir(jig_dir)
+    mkdir(join(jig_dir, JIG_PLUGIN_DIR))
 
-    return set_bcconfig(gitrepo)
+    return set_jigconfig(gitrepo)
 
 
 @_git_check
-def set_bcconfig(gitrepo, config=None):
+def set_jigconfig(gitrepo, config=None):
     """
     Saves the config for jig in the Git repo.
 
     The ``config`` argument must be an instance of :py:class:`ConfigParser`.
     """
     # If it's already initialized, refuse to run
-    if not repo_bcinitialized(gitrepo):
+    if not repo_jiginitialized(gitrepo):
         raise GitRepoNotInitialized('The repository has not been initialized.')
 
     # Create the container for all things jig
-    bc_dir = join(gitrepo, BC_DIR_NAME)
+    jig_dir = join(gitrepo, JIG_DIR_NAME)
 
     # Create an empty config parser if we were not passed one
     plugins = config if config else SafeConfigParser()
 
     # Create a plugin list file
-    with open(join(bc_dir, BC_PLUGIN_CONFIG_FILENAME), 'w') as fh:
+    with open(join(jig_dir, JIG_PLUGIN_CONFIG_FILENAME), 'w') as fh:
         plugins.write(fh)
 
         return plugins
 
 
 @_git_check
-def get_bcconfig(gitrepo):
+def get_jigconfig(gitrepo):
     """
     Gets the config for a jig initialized Git repo.
     """
-    bc_dir = join(gitrepo, BC_DIR_NAME)
+    jig_dir = join(gitrepo, JIG_DIR_NAME)
 
-    if not repo_bcinitialized(gitrepo):
+    if not repo_jiginitialized(gitrepo):
         raise GitRepoNotInitialized('This repository has not been initialized')
 
-    with open(join(bc_dir, BC_PLUGIN_CONFIG_FILENAME), 'r') as fh:
+    with open(join(jig_dir, JIG_PLUGIN_CONFIG_FILENAME), 'r') as fh:
         plugins = SafeConfigParser()
         plugins.readfp(fh)
 

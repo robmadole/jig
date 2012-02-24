@@ -16,7 +16,7 @@ class TestPluginManager(PluginTestCase):
         """
         A freshly initialized repo has no plugins.
         """
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         self.assertEqual([], pm.plugins)
 
@@ -24,9 +24,9 @@ class TestPluginManager(PluginTestCase):
         """
         We can add one plugin to the main config file.
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
+        self._add_plugin(self.jigconfig, 'plugin01')
 
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         self.assertEqual(1, len(pm.plugins))
 
@@ -39,12 +39,12 @@ class TestPluginManager(PluginTestCase):
         """
         Other sections of the config do not get seen as a plugin.
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
+        self._add_plugin(self.jigconfig, 'plugin01')
 
-        self.bcconfig.add_section('nonplugin')
-        self.bcconfig.set('nonplugin', 'def1', '1')
+        self.jigconfig.add_section('nonplugin')
+        self.jigconfig.set('nonplugin', 'def1', '1')
 
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         self.assertEqual(1, len(pm.plugins))
 
@@ -53,7 +53,7 @@ class TestPluginManager(PluginTestCase):
         Test the add method on the plugin manager.
         """
         # Config is empty
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         plugin = pm.add(join(self.fixturesdir, 'plugin01'))
 
@@ -66,10 +66,10 @@ class TestPluginManager(PluginTestCase):
         """
         Tests a bad plugin config from the main config.
         """
-        self._add_plugin(self.bcconfig, 'plugin02')
+        self._add_plugin(self.jigconfig, 'plugin02')
 
         with self.assertRaises(PluginError) as ec:
-            PluginManager(self.bcconfig)
+            PluginManager(self.jigconfig)
 
         self.assertIn('Could not parse config file', str(ec.exception))
 
@@ -77,7 +77,7 @@ class TestPluginManager(PluginTestCase):
         """
         Adding a bad plugin catches parsing errors.
         """
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         with self.assertRaises(PluginError) as ec:
             pm.add(join(self.fixturesdir, 'plugin02'))
@@ -88,7 +88,7 @@ class TestPluginManager(PluginTestCase):
         """
         Will handle a plugin that has no config file.
         """
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         with self.assertRaises(PluginError) as ec:
             pm.add(join(self.fixturesdir, 'plugin03'))
@@ -100,7 +100,7 @@ class TestPluginManager(PluginTestCase):
         """
         Will not add a plugin with missing plugin section.
         """
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         with self.assertRaises(PluginError) as ec:
             pm.add(join(self.fixturesdir, 'plugin04'))
@@ -113,7 +113,7 @@ class TestPluginManager(PluginTestCase):
         """
         Adds a plugin if it has no settings.
         """
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         pm.add(join(self.fixturesdir, 'plugin05'))
 
@@ -123,7 +123,7 @@ class TestPluginManager(PluginTestCase):
         """
         Will not add a plugin if it is missing a bundle or name.
         """
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         with self.assertRaises(PluginError) as ec:
             pm.add(join(self.fixturesdir, 'plugin06'))
@@ -134,7 +134,7 @@ class TestPluginManager(PluginTestCase):
         """
         After a plugin has been added, it can't be added again.
         """
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         with self.assertRaises(PluginError) as ec:
             pm.add(join(self.fixturesdir, 'plugin01'))
@@ -148,7 +148,7 @@ class TestPluginManager(PluginTestCase):
         """
         Remove a plugin.
         """
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         pm.add(join(self.fixturesdir, 'plugin01'))
 
@@ -163,7 +163,7 @@ class TestPluginManager(PluginTestCase):
         """
         Try to remove a plugin that does not exist.
         """
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         with self.assertRaises(PluginError) as ec:
             pm.remove('bundle', 'name')
@@ -191,7 +191,7 @@ class TestPlugin(PluginTestCase):
         """
         Test a new file pre-commit.
         """
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         pm.add(join(self.fixturesdir, 'plugin01'))
         gdi = self.git_diff_index(self.testrepo, self.testdiffs[0])

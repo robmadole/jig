@@ -8,7 +8,7 @@ from mock import patch
 from jig.tests.testcase import RunnerTestCase, PluginTestCase
 from jig.tests.mocks import MockPlugin
 from jig.exc import ForcedExit
-from jig.plugins import set_bcconfig, Plugin
+from jig.plugins import set_jigconfig, Plugin
 from jig.runner import Runner
 
 
@@ -72,8 +72,8 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
         """
         User sees a prompt if there are messages.
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
-        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         # Create staged changes
         self.commit(self.gitrepodir, 'a.txt', 'a')
@@ -100,8 +100,8 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
         """
         The user can choose to continue with the commit anyway.
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
-        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         # Create staged changes
         self.commit(self.gitrepodir, 'a.txt', 'a')
@@ -140,10 +140,10 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
     def test_uninitialized_repo(self):
         """
-        The BC directory has not been initialized.
+        The JIG directory has not been initialized.
         """
-        # Remove the .bc directory, effectively un-initializing our repository
-        rmtree(join(self.gitrepodir, '.bc'))
+        # Remove the .jig directory, effectively un-initializing our repository
+        rmtree(join(self.gitrepodir, '.jig'))
 
         with self.assertRaises(ForcedExit) as ec:
             self.runner.results(self.gitrepodir)
@@ -155,7 +155,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
     def test_no_plugins(self):
         """
-        If there is a BC directory without any plugins.
+        If there is a JIG directory without any plugins.
         """
         self.runner.results(self.gitrepodir)
 
@@ -165,10 +165,10 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
     def test_empty_repository(self):
         """
-        If BC is ran on a repository that hasn't had any commits
+        If JIG is ran on a repository that hasn't had any commits
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
-        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         self.runner.results(self.gitrepodir)
 
@@ -178,10 +178,10 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
     def test_no_diff(self):
         """
-        If BC is ran on a repository without any changes.
+        If JIG is ran on a repository without any changes.
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
-        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         self.commit(self.gitrepodir,
             name='a.txt',
@@ -197,8 +197,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         """
         Ran on a repository with an unstaged file.
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
-        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         # Add the first commit because we have to have it
         self.commit(self.gitrepodir,
@@ -220,8 +220,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         """
         Ran on a repository with a staged file.
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
-        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         # Add the first commit because we have to have it
         self.commit(self.gitrepodir,
@@ -254,8 +254,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         """
         One modified and staged file.
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
-        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         # Add the first commit because we have to have it
         self.commit(self.gitrepodir,
@@ -278,8 +278,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         """
         Delete one file.
         """
-        self._add_plugin(self.bcconfig, 'plugin01')
-        set_bcconfig(self.gitrepodir, config=self.bcconfig)
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         self.commit(self.gitrepodir,
             name='a.txt',
@@ -303,8 +303,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
             Plugin.pre_commit.return_value = (
                 0, 'Test non-JSON output', '')
 
-            self._add_plugin(self.bcconfig, 'plugin01')
-            set_bcconfig(self.gitrepodir, config=self.bcconfig)
+            self._add_plugin(self.jigconfig, 'plugin01')
+            set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
             self.commit(self.gitrepodir,
                 name='a.txt',
@@ -330,8 +330,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
             Plugin.pre_commit.return_value = (
                 1, '', 'Something went horribly wrong')
 
-            self._add_plugin(self.bcconfig, 'plugin01')
-            set_bcconfig(self.gitrepodir, config=self.bcconfig)
+            self._add_plugin(self.jigconfig, 'plugin01')
+            set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
             self.commit(self.gitrepodir,
                 name='a.txt',

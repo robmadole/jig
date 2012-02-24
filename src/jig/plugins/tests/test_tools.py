@@ -7,7 +7,7 @@ from ConfigParser import ConfigParser
 from jig.tests.testcase import jigTestCase, PluginTestCase
 from jig.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized)
-from jig.plugins import (initializer, get_bcconfig, set_bcconfig,
+from jig.plugins import (initializer, get_jigconfig, set_jigconfig,
     PluginManager, create_plugin, available_templates)
 
 
@@ -53,7 +53,7 @@ class TestPluginConfig(jigTestCase):
         Attempting to get a config for a directory not initialized.
         """
         with self.assertRaises(GitRepoNotInitialized):
-            get_bcconfig(self.gitrepodir)
+            get_jigconfig(self.gitrepodir)
 
     def test_get_config(self):
         """
@@ -61,10 +61,10 @@ class TestPluginConfig(jigTestCase):
         """
         initializer(self.gitrepodir)
 
-        plugins = get_bcconfig(self.gitrepodir)
+        plugins = get_jigconfig(self.gitrepodir)
 
         self.assertTrue(isinstance(plugins, ConfigParser))
-        self.assertTrue(isfile(join(self.gitrepodir, '.bc', 'plugins.cfg')))
+        self.assertTrue(isfile(join(self.gitrepodir, '.jig', 'plugins.cfg')))
 
     def test_save_config_not_initialized(self):
         """
@@ -72,7 +72,7 @@ class TestPluginConfig(jigTestCase):
         """
         with self.assertRaises(GitRepoNotInitialized):
             # It hasn't been initialized at this point, this should fail
-            set_bcconfig(self.gitrepodir, config=None)
+            set_jigconfig(self.gitrepodir, config=None)
 
     def test_save_config(self):
         """
@@ -83,7 +83,7 @@ class TestPluginConfig(jigTestCase):
         config.add_section('test')
         config.set('test', 'foo', 'bar')
 
-        set_bcconfig(self.gitrepodir, config=config)
+        set_jigconfig(self.gitrepodir, config=config)
 
 
 class TestCreatePlugin(PluginTestCase):
@@ -146,7 +146,7 @@ class TestCreatePlugin(PluginTestCase):
         plugin_dir = create_plugin(self.plugindir, template='python',
             bundle='test', name='plugin')
 
-        pm = PluginManager(self.bcconfig)
+        pm = PluginManager(self.jigconfig)
 
         pm.add(plugin_dir)
 
