@@ -1,10 +1,10 @@
 from mock import Mock
 
-from jig.tests.testcase import jigTestCase
+from jig.tests.testcase import JigTestCase
 from jig.tests.mocks import MockPlugin
 
 
-class TestMockPlugin(jigTestCase):
+class TestMockPlugin(JigTestCase):
 
     """
     Mock plugin behaves correctly.

@@ -32,7 +32,7 @@ def cd_gitrepo(func):
     return wrapper
 
 
-class jigTestCase(unittest.TestCase):
+class JigTestCase(unittest.TestCase):
 
     """
     Base test case for all jig tests.
@@ -171,7 +171,7 @@ class jigTestCase(unittest.TestCase):
         return index.commit(name)
 
 
-class ViewTestCase(jigTestCase):
+class ViewTestCase(JigTestCase):
 
     """
     Access to captured output for test cases that interact with a view.
@@ -237,7 +237,7 @@ class RunnerTestCase(ViewTestCase):
         return runner
 
 
-class PluginTestCase(jigTestCase):
+class PluginTestCase(JigTestCase):
 
     """
     Base test case for plugin tests.

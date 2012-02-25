@@ -3,7 +3,7 @@ Collection of :py:class:`Exception` subclasses used by jig.
 """
 
 
-class jigException(Exception):
+class JigException(Exception):
 
     """
     Base exception.
@@ -12,7 +12,7 @@ class jigException(Exception):
     pass
 
 
-class ForcedExit(jigException):
+class ForcedExit(JigException):
 
     """
     Raised when execution of should stop.
@@ -24,7 +24,7 @@ class ForcedExit(jigException):
     pass
 
 
-class NotGitRepo(jigException):
+class NotGitRepo(JigException):
 
     """
     A directory provided does not appear to be a Git repository.
@@ -33,7 +33,7 @@ class NotGitRepo(jigException):
     pass
 
 
-class PreCommitExists(jigException):
+class PreCommitExists(JigException):
 
     """
     The :file:`pre-commit` file in the hooks directory exists.
@@ -42,7 +42,7 @@ class PreCommitExists(jigException):
     pass
 
 
-class GitRepoNotInitialized(jigException):
+class GitRepoNotInitialized(JigException):
 
     """
     The given Git repository has not been initialized for usage.
@@ -51,7 +51,16 @@ class GitRepoNotInitialized(jigException):
     pass
 
 
-class AlreadyInitialized(jigException):
+class GitCloneError(JigException):
+
+    """
+    Attempting to clone a Git repository failed.
+
+    """
+    pass
+
+
+class AlreadyInitialized(JigException):
 
     """
     The given Git repository has been initialized already.
@@ -60,7 +69,7 @@ class AlreadyInitialized(jigException):
     pass
 
 
-class PluginError(jigException):
+class PluginError(JigException):
 
     """
     An error occured while working with a plugin.
@@ -69,7 +78,7 @@ class PluginError(jigException):
     pass
 
 
-class CommandError(jigException):
+class CommandError(JigException):
 
     """
     Raise when an error occurs while using any command line tool.
@@ -78,7 +87,7 @@ class CommandError(jigException):
     pass
 
 
-class ExpectationError(jigException):
+class ExpectationError(JigException):
 
     """
     Base class for all error dealing with plugin expectations.

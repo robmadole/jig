@@ -7,7 +7,7 @@ from operator import itemgetter
 
 from mock import Mock
 
-from jig.tests.testcase import jigTestCase
+from jig.tests.testcase import JigTestCase
 from jig.diffconvert import describe_diff, DiffType
 
 
@@ -217,7 +217,7 @@ class TestDescribeDiff(TestCase):
             (6, ' ', 'four')]
 
 
-class TestDiffType(jigTestCase):
+class TestDiffType(JigTestCase):
 
     """
     Detect diff type from :py:class:`Git.Diff` objects.
@@ -280,7 +280,7 @@ class TestDiffType(jigTestCase):
         self.assertEqual(DiffType.U, DiffType.for_diff(diff))
 
 
-class TestGitDiffIndex(jigTestCase):
+class TestGitDiffIndex(JigTestCase):
 
     """
     Test converting Git changes to JSON.

@@ -1,7 +1,7 @@
 # coding=utf-8
 from collections import OrderedDict
 
-from jig.tests.testcase import jigTestCase, ViewTestCase
+from jig.tests.testcase import JigTestCase, ViewTestCase
 from jig.tests.mocks import MockPlugin
 from jig.output import ConsoleView, Message, Error, ResultsCollater
 
@@ -137,7 +137,7 @@ class TestConsoleView(ViewTestCase):
             """, self.output)
 
 
-class TestMessage(jigTestCase):
+class TestMessage(JigTestCase):
 
     """
     Test Message which is responsible for representing output from plugins.
@@ -169,7 +169,7 @@ class TestMessage(jigTestCase):
         self.assertFalse(message3 == {})
 
 
-class TestResultsCollater(jigTestCase):
+class TestResultsCollater(JigTestCase):
 
     """
     Collate results into digestible summaries.

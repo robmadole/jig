@@ -10,7 +10,8 @@ import git
 import gitdb
 import async
 import smmap
-from jig.exc import NotGitRepo, PreCommitExists
+
+from jig.exc import NotGitRepo, PreCommitExists, GitCloneError
 from jig.conf import JIG_DIR_NAME
 
 # Dependencies to make jig run
@@ -97,3 +98,20 @@ def hook(gitdir):
     chmod(pc_filename, mode)
 
     return pc_filename
+
+
+def clone(repository, to_dir):
+    """
+    Clone a Git repository to a directory.
+
+    Where ``repository`` is a string representing a path or URL to the
+    repository and ``to_dir`` is where the repository will be cloned 
+    """
+    gitobj = git.Git()
+
+    try:
+        gitobj.execute(['git', 'clone', repository, to_dir])
+
+        return gitobj
+    except git.GitCommandError as gce:
+        raise GitCloneError(str(gce))

@@ -4,14 +4,14 @@ from textwrap import dedent
 from tempfile import mkdtemp
 from ConfigParser import ConfigParser
 
-from jig.tests.testcase import jigTestCase, PluginTestCase
+from jig.tests.testcase import JigTestCase, PluginTestCase
 from jig.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized)
 from jig.plugins import (initializer, get_jigconfig, set_jigconfig,
     PluginManager, create_plugin, available_templates)
 
 
-class TestPluginConfig(jigTestCase):
+class TestPluginConfig(JigTestCase):
 
     """
     Test plugin config file handling.

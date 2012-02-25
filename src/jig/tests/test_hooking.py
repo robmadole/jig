@@ -2,12 +2,12 @@ from os import rmdir
 from os.path import join, realpath
 from tempfile import mkdtemp
 
-from jig.tests.testcase import jigTestCase
+from jig.tests.testcase import JigTestCase
 from jig.exc import NotGitRepo, PreCommitExists
 from jig.gitutils import hook
 
 
-class TestAddingHook(jigTestCase):
+class TestAddingHook(JigTestCase):
 
     """
     Can we properly hook a Git repository
