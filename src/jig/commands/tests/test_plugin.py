@@ -1,6 +1,8 @@
 # coding=utf-8
 from os.path import dirname, isdir, isfile, join
+from os import makedirs
 from tempfile import mkdtemp
+from contextlib import nested
 
 from mock import Mock, patch
 
@@ -141,6 +143,11 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         # We are going to test whether it defaults --gitrepo to cwd
         self.run_command('add {}'.format(plugin_dir))
 
+        config = get_jigconfig(self.gitrepodir)
+
+        # The config now contains our section
+        self.assertTrue(config.has_section('plugin:a:a'))
+
         self.assertEqual(
             u'Added plugin a in bundle a to the repository.\n',
             self.output)
@@ -154,6 +161,65 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
         self.run_command('add --gitrepo {} {}'.format(
             self.gitrepodir, plugin_dir))
+
+        self.assertEqual(
+            u'Added plugin a in bundle a to the repository.\n',
+            self.output)
+
+    def test_add_plugin_by_url(self):
+        """
+        Add a plugin from a Git URL.
+        """
+        def clone(plugin, to_dir):
+            makedirs(to_dir)
+            create_plugin(to_dir, template='python',
+                bundle='a', name='a')
+
+        with nested(
+            patch('jig.commands.plugin.expanduser'),
+            patch('jig.commands.plugin.clone')) as (e, c):
+            # Instead of giving the user's home directory, let's force the
+            # clone to occur in the test directory.
+            e.return_value = self.plugindir
+            c.side_effect = clone
+
+            self.run_command('add --gitrepo {} http://repo'.format(
+                self.gitrepodir))
+
+        # A call was made to expanduser, this shows we were trying to do
+        # something with the user's home directory.
+        self.assertEqual('~', e.call_args[0][0])
+        # And clone was called with our URL and would have performed the
+        # operation in our test directory.
+        self.assertEqual('http://repo', c.call_args[0][0])
+        self.assertIn(self.plugindir, c.call_args[0][1])
+
+    def test_add_plugin_by_url_jig_exists(self):
+        """
+        Add a plugin by URL if the ~/.jig directory already exists.
+        """
+        # Create the ~/.jig directory to make sure our command can handle this
+        # condition.
+        makedirs(join(self.plugindir, '.jig'))
+
+        def clone(plugin, to_dir):
+            makedirs(to_dir)
+            create_plugin(to_dir, template='python',
+                bundle='a', name='a')
+
+        with nested(
+            patch('jig.commands.plugin.expanduser'),
+            patch('jig.commands.plugin.clone')) as (e, c):
+            # Instead of giving the user's home directory, let's force the
+            # clone to occur in the test directory.
+            e.return_value = self.plugindir
+            c.side_effect = clone
+
+            self.run_command('add --gitrepo {} http://repo'.format(
+                self.gitrepodir))
+
+        # It should suffice to make sure that clone was called
+        self.assertTrue(c.called)
 
     @cd_gitrepo
     def test_remove_bad_plugin(self):
@@ -179,6 +245,11 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
         # Remove with the --gitrepo defaulting to cwd again
         self.run_command('remove name bundle')
+
+        config = get_jigconfig(self.gitrepodir)
+
+        # It should be removed from our config now
+        self.assertFalse(config.has_section('plugin:bundle:name'))
 
         self.assertEqual(
             u'Removed plugin name\n',

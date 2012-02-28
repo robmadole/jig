@@ -21,7 +21,7 @@ class Runner(object):
     def __init__(self, view=None):
         self.view = view or ConsoleView()
 
-    def fromhook(self, gitrepo, interactive=False):
+    def fromhook(self, gitrepo, interactive=True):
         """
         Main entry point for running, typically called from pre-commit hook.
 
@@ -34,7 +34,7 @@ class Runner(object):
 
         report_counts = self.view.print_results(results)
 
-        if report_counts and sum(report_counts):
+        if interactive and report_counts and sum(report_counts):
             answer = raw_input(
                 '\nCommit anyway (hit enter), or "c" to cancel the commit\n')
             if answer.lower() == 'c':

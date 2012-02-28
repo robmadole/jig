@@ -1,7 +1,7 @@
 # coding=utf-8
 import json
 from codecs import open
-from os.path import join
+from os.path import join, abspath
 from StringIO import StringIO
 from collections import namedtuple
 from ConfigParser import SafeConfigParser
@@ -138,6 +138,30 @@ class FailureResult(Result):
         return '<FailureResult from={} to={}>'.format(*self.expectation.range)
 
 
+class InstrumentedGitDiffIndex(GitDiffIndex):
+
+    """
+    A GitDiffIndex that can be specially instrumented for testing.
+
+    """
+    def __init__(self, gitrepo, difflist):
+        super(InstrumentedGitDiffIndex, self).__init__(gitrepo, difflist)
+
+        # Allows filepaths to be modified on the fly when the
+        # :py:method:`files()` method is called.
+        # This should be a tuple of (REAL_PATH, REPLACEMENT_PATH)
+        self.replace_path = (None, None)
+
+    def files(self):
+        real_files = super(InstrumentedGitDiffIndex, self).files()
+
+        for f in real_files:
+            if all(self.replace_path):
+                f['filename'] = f['filename'].replace(
+                    self.replace_path[0], self.replace_path[1])
+            yield f
+
+
 class PluginTestRunner(object):
 
     """
@@ -203,12 +227,18 @@ class PluginTestRunner(object):
             view = ConsoleView(collect_output=True, exit_on_exception=False)
 
             # Get a GitDiffIndex object from
-            gdi = GitDiffIndex(self.timeline.repo.working_dir,
+            gdi = InstrumentedGitDiffIndex(self.timeline.repo.working_dir,
                 self.timeline.diffs()[exp.range[0] - 1])
 
-            wd = join(self.plugin_dir, PLUGIN_TESTS_DIRECTORY,
-                '{0:02d}'.format(exp.range[1]))
+            # What is the numbered test directory reprsenting our commit?
+            wd = abspath(join(self.plugin_dir, PLUGIN_TESTS_DIRECTORY,
+                '{0:02d}'.format(exp.range[1])))
+
             with cwd_bounce(wd):
+                # Patch up the filename to be within our numbered directory
+                # instead of the Git repository
+                gdi.replace_path = (self.timeline.repo.working_dir, wd)
+
                 # Now run the actual pre_commit hook for this plugin
                 res = plugin.pre_commit(gdi)
                 # Break apart into its pieces

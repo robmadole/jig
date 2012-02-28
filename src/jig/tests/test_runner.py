@@ -2,7 +2,6 @@ from shutil import rmtree
 from os.path import join
 from contextlib import nested
 
-from nose.plugins.attrib import attr
 from mock import patch
 
 from jig.tests.testcase import RunnerTestCase, PluginTestCase

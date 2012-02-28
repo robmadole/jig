@@ -1,5 +1,6 @@
 import json
-from os.path import join, isfile, realpath
+from os import listdir
+from os.path import join, isfile, isdir, realpath
 from subprocess import Popen, PIPE
 from ConfigParser import SafeConfigParser
 from ConfigParser import Error as ConfigParserError
@@ -77,7 +78,47 @@ class PluginManager(object):
 
     def add(self, plugindir):
         """
-        Add the given plugin to this manager instance.
+        Add the given plugin or directory of plugins to this manager instance.
+
+        ``plugindir`` should be the full path to a directory containing all the
+        files required for a Jig plugin. It can alternatively be a directory of
+        plugins, where each sub-directory is a Jig plugin.
+
+        If ``recursive`` is True, then add will treat this as a directory of
+        plugins instead of a single plugin and attempt to add them all.
+
+        Returns a list of plugins that were added to this manager.
+        """
+        exc_collection = []
+        added = []
+
+        try:
+            # Add as if plugindir is the actual plugin
+            added.append(self._add_plugin(plugindir))
+
+            return added
+        except PluginError as pe:
+            exc_collection.append(pe)
+
+        # Walk the directory, try to add each sub-directory as a plugin
+        for dirname in listdir(plugindir):
+            subdir = join(plugindir, dirname)
+            if not isdir(subdir):
+                continue
+            try:
+                added.append(self._add_plugin(subdir))
+            except PluginError as pe:
+                exc_collection.append(pe)
+
+        if added:
+            return added
+
+        # If we haven't added any plugins and we have an exception raise it
+        raise exc_collection[0]
+
+    def _add_plugin(self, plugindir):
+        """
+        If this is a Jig plugin, add it.
 
         ``plugindir`` should be the full path to a directory containing all the
         files required for a jig plugin.
@@ -86,6 +127,7 @@ class PluginManager(object):
         config_filename = join(plugindir, PLUGIN_CONFIG_FILENAME)
 
         if not isfile(config_filename):
+
             raise PluginError('The plugin file {} is missing.'.format(
                 config_filename))
 

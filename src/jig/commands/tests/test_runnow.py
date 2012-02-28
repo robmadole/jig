@@ -48,12 +48,9 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
         self.stage(self.gitrepodir, 'b.txt', 'b')
 
         with nested(
-            patch('jig.runner.raw_input', create=True),
             patch('jig.runner.sys'),
             self.assertRaises(SystemExit)
-        ) as (ri, r_sys, ec):
-            # Fake the raw_input call to return 'c'
-            ri.return_value = 'c'
+        ) as (r_sys, ec):
             # Raise the error to halt execution like the real sys.exit would
             r_sys.exit.side_effect = SystemExit
 
@@ -62,7 +59,7 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
         # Since we chose to cancel the commit by providing 'c', this should
         # exit with 1 which will indicate to Git that it needs to abort the
         # commit.
-        r_sys.exit.assert_called_once_with(1)
+        r_sys.exit.assert_called_once_with(0)
 
         self.assertResults(u"""
             ▾  plugin01

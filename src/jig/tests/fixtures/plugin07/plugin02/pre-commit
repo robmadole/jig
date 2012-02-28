@@ -1,0 +1,15 @@
+#!/usr/bin/env python2.7
+import json
+import sys
+
+files = json.loads(sys.stdin.read())['files']
+
+out = {}
+for f in files:
+    out[f['name']] = []
+    for l in f['diff']:
+        out[f['name']].append(
+            (l[0], 'warn', '{} is {}'.format(l[2], l[1])))
+
+print(json.dumps(out, indent=4))
+exit(0)

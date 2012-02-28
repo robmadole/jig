@@ -1,8 +1,14 @@
 import argparse
 import errno
+from os import makedirs
+from os.path import join, expanduser
+from urlparse import urlparse
+from uuid import uuid4 as uuid
 
 from jig.commands.base import BaseCommand
+from jig.conf import JIG_DIR_NAME
 from jig.exc import CommandError, ExpectationError
+from jig.gitutils import clone
 from jig.plugins import (get_jigconfig, set_jigconfig, PluginManager,
     create_plugin, available_templates)
 from jig.plugins.testrunner import PluginTestRunner, PluginTestReporter
@@ -21,9 +27,9 @@ _listparser.add_argument('--gitrepo', '-r', default='.', dest='path',
 _listparser.set_defaults(subcommand='list')
 
 _addparser = _subparsers.add_parser('add',
-    help='add an installed plugin')
+    help='add a plugin')
 _addparser.add_argument('plugin',
-    help='Path to the plugin directory')
+    help='URL or path to the plugin directory')
 _addparser.add_argument('--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _addparser.set_defaults(subcommand='add')
@@ -142,13 +148,37 @@ class Command(BaseCommand):
 
             pm = PluginManager(config)
 
-            p = pm.add(plugin)
+            added = self._add_path_or_url(pm, plugin)
 
             set_jigconfig(path, pm.config)
 
-            out.append(
-                'Added plugin {} in bundle {} to the repository.'.format(
-                    p.name, p.bundle))
+            for p in added:
+                out.append('Added plugin {} in bundle {} to the '
+                    'repository.'.format(p.name, p.bundle))
+
+    def _add_path_or_url(self, pm, plugin):
+        """
+        Adds a plugin by filename or URL.
+
+        Where ``pm`` is an instance of :py:class:`PluginManager` and ``plugin``
+        is either the URL to a Git Jig plugin repository or the file name of a
+        Jig plugin.
+        """
+        # If this looks like a URL we will clone it first
+        url = urlparse(plugin)
+
+        if url.scheme:
+            # This is a URL, let's clone it first into the user's home
+            # directory.
+            try:
+                makedirs(join(expanduser('~'), JIG_DIR_NAME))
+            except OSError:
+                pass
+            to_dir = join(expanduser('~'), JIG_DIR_NAME, uuid().hex)
+            clone(plugin, to_dir)
+            plugin = to_dir
+
+        return pm.add(plugin)
 
     def remove(self, argv):
         """
@@ -180,6 +210,8 @@ class Command(BaseCommand):
                 bundle = plugins[name][0].bundle
 
             pm.remove(bundle, name)
+
+            set_jigconfig(path, pm.config)
 
             out.append('Removed plugin {}'.format(name))
 

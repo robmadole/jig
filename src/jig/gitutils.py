@@ -105,7 +105,7 @@ def clone(repository, to_dir):
     Clone a Git repository to a directory.
 
     Where ``repository`` is a string representing a path or URL to the
-    repository and ``to_dir`` is where the repository will be cloned 
+    repository and ``to_dir`` is where the repository will be cloned.
     """
     gitobj = git.Git()
 

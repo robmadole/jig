@@ -55,7 +55,7 @@ class TestPluginManager(PluginTestCase):
         # Config is empty
         pm = PluginManager(self.jigconfig)
 
-        plugin = pm.add(join(self.fixturesdir, 'plugin01'))
+        plugin = pm.add(join(self.fixturesdir, 'plugin01'))[0]
 
         self.assertEqual(1, len(pm.plugins))
         self.assertTrue(pm.config.has_section('plugin:test01:plugin01'))
@@ -129,6 +129,16 @@ class TestPluginManager(PluginTestCase):
             pm.add(join(self.fixturesdir, 'plugin06'))
 
         self.assertIn('Could not find the bundle or name', str(ec.exception))
+
+    def test_add_plugin_from_directory_of_plugins(self):
+        """
+        Adds all the plugins in a directory of plugins.
+        """
+        pm = PluginManager(self.jigconfig)
+
+        pm.add(join(self.fixturesdir, 'plugin07'))
+
+        self.assertEqual(2, len(pm.plugins))
 
     def test_cannot_add_plugin_twice(self):
         """
