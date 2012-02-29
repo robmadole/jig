@@ -13,10 +13,10 @@ from jig.tests.mocks import MockPlugin
 from jig.conf import CODEC
 from jig.tools import NumberedDirectoriesToGit
 from jig.plugins import create_plugin, Plugin
-from jig.tests.testcase import PluginTestCase
+from jig.tests.testcase import JigTestCase, PluginTestCase
 from jig.plugins.testrunner import (PluginTestRunner,
-    PluginTestReporter, get_expectations, Expectation, SuccessResult,
-    FailureResult, REPORTER_HORIZONTAL_DIVIDER)
+    InstrumentedGitDiffIndex, PluginTestReporter, get_expectations,
+    Expectation, SuccessResult, FailureResult, REPORTER_HORIZONTAL_DIVIDER)
 
 
 class TestPluginTestRunner(PluginTestCase):
@@ -584,3 +584,46 @@ class TestGetExpectations(PluginTestCase):
             Expectation((1, 2), {'a': '1'}, u'Output 1'),
             Expectation((2, 3), {'a': '1'}, u'Output 2')],
             exps)
+
+
+class TestInstrumentedGitDiffIndex(JigTestCase):
+
+    """
+    The instrumented GitDiffIndex provides extra features for testing.
+
+    """
+    def setUp(self):
+        super(TestInstrumentedGitDiffIndex, self).setUp()
+
+        repo, working_dir, diffs = self.repo_from_fixture('repo01')
+
+        self.testrepo = repo
+        self.testrepodir = working_dir
+        self.testdiffs = diffs
+
+    def test_no_replacement(self):
+        """
+        Will not make any replacements if not configured to.
+        """
+        igdi = InstrumentedGitDiffIndex(self.testrepo, self.testdiffs[0])
+
+        filenames = [i['filename'] for i in igdi.files()]
+
+        self.assertEqual(1, len(filenames))
+        self.assertEqual(
+            '{}/argument.txt'.format(self.testrepodir),
+            filenames[0])
+
+    def test_will_replace(self):
+        """
+        Will replace part of the filename path with something else.
+        """
+        igdi = InstrumentedGitDiffIndex(self.testrepo, self.testdiffs[0])
+
+        igdi.replace_path = (self.testrepodir, '/path')
+
+        filenames = [i['filename'] for i in igdi.files()]
+
+        self.assertEqual(1, len(filenames))
+        self.assertEqual(
+            '/path/argument.txt', filenames[0])
