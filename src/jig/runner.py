@@ -35,6 +35,9 @@ class Runner(object):
         report_counts = self.view.print_results(results)
 
         if interactive and report_counts and sum(report_counts):
+            # Git will run a pre-commit hook with stdin pointed at /dev/null.
+            # We will reconnect to the tty so that raw_input works.
+            sys.stdin = open('/dev/tty')
             answer = raw_input(
                 '\nCommit anyway (hit enter), or "c" to cancel the commit\n')
             if answer.lower() == 'c':
