@@ -1,7 +1,6 @@
 What is Jig
 ===========
 
-
 Jig is a Git pre-commit hook on steroids. It abstracts some of the messier
 manual bits away and lets you get down to business.
 
@@ -9,12 +8,14 @@ manual bits away and lets you get down to business.
 directory to trigger actions at certain points. The ``pre-commit`` hook is
 useful for performing actions right before Git writes a commit.
 
-If you like to run linting tools like the `pep8 checker`_ or jslint_ or if you
-want an automated way to make sure you didn't leave a ``debugger;`` line in you
-JavaScript, Jig can help.
-
-Jig comes with a set of common plugins that will probably be useful to you
+Jig has a set of common plugins that will probably be useful to you
 right now, but the real goal is to make it easy for you to write your own.
+
+Jump straight to it
+-------------------
+
+* :doc:`Jig's command line tool <cli>`
+* :doc:`Build Jig plugins <pluginapi>`
 
 Install it
 ----------
@@ -23,8 +24,8 @@ The Jig command line tool is written in Python and is available on PyPi. ::
 
     $ pip install jig || easy_install jig
 
-Initialize a Git repository to use Jig
---------------------------------------
+Initialize a Git repository
+---------------------------
 
 Let's test this out first with a new repository. ::
 
@@ -36,17 +37,17 @@ Let's test this out first with a new repository. ::
     1 files changed, 1 insertions(+), 0 deletions(-)
     create mode 100644 README
 
-The repository has to be initialized to use Jig. It will create a ``.jig``
-directory to hold configuration files. Jig also creates the ``pre-commit`` hook
-for you automatically. Just point it at a Git repository and run this command:
+Jig will create the ``pre-commit`` hook for you automatically.  It will also
+create a ``.jig`` directory to hold configuration files. Just point it at a Git
+repository and run this command:
 
 ::
 
     $ cd gitrepo
     $ jig init .
-    Git repository has been initialized for use with jig.
+    Git repository has been initialized for use with Jig.
 
-Jig uses plugins to do the real work. It's empty to begin with so we'll install
+Jig uses plugins to do the real work. None are installed right now so let's add
 a bundle of plugins now.
 
 ::
@@ -69,8 +70,10 @@ Jig only works off the files you've staged for a commit.
 
     $ git add myapp.py
 
-Use Git to create the commit and Jig will hop into action, running the
-installed plugins for your repository.
+See it in action
+----------------
+
+With our staged file, we're ready to commit.
 
 ::
 
@@ -85,6 +88,9 @@ installed plugins for your repository.
         Info 0 Warn 1 Stop 0
 
     Commit anyway (hit enter), or "c" to cancel the commit
+
+Jig isn't pushy. You can hit enter to commit anyway or :kbd:`c` cancels the
+commit and gives you a chance to make changes.
 
 In-depth docs:
 --------------

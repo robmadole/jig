@@ -22,8 +22,8 @@ class TestCommands(ViewTestCase):
           -h, --help  show this help message and exit
 
         jig commands:
-          init        Initialize a Git repository for use with jig
-          plugin      Manage jig plugins
+          init        Initialize a Git repository for use with Jig
+          plugin      Manage this repository's Jig plugins
           runnow      Run all plugins and show the results
 
         See `jig COMMAND --help` for more information'''

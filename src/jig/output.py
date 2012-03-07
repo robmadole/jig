@@ -100,9 +100,9 @@ class Message(object):
         self.line = line
 
     def __repr__(self):
-        reprstr = '<{cls} type="{t}", body="{b}", file={f}, line={l}>'
+        reprstr = '<{cls} type="{t}", body={b}, file={f}, line={l}>'
         return reprstr.format(cls=self.__class__.__name__,
-            t=self.type, b=self.body, f=self.file, l=self.line)
+            t=self.type, b=repr(self.body), f=repr(self.file), l=self.line)
 
     def __eq__(self, other):
         """
@@ -413,8 +413,11 @@ class ResultsCollater(object):
                 for message in list(func(plugin, stdout)):
                     if isinstance(message, Error):
                         self._errors.append(message)
-                        del self._results[plugin]
-                        continue
+                        try:
+                            del self._results[plugin]
+                        except KeyError:
+                            pass
+                        continue   # pragma: no cover
                     self._reporters.add(plugin)
                     self._counts[message.type] += 1
                     yield message

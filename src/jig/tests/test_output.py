@@ -150,7 +150,13 @@ class TestMessage(JigTestCase):
         message = Message(None, type='w', file='a.txt', body='body', line=1)
 
         self.assertEqual(
-            '<Message type="warn", body="body", file=a.txt, line=1>',
+            "<Message type=\"warn\", body='body', file='a.txt', line=1>",
+            repr(message))
+
+        message = Message(None, type='stop', file='a.txt', body=True, line=1)
+
+        self.assertEqual(
+            "<Message type=\"stop\", body=True, file='a.txt', line=1>",
             repr(message))
 
     def test_equality(self):
@@ -404,6 +410,13 @@ class TestResultsCollater(JigTestCase):
             MockPlugin(): (0, {'a.txt': [anon_obj]}, '')}
         self.assertEqual(
             [Error(None, type='s', file='a.txt', body=anon_obj)],
+            ResultsCollater(results).errors)
+
+        results = {
+            MockPlugin(): (0, {'a.txt': [1,  None]}, '')}
+        self.assertEqual([
+            Error(None, type='s', file='a.txt', body=1),
+            Error(None, type='s', file='a.txt', body=None)],
             ResultsCollater(results).errors)
 
         results = {

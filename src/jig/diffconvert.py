@@ -146,6 +146,6 @@ class GitDiffIndex(object):
 
             yield {
                 'filename': blob.abspath,
-                'name': blob.name,
+                'name': blob.path,
                 'diff': linediff,
                 'type': DiffType.for_diff(diff)}

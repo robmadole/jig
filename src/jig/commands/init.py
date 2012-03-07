@@ -5,8 +5,8 @@ from jig.gitutils import hook
 from jig.plugins import initializer
 
 _parser = argparse.ArgumentParser(
-    description='Initialize a Git repository for use with jig',
-    usage='%(prog)s init [-h] path')
+    description='Initialize a Git repository for use with Jig',
+    usage='jig init [-h] [PATH]')
 
 _parser.add_argument('path', default='.', nargs='?',
     help='Path to the Git repository')
@@ -23,4 +23,4 @@ class Command(BaseCommand):
             initializer(path)
 
             out.append('Git repository has been initialized for use '
-                'with jig.')
+                'with Jig.')

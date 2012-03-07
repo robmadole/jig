@@ -1,74 +1,40 @@
-* This is currently a work in progress, this documentation is fake; I haven't
-  written the code that makes any of this work.
-
 Jig
 ===
 
-Check your code before you commit.
+A command line tool and framework for getting more from the Git pre-commit
+hook.
 
-Jig is a framework for finding code smells, checking code style, or performing
-other lint-like operations before you create a changeset.
+What is the Git pre-commit hook? It's a small script that Git automatically
+runs right before you commit.
 
-Why
----
+Installation
+------------
 
-We all make mistakes. How many times have you left a ``debugger;`` line in your
-JavaScript and pushed the changeset to a remote repository?
+The Jig_ command line tool is written in Python, you can write plugins in any
+language you wish. Install the tool by:
 
-Jig helps you avoid commit messages like "Ooops, forgot to remove a
-pdb.set_trace()". It won't prevent you from making mistakes but it can help you
-find them before it's too late.
+::
 
-How does it work
-----------------
-
-With Git hooks and a bit of glue code to some existing tools you've probably
-already used. You can use existing adapters to tools like ``jslint`` or ``pep8``
-or you can write your own.
+    $ pip install jig || easy_install jig
 
 Getting started
 ---------------
 
-Install the Git hook in an existing repository
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can give Jig a spin in less than 5 minutes
 
-You need an existing Git repository for this to work. If you want to try this
-out with an empty repository you can do this.
+`Take me to the quick start`_
 
-::
+It's super easy to write your own plugins too
 
-    mkdir projectx
-    git init projectx
+`Show me how to write plugins`_
 
-Now install Jig::
+.. _Take me to the quick start: http://packages.python.org/jig/index.html
+.. _Show me how to write plugins`_: http://packages.python.org/jig/pluginapi.html
+.. _Jig: http://pypi.python.org/pypi/jig
 
-    pip install jig
+Support
+-------
 
-Change directories into your repo and initialize it::
+Problems or requests? Create an issue on GitHub.
 
-    jig init .
-
-So what just happened? A small Git hook was created that gives Jig access
-to the changes that you make when you attempt to create a commit. If you're
-curious, it's in ``.git/hooks/pre-commit``.
-
-TODOC
-
-Install some scripts
-~~~~~~~~~~~~~~~~~~~~
-
-Jig isn't useful by itself. It's really designed just to glue together
-other scripts in a unified interface. You need to install some scripts before it
-will do anything worthwhile.
-
-From within your repository::
-
-    jig add --git https://github.com/robmadole/jig-plugins.git
-
-You can start with some simple scripts that are bundled along side of Jig.
-It's easy to write your own.
-
-Writing your own scripts
-------------------------
-
-TODOC
+http://github.com/robmadole/jig/issues

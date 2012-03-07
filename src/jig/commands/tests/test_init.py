@@ -21,7 +21,7 @@ class TestInitCommand(CommandTestCase):
         self.run_command(self.gitrepodir)
 
         self.assertEqual(
-            u'Git repository has been initialized for use with jig.\n',
+            u'Git repository has been initialized for use with Jig.\n',
             self.output)
 
     @cd_gitrepo
@@ -34,7 +34,7 @@ class TestInitCommand(CommandTestCase):
         self.run_command()
 
         self.assertEqual(
-            u'Git repository has been initialized for use with jig.\n',
+            u'Git repository has been initialized for use with Jig.\n',
             self.output)
 
     def test_handles_error(self):

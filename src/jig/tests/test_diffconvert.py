@@ -375,3 +375,23 @@ class TestGitDiffIndex(JigTestCase):
 
         self.assertEqual('italian-lesson.txt',
             files[1]['name'])
+
+    def test_name_contains_subdirectories(self):
+        """
+        If sub-directories are involved, those are included properly.
+        """
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[4])
+
+        # Since we've moved the file Git will see this as a deletion of 2 files
+        # plus the addition of 2 files, so it makes our count 4.
+        self.assertEqual(4, len(list(gdi.files())))
+
+        files = sorted([i for i in gdi.files()],
+            key=itemgetter('name'))
+
+        # Make sure that the name contains our sub-directory.
+        self.assertEqual('scripts/famous-deaths.txt',
+            files[2]['name'])
+
+        self.assertEqual('scripts/italian-lesson.txt',
+            files[3]['name'])

@@ -297,7 +297,7 @@ class TestPluginTestRunner(PluginTestCase):
 
                 ▾  plugin
 
-                ✓  a.txt
+                ✓  src/a.txt
                     File has been modified
 
                 Ran 1 plugin
@@ -309,7 +309,7 @@ class TestPluginTestRunner(PluginTestCase):
 
                 ▾  plugin
 
-                ✓  a.txt
+                ✓  src/a.txt
                     File has been modified
 
                 Ran 1 plugin
@@ -321,7 +321,7 @@ class TestPluginTestRunner(PluginTestCase):
 
                 ▾  plugin
 
-                ✓  b.txt
+                ✓  src/b.txt
                     File has been modified
 
                 Ran 1 plugin

@@ -14,20 +14,22 @@ from jig.plugins import (get_jigconfig, set_jigconfig, PluginManager,
 from jig.plugins.testrunner import PluginTestRunner, PluginTestReporter
 
 _parser = argparse.ArgumentParser(
-    description='Manage jig plugins',
-    usage='%(prog)s plugin')
+    description='Manage this repository\'s Jig plugins',
+    usage='jig plugin [-h] ACTION')
 
 _subparsers = _parser.add_subparsers(title='actions',
     description='available commands to manage plugins')
 
 _listparser = _subparsers.add_parser('list',
-    help='list installed plugins', usage='asdf')
+    help='list installed plugins',
+    usage='jig plugin list [-h] [-r] [PATH]')
 _listparser.add_argument('--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _listparser.set_defaults(subcommand='list')
 
 _addparser = _subparsers.add_parser('add',
-    help='add a plugin')
+    help='add a plugin',
+    usage='jig plugin add [-h] [-r] URL|PATH')
 _addparser.add_argument('plugin',
     help='URL or path to the plugin directory')
 _addparser.add_argument('--gitrepo', '-r', default='.', dest='path',
@@ -35,7 +37,8 @@ _addparser.add_argument('--gitrepo', '-r', default='.', dest='path',
 _addparser.set_defaults(subcommand='add')
 
 _removeparser = _subparsers.add_parser('remove',
-    help='remove an installed plugin')
+    help='remove an installed plugin',
+    usage='jig plugin remove [-h] [-r] NAME [BUNDLE]')
 _removeparser.add_argument('name',
     help='Plugin name')
 _removeparser.add_argument('bundle', nargs='?', default=None,
@@ -45,7 +48,8 @@ _removeparser.add_argument('--gitrepo', '-r', default='.', dest='path',
 _removeparser.set_defaults(subcommand='remove')
 
 _createparser = _subparsers.add_parser('create',
-    help='create a new plugin')
+    help='create a new plugin',
+    usage='jig plugin create [-h] [-l] [-d] NAME BUNDLE')
 _createparser.add_argument('name',
     help='Plugin name')
 _createparser.add_argument('bundle',
@@ -58,7 +62,8 @@ _createparser.add_argument('--dir', '-d', default='.',
 _createparser.set_defaults(subcommand='create')
 
 _testparser = _subparsers.add_parser('test',
-    help='run a suite of plugin tests')
+    help='run a suite of plugin tests',
+    usage='jig plugin test [-h] PLUGIN')
 _testparser.add_argument('plugin', nargs='?', default='.',
     help='Path to the plugin directory')
 _testparser.set_defaults(subcommand='test')

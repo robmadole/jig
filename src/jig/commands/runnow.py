@@ -4,7 +4,8 @@ from jig.commands.base import BaseCommand
 from jig.runner import Runner
 
 _parser = argparse.ArgumentParser(
-    description='Run all plugins and show the results')
+    description='Run all plugins and show the results',
+    usage='jig runnow [-h] [PATH]')
 
 _parser.add_argument('path', nargs='?', default='.',
     help='Path to the Git repository')

@@ -242,8 +242,8 @@ class Plugin(object):
         ph = Popen([script], stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
         # Send the data to the script
-        stdout, stderr = ph.communicate(
-            json.dumps(data_in, indent=2, cls=PluginDataJSONEncoder))
+        stdin = json.dumps(data_in, indent=2, cls=PluginDataJSONEncoder)
+        stdout, stderr = ph.communicate(stdin)
 
         retcode = ph.returncode
 
@@ -266,9 +266,9 @@ class PluginDataJSONEncoder(json.JSONEncoder):
         obj = []
         for f in files:
             obj.append({
-                'type': f['type'],
-                'name': f['name'],
-                'filename': f['filename'],
+                'type': unicode(f['type']),
+                'name': unicode(f['name']),
+                'filename': unicode(f['filename']),
                 'diff': [j for j in f['diff']]})
 
         return obj
