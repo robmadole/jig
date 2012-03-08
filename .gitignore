@@ -14,3 +14,4 @@ parts
 
 .coverage
 cover
+.jig

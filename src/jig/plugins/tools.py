@@ -86,7 +86,8 @@ def get_jigconfig(gitrepo):
     jig_dir = join(gitrepo, JIG_DIR_NAME)
 
     if not repo_jiginitialized(gitrepo):
-        raise GitRepoNotInitialized('This repository has not been initialized')
+        raise GitRepoNotInitialized(
+            'This repository has not been initialized.')
 
     with open(join(jig_dir, JIG_PLUGIN_CONFIG_FILENAME), 'r') as fh:
         plugins = SafeConfigParser()

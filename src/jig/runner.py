@@ -39,8 +39,8 @@ class Runner(object):
             # We will reconnect to the tty so that raw_input works.
             sys.stdin = open('/dev/tty')
             answer = raw_input(
-                '\nCommit anyway (hit enter), or "c" to cancel the commit\n')
-            if answer.lower() == 'c':
+                '\nCommit anyway (hit enter), or "c" to cancel the commit: ')
+            if answer and answer[0].lower() == 'c':
                 sys.exit(1)
 
         sys.exit(0)

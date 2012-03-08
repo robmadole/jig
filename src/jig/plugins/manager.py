@@ -54,7 +54,7 @@ class PluginManager(object):
                 except ConfigParserError:
                     # Something happened when parsing the config
                     raise PluginError('Could not parse config file for '
-                        '{} in {}'.format(name, path))
+                        '{} in {}.'.format(name, path))
 
             # Get rid of the path, we don't need to send this as part of the
             # config for the plugin
@@ -148,14 +148,14 @@ class PluginManager(object):
             plugin_info = OrderedDict(config.items('plugin'))
         except NoSectionError:
             raise PluginError('The plugin config does not contain a '
-                '[plugin] section')
+                '[plugin] section.')
 
         try:
             bundle = plugin_info['bundle']
             name = plugin_info['name']
         except KeyError:
             raise PluginError('Could not find the bundle or name of '
-                'the plugin')
+                'the plugin.')
 
         new_section = 'plugin:{bundle}:{name}'.format(
             bundle=bundle, name=name)

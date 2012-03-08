@@ -59,6 +59,9 @@ class TestDescribeDiff(TestCase):
     """
     @assertDiff
     def test_all_addition(self):
+        """
+        All lines are being added.
+        """
         yield ''
 
         yield '''
@@ -73,6 +76,9 @@ class TestDescribeDiff(TestCase):
 
     @assertDiff
     def test_add_blank_lines(self):
+        """
+        Lines added are just blank lines.
+        """
         yield '''
             one
             two
@@ -95,6 +101,9 @@ class TestDescribeDiff(TestCase):
 
     @assertDiff
     def test_all_same(self):
+        """
+        No changes.
+        """
         yield '''
             one
             two
@@ -112,6 +121,9 @@ class TestDescribeDiff(TestCase):
 
     @assertDiff
     def test_one_insert(self):
+        """
+        Just one line inserted.
+        """
         yield '''
             one
             two
@@ -131,6 +143,9 @@ class TestDescribeDiff(TestCase):
 
     @assertDiff
     def test_one_delete(self):
+        """
+        Just one deleted.
+        """
         yield '''
             one
             two
@@ -150,6 +165,9 @@ class TestDescribeDiff(TestCase):
 
     @assertDiff
     def test_one_insert_delete(self):
+        """
+        One insert, one delete.
+        """
         yield '''
             one
             two
@@ -171,6 +189,9 @@ class TestDescribeDiff(TestCase):
 
     @assertDiff
     def test_one_character_change(self):
+        """
+        A single character changed.
+        """
         yield '''
             one
             two
@@ -192,6 +213,9 @@ class TestDescribeDiff(TestCase):
 
     @assertDiff
     def test_complex_01(self):
+        """
+        Complex example with several changes.
+        """
         yield '''
             one
             two

@@ -35,6 +35,9 @@ class TestCommands(ViewTestCase):
         self.view.exit_on_exception = False
 
     def test_main(self):
+        """
+        Will output help if no arguments are given
+        """
         with patch.object(sys, 'stdout') as p:
             main()
 

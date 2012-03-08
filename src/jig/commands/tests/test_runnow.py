@@ -56,9 +56,6 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
 
             self.run_command(self.gitrepodir)
 
-        # Since we chose to cancel the commit by providing 'c', this should
-        # exit with 1 which will indicate to Git that it needs to abort the
-        # commit.
         r_sys.exit.assert_called_once_with(0)
 
         self.assertResults(u"""

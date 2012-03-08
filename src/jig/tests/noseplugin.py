@@ -88,7 +88,7 @@ class TestSetup(Plugin):
             repo = mkdtemp(dir=rhd)
         except:
             raise TestSetupError('Tried to create a directory to hold '
-                'the test repositories and could not')
+                'the test repositories and could not.')
 
         retcode = call(['git', 'init', repo],
             stdin=PIPE, stdout=PIPE, stderr=PIPE)

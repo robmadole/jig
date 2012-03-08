@@ -79,7 +79,7 @@ class NumberedDirectoriesToGit(object):
     """
     def __init__(self, numdir):
         if not isdir(numdir):
-            raise ValueError('Not a directory: {}'.format(numdir))
+            raise ValueError('Not a directory: {}.'.format(numdir))
 
         self.numdir = numdir
         self.target = mkdtemp()

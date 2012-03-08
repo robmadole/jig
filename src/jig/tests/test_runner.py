@@ -91,7 +91,7 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
 
         # The user was prompted about committing or canceling
         ri.assert_called_once_with('\nCommit anyway (hit enter), '
-            'or "c" to cancel the commit\n')
+            'or "c" to cancel the commit: ')
         # When they said cancel we exited with non-zero
         r_sys.exit.assert_called_once_with(1)
 
@@ -117,7 +117,7 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
 
         # The user was prompted about committing or canceling
         ri.assert_called_once_with('\nCommit anyway (hit enter), '
-            'or "c" to cancel the commit\n')
+            'or "c" to cancel the commit: ')
         # When they said cancel we exited with non-zero
         r_sys.exit.assert_called_once_with(0)
 
@@ -139,7 +139,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
     def test_uninitialized_repo(self):
         """
-        The JIG directory has not been initialized.
+        The .jig directory has not been initialized.
         """
         # Remove the .jig directory, effectively un-initializing our repository
         rmtree(join(self.gitrepodir, '.jig'))
@@ -154,7 +154,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
     def test_no_plugins(self):
         """
-        If there is a JIG directory without any plugins.
+        If there is a .jig directory without any plugins.
         """
         self.runner.results(self.gitrepodir)
 
@@ -164,7 +164,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
     def test_empty_repository(self):
         """
-        If JIG is ran on a repository that hasn't had any commits
+        If .jig is ran on a repository that hasn't had any commits
         """
         self._add_plugin(self.jigconfig, 'plugin01')
         set_jigconfig(self.gitrepodir, config=self.jigconfig)
@@ -177,7 +177,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
     def test_no_diff(self):
         """
-        If JIG is ran on a repository without any changes.
+        If .jig is ran on a repository without any changes.
         """
         self._add_plugin(self.jigconfig, 'plugin01')
         set_jigconfig(self.gitrepodir, config=self.jigconfig)

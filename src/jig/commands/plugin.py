@@ -232,7 +232,7 @@ class Command(BaseCommand):
         with self.out() as out:
             if template not in available_templates():
                 raise CommandError('Language {} is not supported yet, you '
-                    'can for this project and add it though!'.format(
+                    'can fork this project and add it though!'.format(
                         template))
 
             try:

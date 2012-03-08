@@ -319,6 +319,9 @@ class TestResultsCollater(JigTestCase):
         self.assertEqual([], rc.errors)
 
     def test_line_specific_message(self):
+        """
+        Results that are line-specific are collated correctly.
+        """
         stdout = OrderedDict()
         stdout[u'a.txt'] = [[1, None, 'Info A']]
         stdout[u'b.txt'] = [[2, u'warn', 'Warn B']]
@@ -351,6 +354,9 @@ class TestResultsCollater(JigTestCase):
         self.assertEqual([], rc.errors)
 
     def test_one_of_each(self):
+        """
+        One of each type of message is captured.
+        """
         results = {
             MockPlugin(): (0, ['C'], ''),
             MockPlugin(): (0, {u'a.txt': u'F'}, ''),
@@ -425,7 +431,10 @@ class TestResultsCollater(JigTestCase):
             [Error(None, type='s', body={'a.txt': [[1, 2, 3, 4, 5]]})],
             ResultsCollater(results).errors)
 
-    def test_plugin_count(self):
+    def test_empty_results(self):
+        """
+        Empty results do not generate empty messages.
+        """
         rc1 = ResultsCollater({})
 
         rc2 = ResultsCollater({

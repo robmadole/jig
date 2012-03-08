@@ -306,7 +306,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             self.run_command('create -l php name bundle')
 
         self.assertEqual(
-            u'Language php is not supported yet, you can for this '
+            u'Language php is not supported yet, you can fork this '
             u'project and add it though!\n',
             self.error)
 

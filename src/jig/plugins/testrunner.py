@@ -177,7 +177,7 @@ class PluginTestRunner(object):
             test_directory = join(plugin_dir, PLUGIN_TESTS_DIRECTORY)
             self.timeline = NumberedDirectoriesToGit(test_directory)
         except ValueError:
-            raise ExpectationNoTests('Could not find any tests: {}'.format(
+            raise ExpectationNoTests('Could not find any tests: {}.'.format(
                 test_directory))
 
         try:
@@ -190,7 +190,7 @@ class PluginTestRunner(object):
             self.expectations = list(get_expectations(expectation_text))
         except (IOError, OSError):
             raise ExpectationFileNotFound(
-                'Missing expectation file: {}'.format(expect_filename))
+                'Missing expectation file: {}.'.format(expect_filename))
 
     def run(self):
         """

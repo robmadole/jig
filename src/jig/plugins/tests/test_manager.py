@@ -106,7 +106,7 @@ class TestPluginManager(PluginTestCase):
             pm.add(join(self.fixturesdir, 'plugin04'))
 
         self.assertEqual(
-            'The plugin config does not contain a [plugin] section',
+            'The plugin config does not contain a [plugin] section.',
             str(ec.exception))
 
     def test_add_plugin_no_settings_section(self):
