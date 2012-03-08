@@ -24,13 +24,21 @@ The Jig command line tool is written in Python and is available on PyPi. ::
 
     $ pip install jig || easy_install jig
 
-Initialize a Git repository
----------------------------
+This is just a little shell trick that uses ``easy_install`` if it can't locate
+``pip``.
+
+Test drive
+----------
 
 Let's test this out first with a new repository. ::
 
     $ mkdir gitrepo; cd $_
     $ git init .
+
+Create the root commit. Git repositories are not very useful without it.
+
+::
+
     $ echo "Testing Jig" > README
     $ git add README; git commit -m 'First commit!'
     [master (root-commit) bc45fd3] First commit!
@@ -47,13 +55,19 @@ repository and run this command:
     $ jig init .
     Git repository has been initialized for use with Jig.
 
-Jig uses plugins to do the real work. None are installed right now so let's add
-a bundle of plugins now.
+If you're curious, you can :ref:`see what this thing has done
+<development-plumbing>` to your repository.
+
+Jig uses "plugins" to do the real work. Your Jig config file (in
+:file:`.jig/plugins.cfg`) is empty which means you have none installed.
 
 ::
 
     $ jig plugin add http://github.com/robmadole/jig-plugins
     Added plugin pep8-checker in bundle jig-plugins to the repository.
+    Added plugin pyflakes in bundle jig-plugins to the repository.
+    Added plugin whitespace in bundle jig-plugins to the repository.
+    Added plugin whoops in bundle jig-plugins to the repository.
 
 Let's test our pep8-checker. `PEP8`_ is an endorsed style guide for writing
 Python code. Johann Rocholl `created a tool`_ that checks for compliance.
@@ -105,7 +119,13 @@ Development documentation:
 .. toctree::
    :maxdepth: 1
 
+   cli
    devapi
+
+License
+-------
+
+Jig is licensed under a :doc:`BSD license <license>`.
 
 .. _Git Hooks: http://book.git-scm.com/5_git_hooks.html
 .. _PEP8: http://www.python.org/dev/peps/pep-0008/
