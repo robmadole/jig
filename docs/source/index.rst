@@ -8,14 +8,14 @@ manual bits away and lets you get down to business.
 directory to trigger actions at certain points. The ``pre-commit`` hook is
 useful for performing actions right before Git writes a commit.
 
-Jig has a set of common plugins that will probably be useful to you
+Jig has a set of `common plugins`_ that will probably be useful to you
 right now, but the real goal is to make it easy for you to write your own.
 
 Jump straight to it
 -------------------
 
 * :doc:`Jig's command line tool <cli>`
-* :doc:`Build Jig plugins <pluginapi>`
+* :doc:`Build your own Jig plugins <pluginapi>`
 
 Install it
 ----------
@@ -59,7 +59,7 @@ If you're curious, you can :ref:`see what this thing has done
 <development-plumbing>` to your repository.
 
 Jig uses "plugins" to do the real work. Your Jig config file (in
-:file:`.jig/plugins.cfg`) is empty which means you have none installed.
+:file:`.jig/plugins.cfg`) is empty which means you have no plugins installed.
 
 ::
 
@@ -106,20 +106,21 @@ With our staged file, we're ready to commit.
 Jig isn't pushy. You can hit enter to commit anyway or :kbd:`c` cancels the
 commit and gives you a chance to make changes.
 
-In-depth docs:
+In-depth docs
 --------------
 
 .. toctree::
    :maxdepth: 2
 
+   cli
    pluginapi
 
-Development documentation:
+Developer docs
+--------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   cli
    devapi
 
 License
@@ -132,3 +133,4 @@ Jig is licensed under a :doc:`BSD license <license>`.
 .. _pep8 checker: http://pypi.python.org/pypi/pep8
 .. _created a tool: `pep8 checker`_
 .. _jslint: http://www.jslint.com/
+.. _common plugins: http://github.com/robmadole/jig-plugins

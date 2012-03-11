@@ -74,7 +74,7 @@ class NumberedDirectoriesToGit(object):
     Each directory is a snapshot of the detached head for that commit.
 
     Supports directories, deleting files, and file modifications. Everything
-    you'd expect in a testing utility for create Git repo fixtures.
+    you'd expect in a testing utility for creating Git repo fixtures.
 
     """
     def __init__(self, numdir):

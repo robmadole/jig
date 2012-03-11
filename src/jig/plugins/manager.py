@@ -243,9 +243,21 @@ class Plugin(object):
 
         # Send the data to the script
         stdin = json.dumps(data_in, indent=2, cls=PluginDataJSONEncoder)
-        stdout, stderr = ph.communicate(stdin)
 
-        retcode = ph.returncode
+        retcode = None
+        stdout = ''
+        stderr = ''
+
+        try:
+            stdout, stderr = ph.communicate(stdin)
+            retcode = ph.returncode
+        except OSError as ose:
+            # Generic non-zero retcode that indicates an error
+            retcode = 1
+            if ose.errno == 32:
+                stderr = 'Error: received SIGPIPE from the command'
+            else:
+                stderr = str(ose)
 
         # And return the relevant stuff
         return retcode, stdout, stderr

@@ -1,5 +1,8 @@
 import json
 from os.path import join
+from subprocess import Popen
+
+from mock import patch
 
 from jig.tests.testcase import PluginTestCase
 from jig.exc import PluginError
@@ -218,3 +221,45 @@ class TestPlugin(PluginTestCase):
         self.assertEqual(
             [1, u'warn', u'The cast: is +'],
             data['argument.txt'][0])
+
+    def test_sigpipe_error(self):
+        """
+        If a SIGPIPE is received, handle it without blowing up.
+        """
+        pm = PluginManager(self.jigconfig)
+
+        pm.add(join(self.fixturesdir, 'plugin01'))
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[0])
+
+        with patch.object(Popen, 'communicate'):
+            ose = OSError('SIGPIPE')
+            ose.errno = 32
+
+            Popen.communicate.side_effect = ose
+
+            retcode, stdout, stderr = pm.plugins[0].pre_commit(gdi)
+
+        self.assertEqual(1, retcode)
+        self.assertEqual('', stdout)
+        self.assertEqual('Error: received SIGPIPE from the command', stderr)
+
+    def test_oserror(self):
+        """
+        If a generic OSError is received, don't blow up either.
+        """
+        pm = PluginManager(self.jigconfig)
+
+        pm.add(join(self.fixturesdir, 'plugin01'))
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[0])
+
+        with patch.object(Popen, 'communicate'):
+            ose = OSError('Gazoonkle was discombobulated')
+            ose.errno = 1
+
+            Popen.communicate.side_effect = ose
+
+            retcode, stdout, stderr = pm.plugins[0].pre_commit(gdi)
+
+        self.assertEqual(1, retcode)
+        self.assertEqual('', stdout)
+        self.assertEqual('Gazoonkle was discombobulated', stderr)
