@@ -140,7 +140,11 @@ class GitDiffIndex(object):
             except (AttributeError, BadObject):
                 pass
 
-            linediff = describe_diff(a_data, b_data)
+            if '\0' in a_data or '\0' in b_data:
+                # This file is binary? Probably.
+                linediff = []
+            else:
+                linediff = describe_diff(a_data, b_data)
 
             blob = a_blob or b_blob
 

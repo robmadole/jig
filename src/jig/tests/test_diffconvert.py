@@ -419,3 +419,15 @@ class TestGitDiffIndex(JigTestCase):
 
         self.assertEqual('scripts/italian-lesson.txt',
             files[3]['name'])
+
+    def test_binary_diff(self):
+        """
+        Binary files are ignored.
+        """
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[5])
+
+        # We should see our file
+        self.assertEqual(1, len(list(gdi.files())))
+
+        # But we don't include the diff since it's binary data
+        self.assertEqual([], gdi.files().next()['diff'])

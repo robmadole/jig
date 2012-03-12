@@ -22,6 +22,8 @@ Jig's help menu is available by running ``jig`` or ``jig --help``.
 
     See `jig COMMAND --help` for more information
 
+.. _cli-init:
+
 Initialize a Git repository to use Jig
 --------------------------------------
 
@@ -63,6 +65,8 @@ If there is a pre-existing hook, Jig will not overwrite it.
     not overwrite it. If you want to use jig you'll have to sort this out
     yourself.
 
+.. _cli-plugin:
+
 Manage your plugins
 -------------------
 
@@ -92,6 +96,7 @@ even use Jig to run :ref:`automated tests <pluginapi-testing>` on your plugins.
         create              create a new plugin
         test                run a suite of plugin tests
 
+.. _cli-plugin-list:
 
 Listing installed plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -121,6 +126,8 @@ Listing the plugin provides a quick summary like this:
     pyflakes................. jig-plugins
     whitespace............... jig-plugins
     whoops................... jig-plugins
+
+.. _cli-plugin-add:
 
 Adding plugins
 ~~~~~~~~~~~~~~
@@ -168,6 +175,7 @@ You can also add more than one plugin at a time.
     Added plugin whitespace in bundle jig-plugins to the repository.
     Added plugin whoops in bundle jig-plugins to the repository.
 
+.. _cli-plugin-remove:
 
 Removing plugins
 ~~~~~~~~~~~~~~~~
@@ -192,6 +200,67 @@ Once a plugin is added, it can be easily removed.
 
     $ jig plugin remove myplugin
     Removed plugin myplugin
+
+.. _cli-plugin-create:
+
+Creating a plugin
+~~~~~~~~~~~~~~~~~
+
+The standard Jig plugins each have a single purpose and perform their role
+well. However, you can probably think of at least one additional thing you'd
+like Jig to do.
+
+We encourage you to create your own plugins. A lot of work has gone into
+structuring the plugins in such a way that they are intuitive to write and are
+easy to test.
+
+To help with this, an empty plugin can be created that functions as a great
+starting point to write whatever you wish.
+
+.. note:: Right now, Python is the only supported template. But plugins can be
+          written in any scripting language installed on the system. We could use your
+          help in writing :ref:`new pre-commit templates
+          <pluginapi-pre-commit-templates>`.
+
+::
+
+    $ jig plugin create --help
+    usage: jig plugin create [-h] [-l] [-d] NAME BUNDLE
+
+    positional arguments:
+      name                  Plugin name
+      bundle                Bundle name
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --language TEMPLATE, -l TEMPLATE
+                            Scripting language: python
+      --dir DIR, -d DIR     Create in this directory
+
+Plugins have a ``NAME`` and belong in a ``BUNDLE``. The name usually describes
+what it does. The bundle can be a company, your name, or an identifier that
+groups multiple plugins together.
+
+Example of creating a plugin that checks widgets for the Acme Corporation.
+
+::
+
+    $ jig plugin create widget-checker acme-corp
+    Created plugin as ./widget-checker
+
+The :doc:`plugin API <pluginapi>` has more information on where you can go
+after you've created a new plugin.
+
+.. _cli-plugin-test:
+
+Running a plugin's tests
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Jig will run automated tests for a plugin if they exist.
+
+For information on ``jig plugin test`` see :ref:`Testing Plugins <pluginapi-testing>`.
+
+.. _cli-runnow:
 
 Run Jig manually
 ----------------
@@ -242,58 +311,3 @@ When you call this command, Jig will perform the same motions that happen with
 
     Ran 3 plugins
         Info 0 Warn 4 Stop 0
-
-Creating a plugin
------------------
-
-The standard Jig plugins each have a single purpose and perform their role
-well. However, you can probably think of at least one additional thing you'd
-like Jig to do.
-
-We encourage you to create your own plugins. A lot of work has gone into
-structuring the plugins in such a way that they are intuitive to write and are
-easy to test.
-
-To help with this, an empty plugin can be created that functions as a great
-starting point to write whatever you wish.
-
-.. note:: Right now, Python is the only supported template. But plugins can be
-          written in any scripting language installed on the system. We could use your
-          help in writing :ref:`new pre-commit templates
-          <pluginapi-pre-commit-templates>`.
-
-::
-
-    $ jig plugin create --help
-    usage: jig plugin create [-h] [-l] [-d] NAME BUNDLE
-
-    positional arguments:
-      name                  Plugin name
-      bundle                Bundle name
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      --language TEMPLATE, -l TEMPLATE
-                            Scripting language: python
-      --dir DIR, -d DIR     Create in this directory
-
-Plugins have a ``NAME`` and belong in a ``BUNDLE``. The name usually describes
-what it does. The bundle can be a company, your name, or an identifier that
-groups multiple plugins together.
-
-Example of creating a plugin that checks widgets for the Acme Corporation.
-
-::
-
-    $ jig plugin create widget-checker acme-corp
-    Created plugin as ./widget-checker
-
-The :doc:`plugin API <pluginapi>` has more information on where you can go
-after you've created a new plugin.
-
-Running a plugin's tests
-------------------------
-
-Jig will run automated tests for a plugin if they exist.
-
-For information on ``jig plugin test`` see :ref:`Testing Plugins <pluginapi-testing>`.

@@ -1,14 +1,17 @@
 What is Jig
 ===========
 
-Jig is a Git pre-commit hook on steroids. It abstracts some of the messier
-manual bits away and lets you get down to business.
+**Jig is a Git pre-commit hook on steroids**. What does that mean? It means you
+can do really useful things with your staged changes before you actually create
+the commit.
 
 `Git Hooks`_ are little scripts that you can place in your ``$GIT_DIR/hooks``
 directory to trigger actions at certain points. The ``pre-commit`` hook is
 useful for performing actions right before Git writes a commit.
 
-Jig has a set of `common plugins`_ that will probably be useful to you
+Jig is a command line tool as well as a utility for creating and running "plugins".
+
+It has a set of `common plugins`_ that will probably be useful to you
 right now, but the real goal is to make it easy for you to write your own.
 
 Jump straight to it
@@ -72,7 +75,8 @@ Jig uses "plugins" to do the real work. Your Jig config file (in
 Let's test our pep8-checker. `PEP8`_ is an endorsed style guide for writing
 Python code. Johann Rocholl `created a tool`_ that checks for compliance.
 
-Create a new file and put all of our imports on one line. This is contrary to PEP8.
+Create a new file and put all of our imports on one line. This is contrary to
+PEP8. How dreadful.
 
 ::
 
@@ -105,6 +109,15 @@ With our staged file, we're ready to commit.
 
 Jig isn't pushy. You can hit enter to commit anyway or :kbd:`c` cancels the
 commit and gives you a chance to make changes.
+
+What can the `common plugins`_ do besides check PEP8?
+
+* Pyflakes - analyze Python files and check for various erros (written by the
+  Divmod developers)
+* Whitespace - look for lines with nothing but whitespace plus mixed tabs and
+  spaces
+* Whoops - check for silly errors (like leaving a ``console.log(foo)`` in your
+  JavaScript)
 
 In-depth docs
 --------------
