@@ -3,65 +3,6 @@ Hacking on Jig and internal API
 
 .. contents::
 
-Tests and coverage
-------------------
-
-Jig uses `Nose`_ to run tests and `coverage.py`_ to perform code coverage
-analysis.
-
-You need to have a cloned copy of Jig to run either one. You can start with a
-read-only copy:
-
-::
-
-    $ git clone git://github.com/robmadole/jig.git
-
-Or `fork the repository`_ on GitHub to make your own changes. The
-:doc:`Jig License <license>` is friendly.
-
-.. _development-buildout:
-
-Jig also uses zc.buildout, which means you need to run a couple of commands to
-download dependencies and create the scripts needed for development.
-
-::
-
-    $ python boostrap.py && ./bin/buildout
-
-To run the tests:
-
-::
-
-    $ ./bin/jig-tests
-
-To run test coverage:
-
-::
-
-    $ ./bin/jig-coverage
-
-.. _Nose: http://readthedocs.org/docs/nose/en/latest/
-.. _coverage.py: http://nedbatchelder.com/code/coverage/
-.. _fork the repository: https://github.com/robmadole/jig/fork_select
-
-Making the documentation
-------------------------
-
-This documentation is made with Sphinx_. To build the docs make sure you've ran
-the :ref:`buildout <development-buildout>` first.
-
-
-Build the HTML version:
-
-::
-
-    $ cd docs
-    $ make html
-
-The builds will be placed in :file:`build`.
-
-.. _Sphinx: http://sphinx.pocoo.org/
-
 .. _development-plumbing:
 
 Plumbing of Jig
@@ -130,59 +71,120 @@ will occur. But **if Jig returns a non-zero exit code like 1**, Git will abort t
 commit.
 
 Jig communicates with plugins using the `JSON`_ data format. Both the input and
-the output are JSON.
+the output are JSON. This is convenient because almost all scripting languages
+that will likey be used to write Jig plugins can easily deal with JSON data.
 
 A plugin has the ability to pass messages back to Jig that will be formatted
 and displayed in the terminal.
 
 .. image:: images/integration.png
 
-Objects used internally by Jig to interface with Git.
+Tests and coverage
+------------------
+
+Jig uses `Nose`_ to run tests and `coverage.py`_ to perform code coverage
+analysis.
+
+You need to have a cloned copy of Jig to run either one. You can start with a
+read-only copy:
+
+::
+
+    $ git clone git://github.com/robmadole/jig.git
+
+Or `fork the repository`_ on GitHub to make your own changes. The
+:doc:`Jig License <license>` is friendly.
+
+.. _development-buildout:
+
+Jig also uses zc.buildout, which means you need to run a couple of commands to
+download dependencies and create the scripts needed for development.
+
+::
+
+    $ python boostrap.py && ./bin/buildout
+
+To run the tests:
+
+::
+
+    $ ./bin/jig-tests
+
+To run test coverage:
+
+::
+
+    $ ./bin/jig-coverage
+
+.. _Nose: http://readthedocs.org/docs/nose/en/latest/
+.. _coverage.py: http://nedbatchelder.com/code/coverage/
+.. _fork the repository: https://github.com/robmadole/jig/fork_select
+
+Making the documentation
+------------------------
+
+This documentation is made with Sphinx_. To build the docs make sure you've ran
+the :ref:`buildout <development-buildout>` first.
+
+
+Build the HTML version:
+
+::
+
+    $ cd docs
+    $ make html
+
+The builds will be placed in :file:`build`.
+
+.. _Sphinx: http://sphinx.pocoo.org/
+
+API Reference
+-------------
+
+.. note:: These are the internal objects used by Jig. You only need to worry
+          about these if you are making modifications to how Jig works.
+
+          You don't need any of the following documentation to :doc:`write your
+          own plugins <pluginapi>`.
 
 jig.diffconvert
----------------
+~~~~~~~~~~~~~~~
 
 .. automodule:: jig.diffconvert
    :members:
 
-jig.conf
---------
-
-.. automodule:: jig.conf
-   :members:
-
 jig.exc
--------
+~~~~~~~
 
 .. automodule:: jig.exc
    :members:
 
 jig.gitutils
-------------
+~~~~~~~~~~~~
 
 .. automodule:: jig.gitutils
    :members:
 
 jig.output
-----------
+~~~~~~~~~~
 
 .. automodule:: jig.output
    :members:
 
 jig.plugins
------------
+~~~~~~~~~~~
 
 .. automodule:: jig.plugins
    :members:
 
 jig.runner
-----------
+~~~~~~~~~~
 
 .. automodule:: jig.runner
    :members:
 
 jig.tools
----------
+~~~~~~~~~
 
 .. automodule:: jig.tools
    :members:

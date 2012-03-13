@@ -16,3 +16,4 @@ parts
 cover
 .jig
 .noseids
+.vimdir
