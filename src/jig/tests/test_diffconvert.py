@@ -1,3 +1,4 @@
+from os import symlink
 from os.path import join, realpath
 from unittest import TestCase
 from functools import wraps
@@ -6,9 +7,12 @@ from pprint import PrettyPrinter
 from operator import itemgetter
 
 from mock import Mock
+from git import Repo
+from nose.plugins.attrib import attr
 
 from jig.tests.testcase import JigTestCase
-from jig.diffconvert import describe_diff, DiffType
+from jig.diffconvert import describe_diff, DiffType, GitDiffIndex
+from jig.tools import cwd_bounce
 
 
 def assertDiff(func):
@@ -431,3 +435,27 @@ class TestGitDiffIndex(JigTestCase):
 
         # But we don't include the diff since it's binary data
         self.assertEqual([], gdi.files().next()['diff'])
+
+    @attr('focus')
+    def test_symlinks(self):
+        """
+        Symlinks are ignored because they are not real files.
+        """
+        self.commit(self.gitrepodir, 'text/a.txt', 'a')
+        self.commit(self.gitrepodir, 'text/b.txt', 'b')
+        self.commit(self.gitrepodir, 'text/c.txt', 'c')
+
+        # Create the symlink that should be ignored by GitDiffIndex
+        with cwd_bounce(self.gitrepodir):
+            symlink('text', 'also_text')
+
+        # We have to do this without our testcase since it's a special
+        # situation.
+        repo = Repo(self.gitrepodir)
+        repo.git.add('also_text')
+
+        # The symlink is staged, time to convert the diff
+        gdi = GitDiffIndex(self.gitrepodir, repo.head.commit.diff())
+
+        # If we ignored the symlink, which we should, there should be no files
+        self.assertEqual(0, len(list(gdi.files())))

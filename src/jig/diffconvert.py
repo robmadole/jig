@@ -16,6 +16,7 @@ utilities for discovering differences between two strings.
 
 .. _GitPython: https://github.com/gitpython-developers/GitPython
 """
+from os.path import islink
 from difflib import SequenceMatcher
 
 from git.exc import BadObject
@@ -122,6 +123,9 @@ class GitDiffIndex(object):
 
         ``type`` is ``added``, ``deleted``, ``renamed``, ``modified`` and
         describes the overall action that occurred on this file.
+
+        This will skip symlinks and will not provide the contens of binary
+        files.
         """
         for diff in self.difflist:
             a_blob = diff.a_blob
@@ -147,6 +151,10 @@ class GitDiffIndex(object):
                 linediff = describe_diff(a_data, b_data)
 
             blob = a_blob or b_blob
+
+            if islink(blob.abspath):
+                # Skip symlinks
+                continue
 
             yield {
                 'filename': blob.abspath,
