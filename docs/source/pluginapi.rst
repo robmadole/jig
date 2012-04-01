@@ -26,8 +26,8 @@ It will recieve JSON data through the ``stdin`` stream. It's expected to write
 to ``stdout`` if it has anything to say (or ``stderr`` if it runs into
 problems). Although a plugin doesn't have to write anything.
 
-The :file:`config.cfg` file contains the plugin name and bundle. Optionally it
-can contain settings but they aren't required.
+The :file:`config.cfg` file contains the plugin name and bundle. It
+can also contain default settings but they aren't required.
 
 Here's an example:
 
@@ -64,7 +64,7 @@ that runs the plugin.
     process.stdout.write('Always look on the bright side of life');
     process.exit(0);
 
-The output of this plugin would be:
+Running this plugin with Jig will give you output like this:
 
 ::
 
@@ -110,8 +110,8 @@ we can see that it starts with this:
 
     #!/usr/bin/env python
 
-The example is more thorough than we need right now. Remove everything in there
-and replace it with this:
+The pre-commit Jig created is more thorough than we need right now. Remove
+everything in there and replace it with this:
 
 ::
 
@@ -137,8 +137,9 @@ If you were writing these plugins without using Jig's testing framework it
 would be a pain to test them. You'd either be creating the input data yourself
 by hand or using a carefully crafted Git repository.
 
-Jig takes a set of numbered directories and creates a Git repository for you
-that your tests can make assertions against.
+Jig has a way of making this dead simple. It takes a set of numbered directories
+and creates a Git repository for you that your tests can make assertions
+against.
 
 .. warning:: This is a strange concept to understand at first. Look at some of
              the tests in Jig's own common plugins if some real examples would help.
@@ -154,7 +155,7 @@ The next step is to represent the Git repository's *root commit*. Just as the
 name implies, this is the very first commit in a repository (it's special
 because it's the only commit that doesn't have a parent).
 
-Our number start at ``01``. We'll also create an empty ``README`` file because
+Numbering starts at ``01``. We'll create an empty ``README`` file because
 we need something of substance for that first commit.
 
 ::
@@ -174,7 +175,15 @@ We need something to change between ``01`` and ``02`` for there to be a commit.
 
     $ echo "The Life of Brian" > bright-side/tests/02/title.txt
 
-Run the tests.
+With these two directories, we have enough information to create an empty
+repository with the root commit represented by the **contents** of the ``01``
+directory. The next commit, commit #2, will be based on the **contents** of the
+``02`` directory.
+
+You don't have to interact with Git at all to make this happen. It's a feature
+of Jig's testing and it comes for free.
+
+Now that we have a test fixture as a Git repository, run the tests.
 
 ::
 
@@ -277,11 +286,21 @@ While this is a great first step, it was really simple and not very useful.
 The next sections will explore the input and output format (in JSON) and how
 you can work with this data to make something that actually helps.
 
-Incoming
---------
+Data formats
+------------
 
-Outgoing
---------
+For plugins to operate in Jig's arena, they have to understand the data coming
+in and the data going out. It's JSON both ways.
+
+.. image:: images/input-output.png
+
+The following outlines what you can expect.
+
+Input
+~~~~~
+
+Output
+~~~~~~
 
 Line specific messages
 ~~~~~~~~~~~~~~~~~~~~~~

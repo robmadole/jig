@@ -29,7 +29,7 @@ It's super easy to write your own plugins too
 `Show me how to write plugins`_
 
 .. _Take me to the quick start: http://packages.python.org/jig/index.html
-.. _Show me how to write plugins`_: http://packages.python.org/jig/pluginapi.html
+.. _Show me how to write plugins: http://packages.python.org/jig/pluginapi.html
 .. _Jig: http://pypi.python.org/pypi/jig
 
 Support

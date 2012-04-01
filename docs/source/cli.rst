@@ -125,7 +125,7 @@ Listing the plugin provides a quick summary like this:
     pep8-checker............. jig-plugins
     pyflakes................. jig-plugins
     whitespace............... jig-plugins
-    whoops................... jig-plugins
+    woops.................... jig-plugins
 
 .. _cli-plugin-add:
 
@@ -173,7 +173,7 @@ You can also add more than one plugin at a time.
     Added plugin pep8-checker in bundle jig-plugins to the repository.
     Added plugin pyflakes in bundle jig-plugins to the repository.
     Added plugin whitespace in bundle jig-plugins to the repository.
-    Added plugin whoops in bundle jig-plugins to the repository.
+    Added plugin woops in bundle jig-plugins to the repository.
 
 .. _cli-plugin-remove:
 

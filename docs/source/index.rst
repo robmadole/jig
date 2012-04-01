@@ -1,9 +1,7 @@
 What is Jig
 ===========
 
-**Jig is a Git pre-commit hook on steroids**. What does that mean? It means you
-can do really useful things with your staged changes before you actually create
-the commit.
+**Jig is a Git pre-commit hook on steroids**.
 
 `Git Hooks`_ are little scripts that you can place in your ``$GIT_DIR/hooks``
 directory to trigger actions at certain points. The ``pre-commit`` hook is
@@ -70,7 +68,7 @@ Jig uses "plugins" to do the real work. Your Jig config file (in
     Added plugin pep8-checker in bundle jig-plugins to the repository.
     Added plugin pyflakes in bundle jig-plugins to the repository.
     Added plugin whitespace in bundle jig-plugins to the repository.
-    Added plugin whoops in bundle jig-plugins to the repository.
+    Added plugin woops in bundle jig-plugins to the repository.
 
 Let's test our pep8-checker. `PEP8`_ is an endorsed style guide for writing
 Python code. Johann Rocholl `created a tool`_ that checks for compliance.
@@ -116,7 +114,7 @@ What can the `common plugins`_ do besides check PEP8?
   Divmod developers)
 * Whitespace - look for lines with nothing but whitespace plus mixed tabs and
   spaces
-* Whoops - check for silly errors (like leaving a ``console.log(foo)`` in your
+* Woops - check for silly errors (like leaving a ``console.log(foo)`` in your
   JavaScript)
 
 In-depth docs

@@ -10,7 +10,8 @@ from jig.exc import CommandError, ExpectationError
 from jig.gitutils import clone
 from jig.plugins import (get_jigconfig, set_jigconfig, PluginManager,
     create_plugin, available_templates)
-from jig.plugins.testrunner import PluginTestRunner, PluginTestReporter
+from jig.plugins.testrunner import (PluginTestRunner, PluginTestReporter,
+    FailureResult)
 
 _parser = argparse.ArgumentParser(
     description='Manage this repository\'s Jig plugins',
@@ -65,6 +66,9 @@ _testparser = _subparsers.add_parser('test',
     usage='jig plugin test [-h] PLUGIN')
 _testparser.add_argument('plugin', nargs='?', default='.',
     help='Path to the plugin directory')
+_testparser.add_argument('--verbose', '-v',
+    default=False, action='store_true',
+    help='Print the input and output (stdin and stdout)')
 _testparser.set_defaults(subcommand='test')
 
 
@@ -249,6 +253,7 @@ class Command(BaseCommand):
         Run the tests for a plugin.
         """
         plugin = argv.plugin
+        verbose = argv.verbose
 
         with self.out() as out:
             try:
@@ -258,6 +263,15 @@ class Command(BaseCommand):
 
                 reporter = PluginTestReporter(results)
 
-                out.extend(reporter.dumps().splitlines())
+                test_results = reporter.dumps(verbose=verbose).splitlines()
+
+                failures = [i for i in results if isinstance(i, FailureResult)]
+
+                if failures:
+                    # Raise as an error so the status code will be non-zero
+                    raise CommandError('\n'.join(test_results))
+
+                # No failures, ok to send this to stdout
+                out.extend(test_results)
             except ExpectationError as e:
                 raise CommandError(e.message)

@@ -11,7 +11,8 @@ from jig.tests.mocks import MockPlugin
 from jig.exc import ForcedExit
 from jig.plugins import (set_jigconfig, get_jigconfig, create_plugin,
     PluginManager)
-from jig.plugins.testrunner import Expectation, SuccessResult
+from jig.plugins.testrunner import (Expectation, SuccessResult,
+    FailureResult, REPORTER_HORIZONTAL_DIVIDER)
 from jig.commands import plugin
 
 
@@ -358,6 +359,42 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
             Pass 1, Fail 0''', self.output)
 
+    def test_plugin_test_failure(self):
+        """
+        Fails with exit code other than 0.
+        """
+        plugin_dir = create_plugin(mkdtemp(), template='python',
+            bundle='bundle', name='name')
+
+        expectation = Expectation((1, 2), None, u'bbb')
+        results = [
+            FailureResult(actual=u'aaa', expectation=expectation,
+                plugin=MockPlugin())]
+
+        with patch('jig.commands.plugin.PluginTestRunner') as ptr:
+            ptr.return_value = Mock()
+            ptr.return_value.run = Mock(return_value=results)
+
+            with self.assertRaises(ForcedExit):
+                self.run_command('test {}'.format(plugin_dir))
+
+        self.assertResults(u'''
+            01 – 02 Fail
+
+            Actual
+            {0}
+
+            aaa
+
+            Diff
+            {0}
+
+            - bbb
+            + aaa
+
+            Pass 0, Fail 1'''.format(REPORTER_HORIZONTAL_DIVIDER),
+            self.error)
+
     def test_plugin_defaults_to_cwd(self):
         """
         Running the plugins tests defaults to the current working directory.
@@ -381,3 +418,36 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             01 – 02 Pass
 
             Pass 1, Fail 0''', self.output)
+
+    def test_formats_results_verbose(self):
+        """
+        Will return test results with stdin and stdout.
+        """
+        plugin_dir = create_plugin(mkdtemp(), template='python',
+            bundle='bundle', name='name')
+
+        expectation = Expectation((1, 2), None, u'aaa')
+        results = [
+            SuccessResult(actual=u'aaa', expectation=expectation,
+                plugin=MockPlugin(), stdin='a\n', stdout='b\n')]
+
+        with patch('jig.commands.plugin.PluginTestRunner') as ptr:
+            ptr.return_value = Mock()
+            ptr.return_value.run = Mock(return_value=results)
+
+            self.run_command('test -v {}'.format(plugin_dir))
+
+        self.assertResults(u'''
+            01 – 02 Pass
+
+            stdin (sent to the plugin)
+
+                a
+
+            stdout (received from the plugin)
+
+                b
+
+            {0}
+            Pass 1, Fail 0'''.format(REPORTER_HORIZONTAL_DIVIDER),
+            self.output)

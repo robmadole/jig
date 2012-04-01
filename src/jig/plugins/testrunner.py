@@ -3,7 +3,8 @@ import json
 from codecs import open
 from os.path import join, abspath
 from StringIO import StringIO
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
+from operator import itemgetter
 from ConfigParser import SafeConfigParser
 
 from docutils import nodes, core, io
@@ -17,6 +18,7 @@ from jig.tools import NumberedDirectoriesToGit, cwd_bounce
 from jig.diffconvert import describe_diff
 from jig.output import ConsoleView, strip_paint, green_bold, red_bold
 from jig.plugins import PluginManager
+from jig.plugins.manager import PluginDataJSONEncoder
 from jig.diffconvert import GitDiffIndex
 
 # What docutil nodes signify a structural or sectional break
@@ -25,8 +27,35 @@ DOCUTILS_DIFFERENT_SECTION_NODES = (nodes.Root, nodes.Structural,
 
 # How wide do we want the columns to be when we report test output
 REPORTER_COLUMN_WIDTH = 80
-# A horizontal dividing line to separate content
+# A horizontal dividing line to separate sections
 REPORTER_HORIZONTAL_DIVIDER = u''.join([u'·'] * REPORTER_COLUMN_WIDTH)
+
+
+def _indent(payload, by=4, character=u' '):
+    """
+    Indents a sequence of strings with whitespace.
+
+    By default it will indent by 4 spaces. Change the amount of indent with
+    ``by`` and the character that is used with ``character``.
+
+    Example:
+
+        >>> print(_indent(u'Jig', by=6, character=u'-'))
+        ------Jig
+
+    """
+    return_first = False
+    if isinstance(payload, (basestring)):
+        payload = [payload]
+        return_first = True
+
+    indented = []
+    for line in payload:
+        indented.append(''.join([unicode(character)] * by) + unicode(line))
+
+    if return_first:
+        return indented[0]
+    return indented
 
 
 def get_expectations(input_string):
@@ -115,7 +144,65 @@ def get_expectations(input_string):
                     output=expectation.rawsource)
 
 
-Result = namedtuple('Result', 'expectation actual plugin')
+class Result(tuple):
+
+    """
+    Result(expectation, actual, plugin, stdin, stdout)
+
+    """
+    __slots__ = ()
+
+    _fields = ('expectation', 'actual', 'plugin', 'stdin', 'stdout')
+
+    def __new__(_cls, expectation, actual, plugin, stdin='', stdout=''):
+        return tuple.__new__(_cls, (
+            expectation, actual, plugin, stdin, stdout))
+
+    @classmethod
+    def _make(cls, iterable, new=tuple.__new__, len=len):
+        """
+        Make a new Result object from a sequence or iterable.
+        """
+        result = new(cls, iterable)
+        if len(result) != 5:
+            raise TypeError('Expected 5 arguments, got %d' % len(result))
+        return result
+
+    def __repr__(self):
+        """
+        Return a nicely formatted representation string.
+        """
+        reprformat = 'Result(expectation=%r, actual=%r, plugin=%r, ' + \
+            'stdin=%r, stdout=%r)'
+        return reprformat % self
+
+    def _asdict(self):
+        """
+        Return a new OrderedDict which maps field names to their values.
+        """
+        return OrderedDict(zip(self._fields, self))
+
+    def _replace(_self, **kwds):
+        """
+        Return a new object replacing specified fields with new values.
+        """
+        result = _self._make(map(kwds.pop,
+            ('expectation', 'actual', 'plugin', 'stdin', 'stdout'), _self))
+        if kwds:
+            raise ValueError('Got unexpected field names: %r' % kwds.keys())
+        return result
+
+    def __getnewargs__(self):
+        """
+        Return self as a plain tuple.  Used by copy and pickle.
+        """
+        return tuple(self)
+
+    expectation = property(itemgetter(0), doc='Alias for field number 0')
+    actual = property(itemgetter(1), doc='Alias for field number 1')
+    plugin = property(itemgetter(2), doc='Alias for field number 2')
+    stdin = property(itemgetter(3), doc='Alias for field number 3')
+    stdout = property(itemgetter(4), doc='Alias for field number 4')
 
 
 class SuccessResult(Result):
@@ -124,6 +211,7 @@ class SuccessResult(Result):
     The expectation for a single plugins tests matched its output.
 
     """
+
     def __repr__(self):   # pragma: no cover
         return '<SuccessResult from={} to={}>'.format(*self.expectation.range)
 
@@ -239,6 +327,10 @@ class PluginTestRunner(object):
                 # instead of the Git repository
                 gdi.replace_path = (self.timeline.repo.working_dir, wd)
 
+                # Gather up the input to the plugin for logging
+                stdin = json.dumps({'config': plugin.config,
+                    'files': gdi}, indent=2, cls=PluginDataJSONEncoder)
+
                 # Now run the actual pre_commit hook for this plugin
                 res = plugin.pre_commit(gdi)
                 # Break apart into its pieces
@@ -267,7 +359,7 @@ class PluginTestRunner(object):
             actual = strip_paint(view._collect['stdout'].getvalue() or
                 view._collect['stderr'].getvalue())
 
-            resargs = (exp, actual, plugin)
+            resargs = (exp, actual, plugin, stdin, stdout)
             if actual.strip() != exp.output.strip():
                 results.append(FailureResult(*resargs))
             else:
@@ -288,9 +380,37 @@ class PluginTestReporter(object):
     def __init__(self, results):
         self.results = results
 
-    def dumps(self):
+    def _add_verbosity(self, out, stdin, stdout):
+        """
+        Formats the stdin and stdout into the output.
+        """
+        # Try to pretty print our data if it's JSON
+        data = [stdin, stdout]
+        for i in (0, 1):
+            try:
+                obj = json.loads(data[i])
+                data[i] = json.dumps(obj, indent=2)
+            except ValueError:
+                # Wasn't JSON
+                pass
+            data[i] = _indent(data[i].splitlines())
+
+        out.append(u'stdin (sent to the plugin)')
+        out.append(u'')
+        out.extend(data[0])
+        out.append(u'')
+        out.append(u'stdout (received from the plugin)')
+        out.append(u'')
+        out.extend(data[1])
+        out.append(u'')
+        out.append(REPORTER_HORIZONTAL_DIVIDER)
+
+    def dumps(self, verbose=False):
         """
         Formats a list of test results to unicode.
+
+        The reporter can also output the value of what was sent to stdin and
+        what the plugin sent to stdout if ``verbose`` is ``True``.
         """
         out = []
 
@@ -298,14 +418,22 @@ class PluginTestReporter(object):
 
         for result in results:
             exprange = result.expectation.range
+            v_out = []
+
+            if verbose:
+                self._add_verbosity(v_out, result.stdin, result.stdout)
+
             if isinstance(result, SuccessResult):
                 out.append(green_bold(u'{0:02d} – {1:02d} Pass'.format(
                     exprange[0], exprange[1])))
                 out.append(u'')
+                out.extend(v_out)
                 continue
 
             out.append(red_bold(u'{0:02d} – {1:02d} Fail'.format(
                 exprange[0], exprange[1])))
+
+            out.extend(v_out)
 
             out.append(u'')
 

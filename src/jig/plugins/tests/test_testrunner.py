@@ -1,9 +1,12 @@
 # coding=utf-8
+import json
 from os import makedirs
-from codecs import open
 from os.path import join, dirname
+from codecs import open
 from tempfile import mkdtemp
 from textwrap import dedent
+from collections import OrderedDict
+from copy import copy
 
 from mock import patch
 
@@ -14,9 +17,82 @@ from jig.conf import CODEC
 from jig.tools import NumberedDirectoriesToGit
 from jig.plugins import create_plugin, Plugin
 from jig.tests.testcase import JigTestCase, PluginTestCase
-from jig.plugins.testrunner import (PluginTestRunner,
+from jig.plugins.testrunner import (PluginTestRunner, _indent,
     InstrumentedGitDiffIndex, PluginTestReporter, get_expectations,
-    Expectation, SuccessResult, FailureResult, REPORTER_HORIZONTAL_DIVIDER)
+    Expectation, Result, SuccessResult, FailureResult,
+    REPORTER_HORIZONTAL_DIVIDER)
+
+
+class TestResult(PluginTestCase):
+
+    """
+    Test the base class for success and failure results.
+
+    """
+    def test_requires_correct_args(self):
+        """
+        TypeError if missing arguments.
+        """
+        with self.assertRaises(TypeError):
+            Result._make(tuple())
+
+    def test_will_make_from_iterable(self):
+        """
+        Class method can create new results.
+        """
+        result = Result._make((None, None, None, None, None))
+
+        self.assertEqual(
+            'Result(expectation=None, actual=None, plugin=None, '
+                'stdin=None, stdout=None)',
+            repr(result))
+
+    def test_convert_to_dict(self):
+        """
+        Can convert to a dictionary.
+        """
+        result = Result(None, None, None, None, None)
+
+        self.assertEqual(OrderedDict([
+            ('expectation', None),
+            ('actual', None),
+            ('plugin', None),
+            ('stdin', None),
+            ('stdout', None)]),
+            result._asdict())
+
+    def test_can_replace(self):
+        """
+        Can replace values.
+        """
+        result1 = Result(None, None, None, None, None)
+
+        result2 = result1._replace(expectation=1, actual=1)
+
+        self.assertEqual(
+            'Result(expectation=1, actual=1, plugin=None, '
+                'stdin=None, stdout=None)',
+            repr(result2))
+
+    def test_replace_checks_fields(self):
+        """
+        Replace will not work if the keyword is incorrect.
+        """
+        result = Result(None, None, None, None, None)
+
+        with self.assertRaises(ValueError):
+            result._replace(not_a_field=1)
+
+    def test_can_copy(self):
+        """
+        Can copy.
+        """
+        result1 = Result(None, None, None, None, None)
+
+        result2 = copy(result1)
+
+        self.assertTrue(result1 == result2)
+        self.assertFalse(result1 is result2)
 
 
 class TestPluginTestRunner(PluginTestCase):
@@ -438,6 +514,76 @@ class TestPluginTestReporter(PluginTestCase):
             Pass 2, Fail 1'''.format(REPORTER_HORIZONTAL_DIVIDER),
             ptr.dumps())
 
+    def test_outputs_stdin_stdout(self):
+        """
+        Will report the input and output of a plugin.
+        """
+        stdin = json.dumps(['a', 'b', 'c'])
+        stdout = json.dumps(['d', 'e', 'f'])
+
+        expectation = Expectation((1, 2), None, u'aaa')
+        results = [
+            SuccessResult(actual=u'aaa', expectation=expectation,
+                plugin=MockPlugin(), stdin=stdin, stdout=stdout)]
+
+        ptr = PluginTestReporter(results)
+
+        self.assertResults(u'''
+            01 – 02 Pass
+
+            stdin (sent to the plugin)
+
+                [
+                  "a", 
+                  "b", 
+                  "c"
+                ]
+
+            stdout (received from the plugin)
+
+                [
+                  "d", 
+                  "e", 
+                  "f"
+                ]
+
+            {0}
+            Pass 1, Fail 0'''.format(REPORTER_HORIZONTAL_DIVIDER),
+            ptr.dumps(verbose=True))
+
+    def tests_outputs_stdout_not_json(self):
+        """
+        Will report input and output, even if it's not JSON.
+        """
+        stdin = 'a\nb\nc\n'
+        stdout = 'd\ne\nf\n'
+
+        expectation = Expectation((1, 2), None, u'aaa')
+        results = [
+            SuccessResult(actual=u'aaa', expectation=expectation,
+                plugin=MockPlugin(), stdin=stdin, stdout=stdout)]
+
+        ptr = PluginTestReporter(results)
+
+        self.assertResults(u'''
+            01 – 02 Pass
+
+            stdin (sent to the plugin)
+
+                a
+                b
+                c
+
+            stdout (received from the plugin)
+
+                d
+                e
+                f
+
+            {0}
+            Pass 1, Fail 0'''.format(REPORTER_HORIZONTAL_DIVIDER),
+            ptr.dumps(verbose=True))
+
 
 class TestGetExpectations(PluginTestCase):
 
@@ -627,3 +773,40 @@ class TestInstrumentedGitDiffIndex(JigTestCase):
         self.assertEqual(1, len(filenames))
         self.assertEqual(
             '/path/argument.txt', filenames[0])
+
+
+class TestIndent(JigTestCase):
+
+    """
+    The indent method will indent a sequence of strings.
+
+    """
+    def test_indent_string(self):
+        """
+        If the payload is a string it indents and returns a string.
+        """
+        self.assertEqual('    a', _indent('a'))
+
+    def test_indents_list(self):
+        """
+        List payload indents each item and returns a list.
+        """
+        self.assertEqual(
+            [u'    a', u'    b', u'    c'],
+            _indent(['a', 'b', 'c']))
+
+    def test_indents_different_by(self):
+        """
+        Can change the default indent of 4 to a different integer.
+        """
+        self.assertEqual(
+            [u' a', u' b', u' c'],
+            _indent(['a', 'b', 'c'], by=1))
+
+    def test_indents_different_character(self):
+        """
+        Can change the character used to indent to something else.
+        """
+        self.assertEqual(
+            [u'?a', u'?b', u'?c'],
+            _indent(['a', 'b', 'c'], by=1, character='?'))
