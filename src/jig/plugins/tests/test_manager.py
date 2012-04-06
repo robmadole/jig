@@ -1,3 +1,4 @@
+# coding=utf-8
 import json
 from os.path import join
 from subprocess import Popen
@@ -263,3 +264,21 @@ class TestPlugin(PluginTestCase):
         self.assertEqual(1, retcode)
         self.assertEqual('', stdout)
         self.assertEqual('Gazoonkle was discombobulated', stderr)
+
+    def test_unicode_in_stream(self):
+        """
+        UTF-8 encoded streams get converted back to unicode.
+        """
+        pm = PluginManager(self.jigconfig)
+
+        pm.add(join(self.fixturesdir, 'plugin01'))
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[0])
+
+        with patch.object(Popen, 'communicate'):
+            # Send it encoded unicode to see if it will convert it back
+            Popen.communicate.return_value = (u'å∫ç'.encode('utf-8'), '')
+
+            retcode, stdout, stderr = pm.plugins[0].pre_commit(gdi)
+
+        self.assertEqual(u'å∫ç', stdout)
+        self.assertEqual(u'', stderr)

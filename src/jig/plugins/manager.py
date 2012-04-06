@@ -250,14 +250,19 @@ class Plugin(object):
 
         try:
             stdout, stderr = ph.communicate(stdin)
+
+            # Convert to unicode
+            stdout = stdout.decode('utf-8')
+            stderr = stderr.decode('utf-8')
+
             retcode = ph.returncode
         except OSError as ose:
             # Generic non-zero retcode that indicates an error
             retcode = 1
             if ose.errno == 32:
-                stderr = 'Error: received SIGPIPE from the command'
+                stderr = u'Error: received SIGPIPE from the command'
             else:
-                stderr = str(ose)
+                stderr = unicode(ose)
 
         # And return the relevant stuff
         return retcode, stdout, stderr

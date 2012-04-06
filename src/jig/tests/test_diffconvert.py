@@ -8,7 +8,6 @@ from operator import itemgetter
 
 from mock import Mock
 from git import Repo
-from nose.plugins.attrib import attr
 
 from jig.tests.testcase import JigTestCase
 from jig.diffconvert import describe_diff, DiffType, GitDiffIndex
@@ -436,7 +435,6 @@ class TestGitDiffIndex(JigTestCase):
         # But we don't include the diff since it's binary data
         self.assertEqual([], gdi.files().next()['diff'])
 
-    @attr('focus')
     def test_symlinks(self):
         """
         Symlinks are ignored because they are not real files.
