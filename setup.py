@@ -18,7 +18,17 @@ setup(name='jig',
     description="Check your code for stuff before you `git commit`",
     long_description=README + '\n\n' + NEWS,
     classifiers=[
-      # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'License :: OSI Approved :: MIT License',
+        'Intended Audience :: Developers',
+        'Natural Language :: English',
+        'Operating System :: POSIX',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Software Development :: Quality Assurance',
+        'Topic :: Software Development :: Version Control',
+        'Topic :: Text Processing'
     ],
     keywords='git hooks code smell lint',
     author='Rob Madole',
