@@ -17,7 +17,9 @@ right now, but the real goal is to make it easy for you to write your own.
 Install it
 ----------
 
-The Jig command line tool is written in Python and is available on PyPi. ::
+The Jig command line tool is written in Python and is available on PyPi.
+
+.. code-block:: console
 
     $ pip install jig || easy_install jig
 
@@ -36,6 +38,8 @@ Change directories into your Git repository and initialize it to use Jig.
     Git repository has been initialized for use with Jig.
 
 Install some Jig plugins.
+
+.. code-block:: console
 
     $ jig plugin add http://github.com/robmadole/jig-plugins
     Added plugin pep8-checker in bundle jig-plugins to the repository.
