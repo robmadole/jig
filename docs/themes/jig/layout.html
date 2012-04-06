@@ -1,0 +1,52 @@
+{% extends "basic/layout.html" %}
+{%- block sidebarsourcelink %}
+{%- endblock %}
+
+{%- block sidebarsearch %}
+<div id="searchbox" style="display: none">
+  <h3>Search</h3>
+    <form class="search" action="{{ pathto('search') }}" method="get">
+      <input type="text" name="q" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+{%- endblock %}
+
+{%- block sidebartoc %}
+  {%- if display_toc %}
+    <h3><a href="{{ pathto(master_doc) }}">{{ _('Jig documentation') }}</a></h3>
+    {{ toc }}
+  {%- endif %}
+  <h3>On GitHub</h3>
+  <ul>
+    <li><a href="http://github.com/robmadole/jig">Get the code</a></li>
+    <li><a href="http://github.com/robmadole/jig/issues">Report an issue</a></li>
+  </ul>
+
+  <iframe src="http://markdotto.github.com/github-buttons/github-btn.html?user=robmadole&repo=jig&type=watch&count=false&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="170px" height="30px"></iframe>
+
+
+{%- endblock %}
+
+{%- block sidebarrel %}
+{%- endblock %}
+
+{%- block document %}
+    <div class="documentwrapper">
+      {% if pagename == 'index' %}
+      <img class="hook-logo" src="_static/hook.png" />
+      {% endif %}
+    {%- if render_sidebar %}
+      <div class="bodywrapper">
+    {%- endif %}
+        <div class="body">
+          {% block body %} {% endblock %}
+        </div>
+    {%- if render_sidebar %}
+      </div>
+    {%- endif %}
+    </div>
+{%- endblock %}

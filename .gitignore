@@ -17,3 +17,4 @@ cover
 .jig
 .noseids
 .vimdir
+*.DS_Store
