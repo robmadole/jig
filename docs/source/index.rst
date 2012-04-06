@@ -12,11 +12,7 @@ Jig is a command line tool as well as a utility for creating and running "plugin
 It has a set of `common plugins`_ that will probably be useful to you
 right now, but the real goal is to make it easy for you to write your own.
 
-Jump straight to it
--------------------
-
-* :doc:`Jig's command line tool <cli>`
-* :doc:`Build your own Jig plugins <pluginapi>`
+.. _install:
 
 Install it
 ----------
@@ -31,38 +27,15 @@ This is just a little shell trick that uses ``easy_install`` if it can't locate
 Test drive
 ----------
 
-Let's test this out first with a new repository. ::
+Change directories into your Git repository and initialize it to use Jig.
 
-    $ mkdir gitrepo; cd $_
-    $ git init .
+.. code-block:: console
 
-Create the root commit. Git repositories are not very useful without it.
-
-::
-
-    $ echo "Testing Jig" > README
-    $ git add README; git commit -m 'First commit!'
-    [master (root-commit) bc45fd3] First commit!
-    1 files changed, 1 insertions(+), 0 deletions(-)
-    create mode 100644 README
-
-Jig will create the ``pre-commit`` hook for you automatically.  It will also
-create a ``.jig`` directory to hold configuration files. Just point it at a Git
-repository and run this command:
-
-::
-
-    $ cd gitrepo
+    $ cd myrepo
     $ jig init .
     Git repository has been initialized for use with Jig.
 
-If you're curious, you can :ref:`see what this thing has done
-<development-plumbing>` to your repository.
-
-Jig uses "plugins" to do the real work. Your Jig config file (in
-:file:`.jig/plugins.cfg`) is empty which means you have no plugins installed.
-
-::
+Install some Jig plugins.
 
     $ jig plugin add http://github.com/robmadole/jig-plugins
     Added plugin pep8-checker in bundle jig-plugins to the repository.
@@ -70,52 +43,35 @@ Jig uses "plugins" to do the real work. Your Jig config file (in
     Added plugin whitespace in bundle jig-plugins to the repository.
     Added plugin woops in bundle jig-plugins to the repository.
 
-Let's test our pep8-checker. `PEP8`_ is an endorsed style guide for writing
-Python code. Johann Rocholl `created a tool`_ that checks for compliance.
+Stage some changes and then commit.
 
-Create a new file and put all of our imports on one line. This is contrary to
-PEP8. How dreadful.
+.. code-block:: console
 
-::
+    $ git add mylib.py
 
-    $ echo "import this; import that; import other" > myapp.py
+Jig will run and let you know if it catches anything.
 
-Jig only works off the files you've staged for a commit.
+.. code-block:: console
 
-::
+    $ git commit -m 'Adding my awesome new library'
+    ▾  woops
 
-    $ git add myapp.py
-
-See it in action
-----------------
-
-With our staged file, we're ready to commit.
-
-::
-
-    $ git commit -m 'Writing some hard to read Python code'
-    ▾  pep8-checker
-
-    ⚠  line 1: myapp.py
-        import this; import that; import other
-         - E702 multiple statements on one line (semicolon)
+    ⚠  line 23: mylib.py
+        print statement
 
     Ran 1 plugin
         Info 0 Warn 1 Stop 0
 
     Commit anyway (hit enter), or "c" to cancel the commit
 
-Jig isn't pushy. You can hit enter to commit anyway or :kbd:`c` cancels the
-commit and gives you a chance to make changes.
+Where to go next
+----------------
 
-What can the `common plugins`_ do besides check PEP8?
+.. toctree::
+   :maxdepth: 2
 
-* Pyflakes - analyze Python files and check for various erros (written by the
-  Divmod developers)
-* Whitespace - look for lines with nothing but whitespace plus mixed tabs and
-  spaces
-* Woops - check for silly errors (like leaving a ``console.log(foo)`` in your
-  JavaScript)
+   usage
+   pluginapi
 
 In-depth docs
 --------------
@@ -124,14 +80,6 @@ In-depth docs
    :maxdepth: 2
 
    cli
-   pluginapi
-
-Developer docs
---------------
-
-.. toctree::
-   :maxdepth: 2
-
    devapi
 
 License

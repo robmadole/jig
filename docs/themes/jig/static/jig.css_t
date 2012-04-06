@@ -1,9 +1,11 @@
 @import url("basic.css");
 
-@import url(http://fonts.googleapis.com/css?family=PT+Serif:400,400italic|PT+Sans|PT+Mono);
+@import url(http://fonts.googleapis.com/css?family=PT+Serif:400,700,400italic|PT+Sans|PT+Mono);
 
 .hook-logo {
-  float: right;
+    float: right;
+    margin-top: 30px;
+    margin-left: 25px;
 }
 
 html {
@@ -149,4 +151,8 @@ div.footer {
 
 iframe {
     display: block;
+}
+
+strong, b {
+    font-weight: 700;
 }

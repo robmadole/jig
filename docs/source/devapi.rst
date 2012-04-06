@@ -1,5 +1,5 @@
-Hacking on Jig and internal API
-===============================
+Hacking on Jig
+==============
 
 .. contents::
 
@@ -137,56 +137,5 @@ Build the HTML version:
 The builds will be placed in :file:`build`.
 
 .. _Sphinx: http://sphinx.pocoo.org/
-
-API Reference
--------------
-
-.. note:: These are the internal objects used by Jig. You only need to worry
-          about these if you are making modifications to how Jig works.
-
-          You don't need any of the following documentation to :doc:`write your
-          own plugins <pluginapi>`.
-
-jig.diffconvert
-~~~~~~~~~~~~~~~
-
-.. automodule:: jig.diffconvert
-   :members:
-
-jig.exc
-~~~~~~~
-
-.. automodule:: jig.exc
-   :members:
-
-jig.gitutils
-~~~~~~~~~~~~
-
-.. automodule:: jig.gitutils
-   :members:
-
-jig.output
-~~~~~~~~~~
-
-.. automodule:: jig.output
-   :members:
-
-jig.plugins
-~~~~~~~~~~~
-
-.. automodule:: jig.plugins
-   :members:
-
-jig.runner
-~~~~~~~~~~
-
-.. automodule:: jig.runner
-   :members:
-
-jig.tools
-~~~~~~~~~
-
-.. automodule:: jig.tools
-   :members:
 
 .. _JSON: http://www.json.org/

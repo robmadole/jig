@@ -1,5 +1,5 @@
-Plugin API
-==========
+How to write plugins
+====================
 
 Jig by itself is useless. You need "plugins" to do the work.
 
@@ -31,7 +31,7 @@ can also contain default settings but they aren't required.
 
 Here's an example:
 
-::
+.. code-block:: ini
 
     [plugin]
     bundle = mybundle
@@ -44,7 +44,7 @@ Here's an example:
 
 If you want to add settings to your plugin which can be read by your ``pre-commit`` script, you can do that like this:
 
-::
+.. code-block:: ini
 
     [plugin]
     bundle = mybundle
@@ -58,7 +58,7 @@ Here's a very simple ``pre-commit`` script written with `Node.js`_. You can use
 any scripting language that you wish as long as it's installed on the system
 that runs the plugin.
 
-::
+.. code-block:: javascript
 
     #!/usr/bin/env node
     process.stdout.write('Always look on the bright side of life');
@@ -66,7 +66,7 @@ that runs the plugin.
 
 Running this plugin with Jig will give you output like this:
 
-::
+.. code-block:: console
 
     ▾  myplugin
 
@@ -92,7 +92,7 @@ Command line
 
 Tests are ran using Jig's command line tool.
 
-::
+.. code-block:: console
 
     $ jig plugin test -h
     usage: jig plugin test [-h] PLUGIN
@@ -115,7 +115,7 @@ We'll call the plugin ``bright-side`` and tell Jig the bundle name is
 ``pythonlyrics``. (Afterall we'll probably be creating more of these, might as
 well bundle them together.)
 
-::
+.. code-block:: console
 
     $ jig plugin create bright-side pythonlyrics
     Created plugin as ./bright-side
@@ -123,14 +123,14 @@ well bundle them together.)
 The default template is in Python, if we take a look at the :file:`pre-commit`
 we can see that it starts with this:
 
-::
+.. code-block:: python
 
     #!/usr/bin/env python
 
 The pre-commit Jig created is too verbose for this example. Remove
 everything in there and replace it with this:
 
-::
+.. code-block:: python
 
     #!/usr/bin/env python
     import sys
@@ -140,7 +140,7 @@ everything in there and replace it with this:
 
 OK, let's run the tests.
 
-::
+.. code-block:: console
 
     $ jig plugin tests bright-side
     Could not find any tests: bright-side/tests.
@@ -164,7 +164,7 @@ against.
 
 To create your fixture we need to start a ``tests`` directory:
 
-::
+.. code-block:: console
 
     $ mkdir bright-side/tests
 
@@ -175,20 +175,20 @@ in Git terms because it's the only commit that doesn't have a parent).
 Numbering starts at ``01``. We'll create an empty ``README`` file because
 we need something of substance for that first commit.
 
-::
+.. code-block:: console
 
     $ mkdir bright-side/tests/01
     $ touch bright-side/tests/01/README
 
 The second commit will be based off the first one, copy the directory to :file:`02`.
 
-::
+.. code-block:: console
 
     $ cp -R bright-side/tests/01 bright-side/tests/02
 
 We need something to change between ``01`` and ``02`` for there to be a commit.
 
-::
+.. code-block:: console
 
     $ echo "The Life of Brian" > bright-side/tests/02/title.txt
 
@@ -202,7 +202,7 @@ of Jig's testing framework and it comes for free.
 
 Now that we have a test fixture as a Git repository, run the tests.
 
-::
+.. code-block:: console
 
     $ jig plugin tests bright-side
     Missing expectation file: bright-side/tests/expect.rst.
@@ -217,7 +217,7 @@ runs, you **document your plugin to test it**  using `reStructuredText`_.
 
 Create :file:`bright-side/tests/expect.rst` and edit it to read:
 
-::
+.. code-block:: rst
 
     Monty Python lyrics
     ===================
@@ -234,7 +234,7 @@ Wiki markup language.
 Let's run this test and we can see how this document serves as the description
 of the behavior we expect from the plugin.
 
-::
+.. code-block:: console
 
     $ jig plugin test bright-side
     01 – 02 Fail
@@ -272,7 +272,7 @@ If we update our :file:`expect.rst` file one we can get a passing test.
 .. warning:: Yes, that's Unicode. It's best that you copy and paste instead of
              trying to type this out.
 
-::
+.. code-block:: rst
 
     Monty Python lyrics
     ===================
@@ -292,7 +292,7 @@ If we update our :file:`expect.rst` file one we can get a passing test.
 
 Run the tests again:
 
-::
+.. code-block:: console
 
     $ jig plugin test bright-side
     01 – 02 Pass
@@ -316,6 +316,8 @@ in and the data going out. It's JSON both ways.
 
 The following outlines what you can expect.
 
+.. _pluginapi-input:
+
 Input
 ~~~~~
 
@@ -323,7 +325,8 @@ The input format is organized by filename. If we turn on verbose output when we
 run the tests we can see exactly what Jig is feeding our ``bright-side``
 plugin.
 
-::
+.. code-block:: console
+    :emphasize-lines: 1
 
     $ jig plugin test --verbose bright-side
 
@@ -469,7 +472,7 @@ Edit :file:`bright-side/config.cfg`:
 
 Run the tests again:
 
-.. code-block:: bash
+.. code-block:: console
 
     $ jig plugin test --verbose bright-side
     01 – 02 Pass
@@ -499,13 +502,33 @@ other data types you'll need to convert them yourself.
 While testing, Jig provides a directive that allows us to test our plugin based
 on different settings.
 
-Edit :file:`bright-side/tests/expect.rst` and add this before the ``..
-expectation::`` directive.
+Edit :file:`bright-side/tests/expect.rst` and add another section and test to
+our expectations.
 
 .. code-block:: rst
-    :emphasize-lines: 3,5,6
+    :emphasize-lines: 20
+
+    Monty Python lyrics
+    ===================
 
     The bright-side plugin simply reminds you to look on the bright side of life.
+
+    .. expectation::
+        :from: 01
+        :to: 02
+
+        ▾  bright-side
+
+        ✓  Always look on the bright side of life
+
+        Ran 1 plugin
+            Info 1 Warn 0 Stop 0
+
+    Sing to me
+    ~~~~~~~~~~
+
+    It will sing to you. Change the ``sing_also`` to ``yes`` to get some additional
+    output.
 
     .. plugin-settings::
 
@@ -516,34 +539,476 @@ expectation::`` directive.
         :from: 01
         :to: 02
 
-When the test runs this data will be used as 
-With this knowledge of the data, we can alter our plugin to provide more detail.
+        ▾  bright-side
+
+        ✓  Always look on the bright side of life
+
+        Ran 1 plugin
+            Info 1 Warn 0 Stop 0
+
+Our :file:`pre-commit` script hasn't been altered to use this new setting so
+running the test again will show that this passes.
+
+.. code-block:: console
+
+    $ jig plugin test bright-side
+    01 – 02 Pass
+
+    01 – 02 Pass
+
+    Pass 2, Fail 0
+
+Change the :file:``bright-side/pre-commit`` script to this:
+
+.. code-block:: python
+    :emphasize-lines: 4,6,8,9
+
+    #!/usr/bin/env python
+    # coding=utf-8
+    import sys
+    import json
+
+    data = json.loads(sys.stdin.read())
+
+    if data['config']['sing_also'] == 'yes':
+        message = '♫ Always look on the bright side of life ♫'
+    else:
+        message = 'Always look on the bright side of life'
+
+    sys.stdout.write(message)
+    sys.exit(0)
+
+The next test result will show a failure because of our altered setting.
+
+.. code-block:: console
+
+    01 – 02 Pass
+
+    01 – 02 Fail
+
+    Actual
+    ················································································
+
+    ▾  bright-side
+
+    ✓  ♫ Always look on the bright side of life ♫
+
+    Ran 1 plugin
+        Info 1 Warn 0 Stop 0
+
+    Diff
+    ················································································
+
+      ▾  bright-side
+
+    - ✓  Always look on the bright side of life
+    + ✓  ♫ Always look on the bright side of life ♫
+
+      Ran 1 plugin
+          Info 1 Warn 0 Stop 0
+
+    Pass 1, Fail 1
+
+Change the expectation to look for our singing version of the chorus.
+
+.. code-block:: rst
+
+    .. plugin-settings::
+
+        sing_also = yes
+        second_chorus_line = no
+
+    .. expectation::
+        :from: 01
+        :to: 02
+
+        ▾  bright-side
+
+        ✓  ♫ Always look on the bright side of life ♫
+
+        Ran 1 plugin
+            Info 1 Warn 0 Stop 0
+
+With that change it should bring our tests back to a passing state.
+
+.. code-block:: console
+
+    $ jig plugin test bright-side
+    01 – 02 Pass
+
+    01 – 02 Pass
+
+    Pass 2, Fail 0
+
+.. warning:: The ``.. plugin-settings::`` directive is sticky to a section. It
+    doesn't apply just once for the next ``.. expectation::`` directive but will
+    continue to apply until a section change. Sections in our example are
+    separated by ``~~~~~~~~~~~~~~~``.
 
 Output
 ~~~~~~
 
-Line specific messages
-~~~~~~~~~~~~~~~~~~~~~~
+Now that we are familiar with the input format, it's time to improve our
+:file:`pre-commit` script and give it a little more whizbang by specifying
+output.
 
-File specific messages
-~~~~~~~~~~~~~~~~~~~~~~
+Info, warnings, and stops
+.........................
 
-Commit specific messages
-~~~~~~~~~~~~~~~~~~~~~~~~
+Jig supports three basic types of messages.
+
+* **info** (you can shorten this to "i")
+* **warn** (you can shorten this to "w")
+* **stop** (you can shorten this to "s")
+
+**The default type is ``info``**
+
+They are displayed to the user with differently and tallied individually at the
+end of Jig's execution.
+
+.. code-block:: console
+
+    ▾  Plugin 1
+
+    ✓  info
+
+    ⚠  warn
+
+    ✕  stop
+
+.. _pluginapi-simple-messages:
+
+Simple messages
+...............
+
+A simple message is not specific to a file or a line in a file. It's used to
+communicate something to the user that is more general.
+
+Examples:
+
+.. code-block:: javascript
+
+    [
+        'Your commit looks really good, excellent job'
+    ]
+
+More than one message:
+
+
+.. code-block:: javascript
+
+    [
+        'Your commit looks really good, excellent job',
+        'Give yourself a pat on the back'
+    ]
+
+This will produce output similar to this:
+
+.. code-block:: console
+
+    ▾  My-Plugin
+
+    ✓  Your commit looks really good, excellent job
+
+    ✓  Give yourself a pat on the back
+
+    Ran 1 plugin
+        Info 1 Warn 0 Stop 0
+
+The default message type is ``info`` but you can change it by providing an array
+of ``[TYPE, MESSAGE]``.
+
+.. code-block:: javascript
+
+    [
+        ['w', 'Your commit looks a little janky'],
+        ['s', 'On second thought, this is a horrible commit']
+    ]
+
+The output will look like this:
+
+.. code-block:: console
+
+    ▾  My-Plugin
+
+    ⚠  Your commit looks a little janky
+
+    ✕  On second thought, this is a horrible commit
+
+    Ran 1 plugin
+        Info 0 Warn 1 Stop 1
+
+File messages
+.............
+
+File messages are specific to files but not to a particular line.
+
+Examples:
+
+.. code-block:: javascript
+
+    {
+        'myMainFile.javascript': [
+            'The extension should probably just be .js',
+            'You should not camelCase your JavaScript filenames'
+        ]
+    }
+
+The output will include the filename:
+
+.. code-block:: console
+
+    ▾  My-Plugin
+
+    ✓  myMainFile.javascript
+        The extension should probably just be .js
+
+    ✓  myMainFile.javascript
+        You should not camelCase your JavaScript filenames
+
+    Ran 1 plugin
+        Info 2 Warn 0 Stop 0
+
+You can specify the type of message:
+
+.. code-block:: javascript
+
+    {
+        'myMainFile.javascript': [
+            ['i', 'The extension should probably just be .js'],
+            ['w', 'You should not camelCase your JavaScript filenames'],
+            ['s', 'Really? Putting "File" in the name of your file?']
+        ]
+    }
+
+The output is:
+
+.. code-block:: console
+
+    ▾  My-Plugin
+
+    ✓  myMainFile.javascript
+        The extension should probably just be .js
+
+    ⚠  myMainFile.javascript
+        You should not camelCase your JavaScript filenames
+
+    ✕  myMainFile.javascript
+        Really? Putting "File" in the name of your file?
+
+    Ran 1 plugin
+        Info 1 Warn 1 Stop 1
+
+Line messages
+.............
+
+These are very similar to file messages but include the line number.
+
+Examples:
+
+.. code-block:: javascript
+
+    {
+        'utils.sh': [
+            [1, 's', 'You don't have a hashbang (#!) as the first line'],
+        ]
+    }
+
+This will include the line number in the output:
+
+.. code-block:: console
+
+    ▾  My-Plugin
+
+    ✕  line 1: utils.sh
+        You don't have a hashbang (#!) as the first line
+
+    Ran 1 plugin
+        Info 0 Warn 0 Stop 1
+
+Multiple messages for the file can be specified:
+
+.. code-block:: javascript
+
+    {
+        'utils.sh': [
+            [1, 's', 'You don't have a hashbang (#!) as the first line'],
+            [5, 'i', 'This is a bash style if statement and will fail with sh'],
+            [500, 'w', "Getting a bit long is it not? You could use Python instead...']
+        ]
+    }
+
+The output:
+
+.. code-block:: console
+
+    ▾  My-Plugin
+
+    ✕  line 1: utils.sh
+        You don't have a hashbang (#!) as the first line
+
+    ✓  line 1: utils.sh
+        This is a bash style if statement and will fail with sh
+
+    ⚠  line 1: utils.sh
+        Getting a bit long is it not? You could use Python instead...
+
+    Ran 1 plugin
+        Info 1 Warn 1 Stop 1
+
+Non-JSON output
+...............
+
+In our examples for the :ref:`input <pluginapi-input>` formatting, our
+:file:`pre-commit` script simply printed the messages directly to standard out.
+They were not in JSON format. Jig is forgiving of this and will not reject
+messages that come in this way.
+
+The output will be treated as :ref:`simple messages <pluginapi-simple-messages>`
+but you'll have to format newlines yourself.
+
+The following examples are equivalent:
+
+.. code-block:: python
+
+    # As a string with a newline
+    sys.stdout.write('Simple message one')
+    sys.exit(0)
+
+.. code-block:: python
+
+    # As JSON
+    sys.stdout.write(json.dumps(
+        ['Simple message one']))
+    sys.exit(0)
+
+The output for both of these would be
+
+.. code-block:: console
+
+    ▾  My-Plugin
+
+    ✓  Simple message one
+
+    Ran 1 plugin
+        Info 1 Warn 0 Stop 0
 
 Error handling
 --------------
 
+Jig pays attention to both the standard out and the standard error streams.
+
+If your plugins exits with an exit code of **1**, any data that is written to
+``stderr`` will be displayed to the user.
+
+.. code-block:: console
+
+    ▾  jslint
+
+    ✕  You need the jslint command line tool installed before running this plugin
+
+    Ran 1 plugin
+        Info 0 Warn 0 Stop 0
+        (1 plugin reported errors)
+
+When you are writing tests for you plugin, these are formatted in a friendly way
+to aid in debugging.
+
+.. code-block:: console
+
+    Actual
+    ················································································
+
+    Exit code: 1
+
+    Std out:
+    (none)
+
+    Std err:
+    You need the jslint command line tool installed before running this plugin
+
+
 Exit codes
 ~~~~~~~~~~
 
+Plugins should always exit with **0** or **1**.
+
+Exiting with 0
+..............
+
+An exit code of **0** means *the plugin functioned normally*. Even if it
+generated warnings or stop messages.
+
+Exiting with 1
+..............
+
+If your plugin fails to function as expected, it should exit witth **1**. This
+indicates to Jig that a problem exists and the output, if any, from the plugin
+is not a normal collection of messages that Jig will understand.
+
+A common reason for exiting with **1** would be a missing dependency.
+
+.. code-block:: python
+
+    import sys
+    from subprocess import call, PIPE
+
+    # which exits with 1 if it can't find the command
+    if call(['which', 'jslint'], stdout=PIPE) == 1:
+        # Write to stderr, not stdout
+        sys.stderr.write('Could not find JSlint, do you need to install it?')
+        sys.exit(1)
+
 Binary files
 ------------
+
+Jig does not currently support binary files. It doesn't ignore them, but you
+will not get any data back in the ``diff`` section.
+
+For example, if an image was added you'll see something like this:
+
+.. code-block:: javascript
+
+    {
+      "files": [
+        {
+          "diff": [], 
+          "type": "added", 
+          "name": "some-image.png", 
+          "filename": "/Users/ericidle/bright-side/tests/02/some-image.png"
+        }, 
+      ]
+    }
+
+Symlinks
+--------
+
+Git supports symlinks but Jig will ignore them. This may change in the future,
+but since they cannot be treated the same as normal files a lot of plugin
+authors would not perform the additional error handling needed.
+
+If you have a valid case for needing to know about symlinks, submit a `feature
+request`_.
 
 .. _pluginapi-pre-commit-templates:
 
 Templates for pre-commit scripts
 --------------------------------
 
+Jig currently comes with one template.
+
+When you run the following command:
+
+.. code-block:: console
+
+    $ jig plugin create my-plugin my-bundle
+
+The templates can be found at:
+
+https://github.com/robmadole/jig/tree/master/src/jig/data/pre-commits
+
+At the moment the only template is Python. More are planned in the future.
+
 .. _Node.js: http://nodejs.org/
 .. _reStructuredText: http://docutils.sourceforge.net/rst.html
+.. _feature request: http://github.com/robmadole/jig/issues/new
