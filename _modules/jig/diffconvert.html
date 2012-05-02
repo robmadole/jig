@@ -1,0 +1,243 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jig.diffconvert &mdash; Jig 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/jig.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Jig 0.1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Jig 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+    <div class="documentwrapper">
+      
+      <div class="bodywrapper">
+        <div class="body">
+          
+  <h1>Source code for jig.diffconvert</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Git object converter</span>
+<span class="sd">====================</span>
+
+<span class="sd">`GitPython`_ does an excellent job of presenting native Git objects in Python</span>
+<span class="sd">objects that can be manipulated and used. However, the format is not ideal for</span>
+<span class="sd">our purposes.</span>
+
+<span class="sd">What is useful to a jig plugin author is the following:</span>
+
+<span class="sd">    1. What files changed</span>
+<span class="sd">    2. What&#39;s the simple diff for modified files</span>
+
+<span class="sd">This module manipulates :py:class:`git.DiffIndex` objects and provides other</span>
+<span class="sd">utilities for discovering differences between two strings.</span>
+
+<span class="sd">.. _GitPython: https://github.com/gitpython-developers/GitPython</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">difflib</span> <span class="kn">import</span> <span class="n">SequenceMatcher</span>
+
+<span class="kn">from</span> <span class="nn">git.exc</span> <span class="kn">import</span> <span class="n">BadObject</span>
+
+
+<div class="viewcode-block" id="describe_diff"><a class="viewcode-back" href="../../devapi.html#jig.diffconvert.describe_diff">[docs]</a><span class="k">def</span> <span class="nf">describe_diff</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes two strings and calculates the difference between them.</span>
+
+<span class="sd">    Output format is a list of::</span>
+
+<span class="sd">        (line_number, diff_type, line)</span>
+
+<span class="sd">    ``diff_type`` can be:</span>
+<span class="sd">        * ``&#39; &#39;``</span>
+<span class="sd">        * ``&#39;-&#39;``</span>
+<span class="sd">        * ``&#39;+&#39;``</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        &gt;&gt;&gt; list(describe_diff(&#39;a\\nb\\nc&#39;, &#39;a\\nc\\nd&#39;))</span>
+<span class="sd">        [(1, &#39; &#39;, &#39;a&#39;),</span>
+<span class="sd">        (2, &#39;-&#39;, &#39;b&#39;),</span>
+<span class="sd">        (2, &#39; &#39;, &#39;c&#39;),</span>
+<span class="sd">        (3, &#39;+&#39;, &#39;d&#39;)]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">j2</span> <span class="ow">in</span> <span class="n">SequenceMatcher</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">get_opcodes</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="s">&#39;equal&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="n">j1</span><span class="p">:</span><span class="n">j2</span><span class="p">]):</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="n">j1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="s">&#39;replace&#39;</span> <span class="ow">or</span> <span class="n">tag</span> <span class="o">==</span> <span class="s">&#39;delete&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i1</span><span class="p">:</span><span class="n">i2</span><span class="p">]):</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="n">i1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="s">&#39;replace&#39;</span> <span class="ow">or</span> <span class="n">tag</span> <span class="o">==</span> <span class="s">&#39;insert&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="n">j1</span><span class="p">:</span><span class="n">j2</span><span class="p">]):</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="n">j1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;+&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="DiffType"><a class="viewcode-back" href="../../devapi.html#jig.diffconvert.DiffType">[docs]</a><span class="k">class</span> <span class="nc">DiffType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    What kind of operation does this diff represent.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="s">&#39;added&#39;</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="s">&#39;deleted&#39;</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="s">&#39;renamed&#39;</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="s">&#39;modified&#39;</span>
+    <span class="n">U</span> <span class="o">=</span> <span class="s">&#39;unknown&#39;</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="DiffType.for_diff"><a class="viewcode-back" href="../../devapi.html#jig.diffconvert.DiffType.for_diff">[docs]</a>    <span class="k">def</span> <span class="nf">for_diff</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">diff</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines what type of diff this represents</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">diff</span><span class="o">.</span><span class="n">new_file</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">A</span>
+        <span class="k">elif</span> <span class="n">diff</span><span class="o">.</span><span class="n">deleted_file</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">D</span>
+        <span class="k">elif</span> <span class="n">diff</span><span class="o">.</span><span class="n">renamed</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">R</span>
+        <span class="k">elif</span> <span class="n">diff</span><span class="o">.</span><span class="n">a_blob</span> <span class="ow">and</span> <span class="n">diff</span><span class="o">.</span><span class="n">b_blob</span> <span class="ow">and</span> <span class="n">diff</span><span class="o">.</span><span class="n">a_blob</span> <span class="o">!=</span> <span class="n">diff</span><span class="o">.</span><span class="n">b_blob</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">M</span>
+
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">U</span>
+
+</div></div>
+<div class="viewcode-block" id="GitDiffIndex"><a class="viewcode-back" href="../../devapi.html#jig.diffconvert.GitDiffIndex">[docs]</a><span class="k">class</span> <span class="nc">GitDiffIndex</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts diff index object to something useful for pre-commit hooks.</span>
+
+<span class="sd">    The expected argument when creating an instance is a</span>
+<span class="sd">    :py:class:`git.diff.DiffIndex` object.</span>
+
+<span class="sd">    The following information is extracted from the list</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gitrepo</span><span class="p">,</span> <span class="n">difflist</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Where ``gitrepo`` is the path to the root of the Git repository.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gitrepo</span> <span class="o">=</span> <span class="n">gitrepo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">difflist</span> <span class="o">=</span> <span class="n">difflist</span>
+
+<div class="viewcode-block" id="GitDiffIndex.files"><a class="viewcode-back" href="../../devapi.html#jig.diffconvert.GitDiffIndex.files">[docs]</a>    <span class="k">def</span> <span class="nf">files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A generator for returning human-readable information about the diffs.</span>
+
+<span class="sd">        Generator yields dictionaries that contain filename, name, diff, and</span>
+<span class="sd">        type.</span>
+
+<span class="sd">        ``filename`` is the absolute path to the file that was modified.</span>
+
+<span class="sd">        ``name`` is the path of the file relative to the Git repository.</span>
+
+<span class="sd">        ``diff`` is a list of ``(line_number, &#39;+&#39;|&#39;-&#39;|&#39; &#39;, line)`` describing</span>
+<span class="sd">        the changes that occurred between the a_blob and b_blob from the</span>
+<span class="sd">        commit.</span>
+
+<span class="sd">        ``type`` is ``added``, ``deleted``, ``renamed``, ``modified`` and</span>
+<span class="sd">        describes the overall action that occurred on this file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">diff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">difflist</span><span class="p">:</span>
+            <span class="n">a_blob</span> <span class="o">=</span> <span class="n">diff</span><span class="o">.</span><span class="n">a_blob</span>
+            <span class="n">b_blob</span> <span class="o">=</span> <span class="n">diff</span><span class="o">.</span><span class="n">b_blob</span>
+
+            <span class="n">a_data</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="n">b_data</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">a_data</span> <span class="o">=</span> <span class="n">a_blob</span><span class="o">.</span><span class="n">data_stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="n">BadObject</span><span class="p">):</span>
+                <span class="k">pass</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">b_data</span> <span class="o">=</span> <span class="n">b_blob</span><span class="o">.</span><span class="n">data_stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="n">BadObject</span><span class="p">):</span>
+                <span class="k">pass</span>
+
+            <span class="n">linediff</span> <span class="o">=</span> <span class="n">describe_diff</span><span class="p">(</span><span class="n">a_data</span><span class="p">,</span> <span class="n">b_data</span><span class="p">)</span>
+
+            <span class="n">blob</span> <span class="o">=</span> <span class="n">a_blob</span> <span class="ow">or</span> <span class="n">b_blob</span>
+
+            <span class="k">yield</span> <span class="p">{</span>
+                <span class="s">&#39;filename&#39;</span><span class="p">:</span> <span class="n">blob</span><span class="o">.</span><span class="n">abspath</span><span class="p">,</span>
+                <span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="n">blob</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s">&#39;diff&#39;</span><span class="p">:</span> <span class="n">linediff</span><span class="p">,</span>
+                <span class="s">&#39;type&#39;</span><span class="p">:</span> <span class="n">DiffType</span><span class="o">.</span><span class="n">for_diff</span><span class="p">(</span><span class="n">diff</span><span class="p">)}</span></div></div>
+</pre></div>
+
+        </div>
+      </div>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>On GitHub</h3>
+  <ul>
+    <li><a href="http://github.com/robmadole/jig">Get the code</a></li>
+    <li><a href="http://github.com/robmadole/jig/issues">Report an issue</a></li>
+  </ul>
+
+  <iframe src="http://markdotto.github.com/github-buttons/github-btn.html?user=robmadole&repo=jig&type=watch&count=false&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="170px" height="30px"></iframe>
+<div id="searchbox" style="display: none">
+  <h3>Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Jig 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Rob Madole.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

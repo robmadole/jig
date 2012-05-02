@@ -1,0 +1,397 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Jig on the command line &mdash; Jig 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/jig.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Jig 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="Hacking on Jig" href="devapi.html" />
+    <link rel="prev" title="How to write plugins" href="pluginapi.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="devapi.html" title="Hacking on Jig"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pluginapi.html" title="How to write plugins"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Jig 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+    <div class="documentwrapper">
+      
+      <div class="bodywrapper">
+        <div class="body">
+          
+  <div class="section" id="jig-on-the-command-line">
+<h1><a class="toc-backref" href="#id1">Jig on the command line</a><a class="headerlink" href="#jig-on-the-command-line" title="Permalink to this headline">¶</a></h1>
+<p>The command line tool is split into sub-commands.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#jig-on-the-command-line" id="id1">Jig on the command line</a><ul>
+<li><a class="reference internal" href="#initialize-a-git-repository-to-use-jig" id="id2">Initialize a Git repository to use Jig</a></li>
+<li><a class="reference internal" href="#manage-your-plugins" id="id3">Manage your plugins</a><ul>
+<li><a class="reference internal" href="#listing-installed-plugins" id="id4">Listing installed plugins</a></li>
+<li><a class="reference internal" href="#adding-plugins" id="id5">Adding plugins</a></li>
+<li><a class="reference internal" href="#updating-plugins" id="id6">Updating plugins</a></li>
+<li><a class="reference internal" href="#removing-plugins" id="id7">Removing plugins</a></li>
+<li><a class="reference internal" href="#creating-a-plugin" id="id8">Creating a plugin</a></li>
+<li><a class="reference internal" href="#running-a-plugin-s-tests" id="id9">Running a plugin&#8217;s tests</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#run-jig-manually" id="id10">Run Jig manually</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>Jig&#8217;s help menu is available by running <tt class="docutils literal"><span class="pre">jig</span></tt> or <tt class="docutils literal"><span class="pre">jig</span> <span class="pre">--help</span></tt>.</p>
+<div class="highlight-python"><pre>$ jig --help
+usage: jig [-h] COMMAND
+
+optional arguments:
+  -h, --help  show this help message and exit
+
+jig commands:
+  init        Initialize a Git repository for use with Jig
+  plugin      Manage jig plugins
+  runnow      Run all plugins and show the results
+
+See `jig COMMAND --help` for more information</pre>
+</div>
+<div class="section" id="initialize-a-git-repository-to-use-jig">
+<span id="cli-init"></span><h2><a class="toc-backref" href="#id2">Initialize a Git repository to use Jig</a><a class="headerlink" href="#initialize-a-git-repository-to-use-jig" title="Permalink to this headline">¶</a></h2>
+<p>Before Jig can be used on a Git repository, it must create the
+<tt class="file docutils literal"><span class="pre">$GIT_REPO/.git/hooks/pre-commit</span></tt> hook and the <tt class="file docutils literal"><span class="pre">$GIT_REPO/.jig</span></tt>
+directory.</p>
+<p>This process is very similar to what Git itself does. Oddly enough the
+sub-command is named the same.</p>
+<div class="highlight-python"><pre>$ jig init --help
+usage: jig init [-h] [PATH]
+
+Initialize a Git repository for use with Jig
+
+positional arguments:
+  path        Path to the Git repository
+
+optional arguments:
+  -h, --help  show this help message and exit</pre>
+</div>
+<p>The initialization process is quick and painless.</p>
+<div class="highlight-python"><pre>$ mkdir gitrepo; cd $_
+$ git init .; jig init .
+Initialized empty Git repository in /Users/robmadole/gitrepo/.git/
+Git repository has been initialized for use with Jig.</pre>
+</div>
+<p>If there is a pre-existing hook, Jig will not overwrite it.</p>
+<div class="highlight-python"><pre>$ jig init .
+/Users/robmadole/gitrepo/.git/hooks/pre-commit already exists and we will
+not overwrite it. If you want to use jig you'll have to sort this out
+yourself.</pre>
+</div>
+</div>
+<div class="section" id="manage-your-plugins">
+<span id="cli-plugin"></span><h2><a class="toc-backref" href="#id3">Manage your plugins</a><a class="headerlink" href="#manage-your-plugins" title="Permalink to this headline">¶</a></h2>
+<p>Jig is useless without plugins to perform some work. Plugins can do anything
+the author chooses.</p>
+<p>More than one plugin can be installed. They can be added or removed. You can
+even use Jig to run <a class="reference internal" href="pluginapi.html#pluginapi-testing"><em>automated tests</em></a> on your plugins.</p>
+<div class="highlight-python"><pre>$ jig plugin --help
+usage: jig plugin [-h] ACTION
+
+Manage this repository's Jig plugins
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+actions:
+  available commands to manage plugins
+
+  {test,add,list,create,remove}
+    list                list installed plugins
+    add                 add a plugin
+    remove              remove an installed plugin
+    create              create a new plugin
+    test                run a suite of plugin tests</pre>
+</div>
+<div class="section" id="listing-installed-plugins">
+<span id="cli-plugin-list"></span><h3><a class="toc-backref" href="#id4">Listing installed plugins</a><a class="headerlink" href="#listing-installed-plugins" title="Permalink to this headline">¶</a></h3>
+<p>To list all installed plugins use the following command. Any installed plugin
+will be ran when the <tt class="docutils literal"><span class="pre">pre-commit</span></tt> hook or <tt class="docutils literal"><span class="pre">jig</span> <span class="pre">runnow</span></tt> is ran.</p>
+<div class="highlight-python"><pre>$ jig plugin list --help
+usage: jig plugin list [-h] [-r] [PATH]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --gitrepo PATH, -r PATH
+                        Path to the Git repository, default current directory</pre>
+</div>
+<p>Listing the plugin provides a quick summary like this:</p>
+<div class="highlight-python"><pre>$ jig plugin list
+Installed plugins
+
+Plugin name               Bundle name
+pep8-checker............. jig-plugins
+pyflakes................. jig-plugins
+whitespace............... jig-plugins
+woops.................... jig-plugins</pre>
+</div>
+</div>
+<div class="section" id="adding-plugins">
+<span id="cli-plugin-add"></span><h3><a class="toc-backref" href="#id5">Adding plugins</a><a class="headerlink" href="#adding-plugins" title="Permalink to this headline">¶</a></h3>
+<p>Jig doesn&#8217;t pre-install anything for you. You have to explicitly add them.</p>
+<div class="highlight-python"><pre>$ jig plugin add --help
+usage: jig plugin add [-h] [-r] URL|PATH
+
+positional arguments:
+  plugin                URL or path to the plugin directory
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --gitrepo PATH, -r PATH
+                        Path to the Git repository, default current directory</pre>
+</div>
+<p>Plugins can be added from Git URLs. If Jig detects that you&#8217;ve given it a URL
+it will attempt to clone it.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Right now Jig only supports cloning Git repositories. This may change
+in the future.</p>
+</div>
+<div class="highlight-python"><pre>$ jig plugin add http://github.com/robmadole/jig-plugins</pre>
+</div>
+<p>Or from local filesystem.</p>
+<div class="highlight-python"><pre>$ jig plugin add ./plugins/myplugin
+Added plugin myplugin in bundle mybundle to the repository.</pre>
+</div>
+<p>You can also add more than one plugin at a time.</p>
+<div class="highlight-python"><pre>$ jig plugin add ./plugins
+Added plugin pep8-checker in bundle jig-plugins to the repository.
+Added plugin pyflakes in bundle jig-plugins to the repository.
+Added plugin whitespace in bundle jig-plugins to the repository.
+Added plugin woops in bundle jig-plugins to the repository.</pre>
+</div>
+</div>
+<div class="section" id="updating-plugins">
+<span id="cli-plugin-update"></span><h3><a class="toc-backref" href="#id6">Updating plugins</a><a class="headerlink" href="#updating-plugins" title="Permalink to this headline">¶</a></h3>
+<p>If you&#8217;ve installed plugins through a URL, you can update plugins which will
+perform a <tt class="docutils literal"><span class="pre">git</span> <span class="pre">pull</span></tt> on each installed repository.</p>
+<div class="highlight-python"><pre>$ jig plugin update
+Updating plugins
+
+Plugin pep8-checker, woops, pyflakes, whitespace in bundle jig-plugins
+    Total 1 (delta 1), reused 0 (delta 0)
+    * refs/remotes/origin/master: fast forward to branch 'master'
+      old..new: a1a0e8b..3c54ac6
+    Updating a1a0e8b..3c54ac6
+    Fast forward
+     pep8-checker/pre-commit |    2 +-
+     1 files changed, 1 insertions(+), 1 deletions(-)</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This only works if you&#8217;ve installed a plugin via a Git URL.</p>
+</div>
+</div>
+<div class="section" id="removing-plugins">
+<span id="cli-plugin-remove"></span><h3><a class="toc-backref" href="#id7">Removing plugins</a><a class="headerlink" href="#removing-plugins" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><pre>$ jig plugin remove --help
+usage: jig plugin remove [-h] [-r] NAME [BUNDLE]
+
+positional arguments:
+  name                  Plugin name
+  bundle                Bundle name
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --gitrepo PATH, -r PATH
+                        Path to the Git repository, default current directory</pre>
+</div>
+<p>Once a plugin is added, it can be easily removed.</p>
+<div class="highlight-python"><pre>$ jig plugin remove myplugin
+Removed plugin myplugin</pre>
+</div>
+</div>
+<div class="section" id="creating-a-plugin">
+<span id="cli-plugin-create"></span><h3><a class="toc-backref" href="#id8">Creating a plugin</a><a class="headerlink" href="#creating-a-plugin" title="Permalink to this headline">¶</a></h3>
+<p>The standard Jig plugins each have a single purpose and perform their role
+well. However, you can probably think of at least one additional thing you&#8217;d
+like Jig to do.</p>
+<p>We encourage you to create your own plugins. A lot of work has gone into
+structuring the plugins in such a way that they are intuitive to write and are
+easy to test.</p>
+<p>To help with this, an empty plugin can be created that functions as a great
+starting point to write whatever you wish.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Right now, Python is the only supported template. But plugins can be
+written in any scripting language installed on the system. We could use your
+help in writing <a class="reference internal" href="pluginapi.html#pluginapi-pre-commit-templates"><em>new pre-commit templates</em></a>.</p>
+</div>
+<div class="highlight-python"><pre>$ jig plugin create --help
+usage: jig plugin create [-h] [-l] [-d] NAME BUNDLE
+
+positional arguments:
+  name                  Plugin name
+  bundle                Bundle name
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --language TEMPLATE, -l TEMPLATE
+                        Scripting language: python
+  --dir DIR, -d DIR     Create in this directory</pre>
+</div>
+<p>Plugins have a <tt class="docutils literal"><span class="pre">NAME</span></tt> and belong in a <tt class="docutils literal"><span class="pre">BUNDLE</span></tt>. The name usually describes
+what it does. The bundle can be a company, your name, or an identifier that
+groups multiple plugins together.</p>
+<p>Example of creating a plugin that checks widgets for the Acme Corporation.</p>
+<div class="highlight-python"><pre>$ jig plugin create widget-checker acme-corp
+Created plugin as ./widget-checker</pre>
+</div>
+<p>The <a class="reference internal" href="pluginapi.html"><em>plugin API</em></a> has more information on where you can go
+after you&#8217;ve created a new plugin.</p>
+</div>
+<div class="section" id="running-a-plugin-s-tests">
+<span id="cli-plugin-test"></span><h3><a class="toc-backref" href="#id9">Running a plugin&#8217;s tests</a><a class="headerlink" href="#running-a-plugin-s-tests" title="Permalink to this headline">¶</a></h3>
+<p>Jig will run automated tests for a plugin if they exist.</p>
+<p>For information on <tt class="docutils literal"><span class="pre">jig</span> <span class="pre">plugin</span> <span class="pre">test</span></tt> see <a class="reference internal" href="pluginapi.html#pluginapi-testing"><em>Testing Plugins</em></a>.</p>
+</div>
+</div>
+<div class="section" id="run-jig-manually">
+<span id="cli-runnow"></span><h2><a class="toc-backref" href="#id10">Run Jig manually</a><a class="headerlink" href="#run-jig-manually" title="Permalink to this headline">¶</a></h2>
+<p>Jig is normally ran before you commit. The primary purpose is to catch things
+that you ordinarily wouldn&#8217;t add.</p>
+<p>But, there are occasions where you want to check your progress and run Jig and
+all of your installed plugins without actually committing anything.</p>
+<p>For this use case, <tt class="docutils literal"><span class="pre">runnow</span></tt> exists.</p>
+<div class="highlight-python"><pre>$ jig runnow --help
+usage: jig runnow [-h] [PATH]
+
+Run all plugins and show the results
+
+positional arguments:
+  path        Path to the Git repository
+
+optional arguments:
+  -h, --help  show this help message and exit</pre>
+</div>
+<p>When you call this command, Jig will perform the same motions that happen with
+<tt class="docutils literal"><span class="pre">git</span> <span class="pre">commit</span></tt> is ran.</p>
+<div class="highlight-python"><pre>$ jig runnow
+▾  pep8-checker
+
+⚠  line 1: a.py
+    import foo; import bar; import daz;
+     - E702 multiple statements on one line (semicolon)
+
+▾  pyflakes
+
+⚠  line 1: a.py
+    'foo' imported but unused
+
+⚠  line 1: a.py
+    'bar' imported but unused
+
+⚠  line 1: a.py
+    'daz' imported but unused
+
+Ran 3 plugins
+    Info 0 Warn 4 Stop 0</pre>
+</div>
+</div>
+</div>
+
+
+        </div>
+      </div>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+    <h3><a href="index.html">Jig documentation</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Jig on the command line</a><ul>
+<li><a class="reference internal" href="#initialize-a-git-repository-to-use-jig">Initialize a Git repository to use Jig</a></li>
+<li><a class="reference internal" href="#manage-your-plugins">Manage your plugins</a><ul>
+<li><a class="reference internal" href="#listing-installed-plugins">Listing installed plugins</a></li>
+<li><a class="reference internal" href="#adding-plugins">Adding plugins</a></li>
+<li><a class="reference internal" href="#updating-plugins">Updating plugins</a></li>
+<li><a class="reference internal" href="#removing-plugins">Removing plugins</a></li>
+<li><a class="reference internal" href="#creating-a-plugin">Creating a plugin</a></li>
+<li><a class="reference internal" href="#running-a-plugin-s-tests">Running a plugin&#8217;s tests</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#run-jig-manually">Run Jig manually</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>On GitHub</h3>
+  <ul>
+    <li><a href="http://github.com/robmadole/jig">Get the code</a></li>
+    <li><a href="http://github.com/robmadole/jig/issues">Report an issue</a></li>
+  </ul>
+
+  <iframe src="http://markdotto.github.com/github-buttons/github-btn.html?user=robmadole&repo=jig&type=watch&count=false&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="170px" height="30px"></iframe>
+<div id="searchbox" style="display: none">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="devapi.html" title="Hacking on Jig"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pluginapi.html" title="How to write plugins"
+             >previous</a> |</li>
+        <li><a href="index.html">Jig 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Rob Madole.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

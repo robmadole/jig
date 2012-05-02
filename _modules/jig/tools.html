@@ -1,0 +1,263 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jig.tools &mdash; Jig 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/jig.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Jig 0.1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Jig 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+    <div class="documentwrapper">
+      
+      <div class="bodywrapper">
+        <div class="body">
+          
+  <h1>Source code for jig.tools</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">unicodedata</span> <span class="kn">import</span> <span class="n">normalize</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">listdir</span><span class="p">,</span> <span class="n">walk</span><span class="p">,</span> <span class="n">makedirs</span><span class="p">,</span> <span class="n">unlink</span><span class="p">,</span> <span class="n">chdir</span><span class="p">,</span> <span class="n">getcwd</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">isdir</span>
+<span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">mkdtemp</span>
+<span class="kn">from</span> <span class="nn">shutil</span> <span class="kn">import</span> <span class="n">copy2</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
+
+<span class="kn">from</span> <span class="nn">git</span> <span class="kn">import</span> <span class="n">Repo</span>
+
+<span class="n">_punct_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;[\t !&quot;#$%&amp;</span><span class="se">\&#39;</span><span class="s">()*\-/&lt;=&gt;?@\[</span><span class="se">\\</span><span class="s">\]^_`{|},.]+&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="slugify"><a class="viewcode-back" href="../../devapi.html#jig.tools.slugify">[docs]</a><span class="k">def</span> <span class="nf">slugify</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">delim</span><span class="o">=</span><span class="s">u&#39;-&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates a an ASCII-only slug.</span>
+
+<span class="sd">    .. Author Armin Ronacher: http://flask.pocoo.org/snippets/5/</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">_punct_re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="nb">unicode</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+        <span class="n">nword</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="s">&#39;NFKD&#39;</span><span class="p">,</span> <span class="n">word</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">,</span> <span class="s">&#39;ignore&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nword</span><span class="p">:</span>
+            <span class="c"># Filter out non-printable</span>
+            <span class="n">pword</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">nword</span> <span class="k">if</span> <span class="nb">ord</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">31</span><span class="p">])</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pword</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">delim</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">result</span><span class="p">)))</span>
+
+</div>
+<span class="nd">@contextmanager</span>
+<div class="viewcode-block" id="cwd_bounce"><a class="viewcode-back" href="../../devapi.html#jig.tools.cwd_bounce">[docs]</a><span class="k">def</span> <span class="nf">cwd_bounce</span><span class="p">(</span><span class="nb">dir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Temporarily changes to a directory and changes back in the end.</span>
+
+<span class="sd">    Where ``dir`` is the directory you wish to change to. When the context</span>
+<span class="sd">    manager exits it will change back to the original working directory.</span>
+
+<span class="sd">    Context manager will yield the original working directory and make that</span>
+<span class="sd">    available to the context manager&#39;s assignment target.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">original_dir</span> <span class="o">=</span> <span class="n">getcwd</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">chdir</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span>
+
+        <span class="k">yield</span> <span class="n">original_dir</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">chdir</span><span class="p">(</span><span class="n">original_dir</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="NumberedDirectoriesToGit"><a class="viewcode-back" href="../../devapi.html#jig.tools.NumberedDirectoriesToGit">[docs]</a><span class="k">class</span> <span class="nc">NumberedDirectoriesToGit</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a directory listing of snapshots to a Git repository.</span>
+
+<span class="sd">    Given a directory where the layout is this::</span>
+
+<span class="sd">        $ ls -1 testrepo</span>
+<span class="sd">        .</span>
+<span class="sd">        ..</span>
+<span class="sd">        01</span>
+<span class="sd">        02</span>
+<span class="sd">        03</span>
+
+<span class="sd">    This object can be initialized like this::</span>
+
+<span class="sd">        &gt;&gt;&gt; repo = NumberedDirectoriesToGit(&#39;testrepo&#39;)</span>
+
+<span class="sd">    The resulting object will be a GitPython ``git.Repo`` object where each</span>
+<span class="sd">    commit corresponds to the numbered directory. Commit 1 will be the contents</span>
+<span class="sd">    in `01`. Commit 2 will be the contents of `02`, etc.</span>
+
+<span class="sd">    The easiest way to think about this is in terms of using ``git checkout``.</span>
+<span class="sd">    Each directory is a snapshot of the detached head for that commit.</span>
+
+<span class="sd">    Supports directories, deleting files, and file modifications. Everything</span>
+<span class="sd">    you&#39;d expect in a testing utility for create Git repo fixtures.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">numdir</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">isdir</span><span class="p">(</span><span class="n">numdir</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Not a directory: {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">numdir</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">numdir</span> <span class="o">=</span> <span class="n">numdir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">mkdtemp</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_repo</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="NumberedDirectoriesToGit.repo"><a class="viewcode-back" href="../../devapi.html#jig.tools.NumberedDirectoriesToGit.repo">[docs]</a>    <span class="k">def</span> <span class="nf">repo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Does the conversion and returns the ``git.Repo`` object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repo</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_repo</span> <span class="o">=</span> <span class="n">Repo</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numdir</span><span class="p">)):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_commit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_repo</span><span class="p">,</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numdir</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repo</span>
+</div>
+<div class="viewcode-block" id="NumberedDirectoriesToGit.diffs"><a class="viewcode-back" href="../../devapi.html#jig.tools.NumberedDirectoriesToGit.diffs">[docs]</a>    <span class="k">def</span> <span class="nf">diffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get a list of diffs for all commits.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span>
+
+        <span class="n">diffs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">commit</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">iter_commits</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">commit</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">commit</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+        <span class="c"># Make the oldest first</span>
+        <span class="n">diffs</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">diffs</span>
+</div>
+    <span class="k">def</span> <span class="nf">_commit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a new commit in the repository</span>
+
+<span class="sd">        Where ``repo`` is a ``git.Repo`` object to create the commit in. And</span>
+<span class="sd">        ``d`` is the directory you want the new commit to look like once the</span>
+<span class="sd">        commit has been made.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># List files currently in our repository</span>
+        <span class="n">paths_current</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_flattendirectory</span><span class="p">(</span>
+            <span class="n">repo</span><span class="o">.</span><span class="n">working_dir</span><span class="p">,</span> <span class="n">strip</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">))</span>
+
+        <span class="c"># What needs to be added</span>
+        <span class="n">paths_new</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_flattendirectory</span><span class="p">(</span>
+            <span class="n">d</span><span class="p">,</span> <span class="n">strip</span><span class="o">=</span><span class="n">d</span><span class="p">))</span>
+
+        <span class="n">paths_to_add</span> <span class="o">=</span> <span class="n">paths_new</span> <span class="o">-</span> <span class="n">paths_current</span>
+        <span class="n">paths_to_del</span> <span class="o">=</span> <span class="n">paths_current</span> <span class="o">-</span> <span class="n">paths_new</span>
+        <span class="n">paths_same</span> <span class="o">=</span> <span class="n">paths_new</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">paths_current</span><span class="p">)</span>
+
+        <span class="c"># Add</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths_to_add</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">paths_same</span><span class="p">):</span>
+            <span class="c"># Create the directory if needed</span>
+            <span class="n">directory</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">isdir</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+                <span class="n">makedirs</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+
+            <span class="n">copy2</span><span class="p">(</span>
+                <span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">path</span><span class="p">),</span>
+                <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span>
+
+            <span class="n">repo</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">add</span><span class="p">([</span><span class="n">path</span><span class="p">])</span>
+
+        <span class="c"># Delete</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths_to_del</span><span class="p">:</span>
+            <span class="n">repo</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">remove</span><span class="p">([</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">path</span><span class="p">)])</span>
+
+            <span class="n">unlink</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span>
+
+        <span class="n">repo</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="s">&#39;Commit from numbered directory {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_flattendirectory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">strip</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Recursively generates a list of paths from a directory.</span>
+
+<span class="sd">        If ``strip`` is not provided it defaults to ``d``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">filenames</span><span class="p">)</span> <span class="ow">in</span> <span class="n">walk</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
+                <span class="n">sdir</span> <span class="o">=</span> <span class="n">dirpath</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">strip</span><span class="p">),</span> <span class="s">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">sdir</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;.git&#39;</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">yield</span> <span class="n">join</span><span class="p">(</span><span class="n">sdir</span><span class="p">,</span> <span class="n">fn</span><span class="p">)</span></div>
+</pre></div>
+
+        </div>
+      </div>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>On GitHub</h3>
+  <ul>
+    <li><a href="http://github.com/robmadole/jig">Get the code</a></li>
+    <li><a href="http://github.com/robmadole/jig/issues">Report an issue</a></li>
+  </ul>
+
+  <iframe src="http://markdotto.github.com/github-buttons/github-btn.html?user=robmadole&repo=jig&type=watch&count=false&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="170px" height="30px"></iframe>
+<div id="searchbox" style="display: none">
+  <h3>Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Jig 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Rob Madole.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

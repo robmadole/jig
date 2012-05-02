@@ -1,0 +1,658 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jig.output &mdash; Jig 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/jig.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Jig 0.1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Jig 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+    <div class="documentwrapper">
+      
+      <div class="bodywrapper">
+        <div class="body">
+          
+  <h1>Source code for jig.output</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">StringIO</span> <span class="kn">import</span> <span class="n">StringIO</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
+
+<span class="kn">from</span> <span class="nn">jig.exc</span> <span class="kn">import</span> <span class="n">ForcedExit</span>
+
+<span class="c"># Message types</span>
+<span class="n">INFO</span> <span class="o">=</span> <span class="s">u&#39;info&#39;</span>
+<span class="n">WARN</span> <span class="o">=</span> <span class="s">u&#39;warn&#39;</span>
+<span class="n">STOP</span> <span class="o">=</span> <span class="s">u&#39;stop&#39;</span>
+
+
+<div class="viewcode-block" id="green_bold"><a class="viewcode-back" href="../../devapi.html#jig.output.green_bold">[docs]</a><span class="k">def</span> <span class="nf">green_bold</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Format payload as green.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s">u&#39;</span><span class="se">\x1b</span><span class="s">[32;1m{}</span><span class="se">\x1b</span><span class="s">[39;22m&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="yellow_bold"><a class="viewcode-back" href="../../devapi.html#jig.output.yellow_bold">[docs]</a><span class="k">def</span> <span class="nf">yellow_bold</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Format payload as yellow.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s">u&#39;</span><span class="se">\x1b</span><span class="s">[33;1m{}</span><span class="se">\x1b</span><span class="s">[39;22m&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="red_bold"><a class="viewcode-back" href="../../devapi.html#jig.output.red_bold">[docs]</a><span class="k">def</span> <span class="nf">red_bold</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Format payload as red.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s">u&#39;</span><span class="se">\x1b</span><span class="s">[31;1m{}</span><span class="se">\x1b</span><span class="s">[39;22m&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="strip_paint"><a class="viewcode-back" href="../../devapi.html#jig.output.strip_paint">[docs]</a><span class="k">def</span> <span class="nf">strip_paint</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Removes any console specific color characters.</span>
+
+<span class="sd">    Where ``payload`` is a string containing special characters used to print</span>
+<span class="sd">    colored output to the terminal.</span>
+
+<span class="sd">    Returns a unicode string without the paint.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">strip</span> <span class="o">=</span> <span class="p">[</span><span class="s">u&#39;</span><span class="se">\x1b</span><span class="s">[31;1m&#39;</span><span class="p">,</span> <span class="s">u&#39;</span><span class="se">\x1b</span><span class="s">[32;1m&#39;</span><span class="p">,</span> <span class="s">u&#39;</span><span class="se">\x1b</span><span class="s">[33;1m&#39;</span><span class="p">,</span> <span class="s">u&#39;</span><span class="se">\x1b</span><span class="s">[39;22m&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">paint</span> <span class="ow">in</span> <span class="n">strip</span><span class="p">:</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">paint</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">payload</span>
+
+</div>
+<div class="viewcode-block" id="lookup_type"><a class="viewcode-back" href="../../devapi.html#jig.output.lookup_type">[docs]</a><span class="k">def</span> <span class="nf">lookup_type</span><span class="p">(</span><span class="n">strtype</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the actual type for a string message representation of it.</span>
+
+<span class="sd">    For example::</span>
+
+<span class="sd">        &gt;&gt;&gt; lookup_type(&#39;Info&#39;)</span>
+<span class="sd">        u&#39;info&#39;</span>
+<span class="sd">        &gt;&gt;&gt; lookup_type(&#39;warn&#39;)</span>
+<span class="sd">        u&#39;warn&#39;</span>
+<span class="sd">        &gt;&gt;&gt; lookup_type(&#39;s&#39;)</span>
+<span class="sd">        u&#39;stop&#39;</span>
+
+<span class="sd">    It will default to ``INFO``.</span>
+
+<span class="sd">        &gt;&gt;&gt; lookup_type(&#39;unknown&#39;):</span>
+<span class="sd">        u&#39;info&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">strtype</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">strtype</span><span class="p">)</span> <span class="ow">or</span> <span class="s">u&#39;&#39;</span>
+    <span class="n">mt</span> <span class="o">=</span> <span class="n">strtype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">mt</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">u&#39;i&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">INFO</span>
+    <span class="k">if</span> <span class="n">mt</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">u&#39;w&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">WARN</span>
+    <span class="k">if</span> <span class="n">mt</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">u&#39;s&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">STOP</span>
+
+    <span class="c"># Default to INFO</span>
+    <span class="k">return</span> <span class="n">INFO</span>
+
+</div>
+<div class="viewcode-block" id="Message"><a class="viewcode-back" href="../../devapi.html#jig.output.Message">[docs]</a><span class="k">class</span> <span class="nc">Message</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents one message that a plugin is communicating to the user.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">INFO</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="nb">file</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a message object associated with a plugin.</span>
+
+<span class="sd">        All messages must be associated with the Plugin ``plugin`` that was</span>
+<span class="sd">        responsible for creating them.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugin</span> <span class="o">=</span> <span class="n">plugin</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">body</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="nb">file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line</span> <span class="o">=</span> <span class="n">line</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">reprstr</span> <span class="o">=</span> <span class="s">&#39;&lt;{cls} type=&quot;{t}&quot;, body=&quot;{b}&quot;, file={f}, line={l}&gt;&#39;</span>
+        <span class="k">return</span> <span class="n">reprstr</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+            <span class="n">t</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        If type, body, file, and line attributes are the same they are equal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;body&#39;</span><span class="p">,</span> <span class="s">&#39;file&#39;</span><span class="p">,</span> <span class="s">&#39;line&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span> <span class="o">==</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="c"># If the other object is missing an attribute they can&#39;t be equal.</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span>
+
+    <span class="nd">@type.setter</span>
+    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="n">lookup_type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Error"><a class="viewcode-back" href="../../devapi.html#jig.output.Error">[docs]</a><span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An error message related to a plugin&#39;s results.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;type&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="c"># Default to stop for errors</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;stop&#39;</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">Error</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ConsoleView"><a class="viewcode-back" href="../../devapi.html#jig.output.ConsoleView">[docs]</a><span class="k">class</span> <span class="nc">ConsoleView</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main view used to handle output to the console.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collect_output</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">exit_on_exception</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+            <span class="n">stdout</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c"># Do we collect output? False means we print it out</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collect_output</span> <span class="o">=</span> <span class="n">collect_output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exit_on_exception</span> <span class="o">=</span> <span class="n">exit_on_exception</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_collect</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&#39;stdout&#39;</span><span class="p">:</span> <span class="n">stdout</span> <span class="ow">or</span> <span class="n">StringIO</span><span class="p">(),</span> <span class="s">&#39;stderr&#39;</span><span class="p">:</span> <span class="n">stderr</span> <span class="ow">or</span> <span class="n">StringIO</span><span class="p">()}</span>
+
+    <span class="nd">@contextmanager</span>
+    <span class="k">def</span> <span class="nf">out</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">collected</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">collected</span>
+
+            <span class="n">fo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collect</span><span class="p">[</span><span class="s">&#39;stdout&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">collect_output</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">collected</span><span class="p">:</span>
+                <span class="n">fo</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">unicode</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">+</span> <span class="s">u&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">fo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collect</span><span class="p">[</span><span class="s">&#39;stderr&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">collect_output</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span>
+            <span class="n">fo</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">unicode</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">+</span> <span class="s">u&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">retcode</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">retcode</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="c"># This exception does not have a return code, assume 1</span>
+                <span class="n">retcode</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exit_on_exception</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">retcode</span><span class="p">)</span>   <span class="c"># pragma: no cover</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ForcedExit</span><span class="p">(</span><span class="n">retcode</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ConsoleView.print_results"><a class="viewcode-back" href="../../devapi.html#jig.output.ConsoleView.print_results">[docs]</a>    <span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Format and print plugins results.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">results</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">collater</span> <span class="o">=</span> <span class="n">ResultsCollater</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+        <span class="n">plugins</span> <span class="o">=</span> <span class="n">collater</span><span class="o">.</span><span class="n">plugins</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">collater</span><span class="o">.</span><span class="n">errors</span>
+        <span class="n">reporters</span> <span class="o">=</span> <span class="n">collater</span><span class="o">.</span><span class="n">reporters</span>
+
+        <span class="n">form</span> <span class="o">=</span> <span class="s">u&#39;plugin&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plugins</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s">u&#39;plugins&#39;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">reporters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c"># Nothing to report</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="p">()</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+                <span class="n">form</span> <span class="o">=</span> <span class="s">u&#39;plugin&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plugins</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s">u&#39;plugins&#39;</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">u&#39;Ran {plen} {form}, nothing to report&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">plen</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">plugins</span><span class="p">),</span> <span class="n">form</span><span class="o">=</span><span class="n">form</span><span class="p">))</span>
+                <span class="k">return</span>
+
+        <span class="c"># Gather the distinct message types from the results</span>
+        <span class="n">cm</span><span class="p">,</span> <span class="n">fm</span><span class="p">,</span> <span class="n">lm</span> <span class="o">=</span> <span class="n">collater</span><span class="o">.</span><span class="n">messages</span>
+
+        <span class="c"># Order them from least specific to most specific, put the errors last</span>
+        <span class="n">messages</span> <span class="o">=</span> <span class="n">cm</span> <span class="o">+</span> <span class="n">fm</span> <span class="o">+</span> <span class="n">lm</span> <span class="o">+</span> <span class="n">errors</span>
+
+        <span class="c"># How do our message types map to a symbol</span>
+        <span class="n">type_to_symbol</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">INFO</span><span class="p">:</span> <span class="n">green_bold</span><span class="p">(</span><span class="s">u&#39;</span><span class="se">\u2713</span><span class="s">&#39;</span><span class="p">),</span>
+            <span class="n">WARN</span><span class="p">:</span> <span class="n">yellow_bold</span><span class="p">(</span><span class="s">u&#39;</span><span class="se">\u26a0</span><span class="s">&#39;</span><span class="p">),</span>
+            <span class="n">STOP</span><span class="p">:</span> <span class="n">red_bold</span><span class="p">(</span><span class="s">u&#39;</span><span class="se">\u2715</span><span class="s">&#39;</span><span class="p">)}</span>
+
+        <span class="n">ic</span><span class="p">,</span> <span class="n">wc</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="p">()</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">last_plugin</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">last_plugin</span> <span class="o">!=</span> <span class="n">msg</span><span class="o">.</span><span class="n">plugin</span><span class="p">:</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">u&#39;</span><span class="se">\u25be</span><span class="s">  {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">plugin</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+                    <span class="n">last_plugin</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">plugin</span>
+                <span class="n">colorized</span> <span class="o">=</span> <span class="s">u&#39;{}  {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">type_to_symbol</span><span class="p">[</span><span class="n">msg</span><span class="o">.</span><span class="n">type</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_message</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">colorized</span><span class="o">.</span><span class="n">splitlines</span><span class="p">())</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">u&#39;Ran {plen} {form}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">plen</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">plugins</span><span class="p">),</span> <span class="n">form</span><span class="o">=</span><span class="n">form</span><span class="p">))</span>
+
+            <span class="n">ic</span><span class="p">,</span> <span class="n">wc</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">collater</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">green_bold</span><span class="p">(</span><span class="n">ic</span><span class="p">)</span> <span class="k">if</span> <span class="n">ic</span> <span class="k">else</span> <span class="n">ic</span>
+            <span class="n">warn</span> <span class="o">=</span> <span class="n">yellow_bold</span><span class="p">(</span><span class="n">wc</span><span class="p">)</span> <span class="k">if</span> <span class="n">wc</span> <span class="k">else</span> <span class="n">wc</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="n">red_bold</span><span class="p">(</span><span class="n">sc</span><span class="p">)</span> <span class="k">if</span> <span class="n">sc</span> <span class="k">else</span> <span class="n">sc</span>
+
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">u&#39;    Info {ic} Warn {wc} Stop {sc}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">ic</span><span class="o">=</span><span class="n">info</span><span class="p">,</span> <span class="n">wc</span><span class="o">=</span><span class="n">warn</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="n">stop</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">):</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">u&#39;    ({ec} {form} reported errors)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">ec</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">),</span> <span class="n">form</span><span class="o">=</span><span class="n">form</span><span class="p">))</span>
+
+        <span class="c"># Return the counts for the different types of messages</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">ic</span><span class="p">,</span> <span class="n">wc</span><span class="p">,</span> <span class="n">sc</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ConsoleView.print_help"><a class="viewcode-back" href="../../devapi.html#jig.output.ConsoleView.print_help">[docs]</a>    <span class="k">def</span> <span class="nf">print_help</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commands</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Format and print help for using the console script.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="p">()</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;usage: jig [-h] COMMAND&#39;</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;optional arguments:&#39;</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;  -h, --help  show this help message and exit&#39;</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;jig commands:&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">commands</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">__module__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">description</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">description</span>
+
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;  {name:12}{description}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">))</span>
+
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;See `jig COMMAND --help` for more information&#39;</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_format_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Formats a single message to a string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">msg</span><span class="o">.</span><span class="n">line</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">+=</span> <span class="s">u&#39;line {}: &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">line</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">msg</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">+=</span> <span class="n">msg</span><span class="o">.</span><span class="n">file</span>
+
+        <span class="k">if</span> <span class="n">header</span><span class="p">:</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="s">u&#39;    {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="s">u&#39;{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">header</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ResultsCollater"><a class="viewcode-back" href="../../devapi.html#jig.output.ResultsCollater">[docs]</a><span class="k">class</span> <span class="nc">ResultsCollater</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Collects and combines plugin results into a unified summary.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
+        <span class="c"># Decorate our message methods</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_commit_specific_message&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">iterresults</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_commit_specific_message</span><span class="p">))</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_file_specific_message&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">iterresults</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_specific_message</span><span class="p">))</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_line_specific_message&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">iterresults</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_line_specific_message</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span> <span class="o">=</span> <span class="n">results</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plugins</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reporters</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_counts</span> <span class="o">=</span> <span class="p">{</span><span class="n">INFO</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="n">WARN</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="n">STOP</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c"># Pre-compute our messages (collate)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cm</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_commit_specific_message</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fm</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_specific_message</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lm</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_line_specific_message</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="ResultsCollater.messages"><a class="viewcode-back" href="../../devapi.html#jig.output.ResultsCollater.messages">[docs]</a>    <span class="k">def</span> <span class="nf">messages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Messages by type for the plugin results.</span>
+
+<span class="sd">        Return a tuple of messages by type based on the results that were</span>
+<span class="sd">        provided when initializing the collater.</span>
+
+<span class="sd">        Each tuple contains a generator object which will return</span>
+<span class="sd">        ``jig.output.Message`` objects.</span>
+
+<span class="sd">        The tuple has a length of 3 and is in this order:</span>
+
+<span class="sd">            1. Commit specific messages</span>
+<span class="sd">            2. File specific messages</span>
+<span class="sd">            3. Line specific messages</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lm</span><span class="p">)</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="ResultsCollater.plugins"><a class="viewcode-back" href="../../devapi.html#jig.output.ResultsCollater.plugins">[docs]</a>    <span class="k">def</span> <span class="nf">plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides a set of plugins that were present in the results.</span>
+
+<span class="sd">        This method will return a plugin regardless of whether it yielded</span>
+<span class="sd">        messages or not.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plugins</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="ResultsCollater.reporters"><a class="viewcode-back" href="../../devapi.html#jig.output.ResultsCollater.reporters">[docs]</a>    <span class="k">def</span> <span class="nf">reporters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides a set of plugins that yielded messages.</span>
+
+<span class="sd">        This method will only provide something other than an empty set when</span>
+<span class="sd">        the commit, file, or line specific message methods have been called.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reporters</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="ResultsCollater.counts"><a class="viewcode-back" href="../../devapi.html#jig.output.ResultsCollater.counts">[docs]</a>    <span class="k">def</span> <span class="nf">counts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Tally of the type of messages from the results.</span>
+
+<span class="sd">        Returns a dictionary like::</span>
+
+<span class="sd">            {u&#39;info&#39;: 5, u&#39;warn&#39;: 0, u&#39;stop&#39;, 1}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_counts</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="ResultsCollater.errors"><a class="viewcode-back" href="../../devapi.html#jig.output.ResultsCollater.errors">[docs]</a>    <span class="k">def</span> <span class="nf">errors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Errors that were generated during collation.</span>
+
+<span class="sd">        Errors are found when a piece of data given to one of the collaters is</span>
+<span class="sd">        of a type that can&#39;t be understood.</span>
+
+<span class="sd">        Returns a list of ``jig.output.Error`` objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span>
+</div>
+<div class="viewcode-block" id="ResultsCollater.iterresults"><a class="viewcode-back" href="../../devapi.html#jig.output.ResultsCollater.iterresults">[docs]</a>    <span class="k">def</span> <span class="nf">iterresults</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Decorator that iterates through results.</span>
+
+<span class="sd">        This simplifies some of the boilerplate for our collation. The</span>
+<span class="sd">        decorated function must be a generator that yields ``Message`` or</span>
+<span class="sd">        ``Error`` object. It will sift errors and collect those into a separate</span>
+<span class="sd">        container. The ``Message`` objects then be returned to the caller.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">plugin</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_plugins</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">plugin</span><span class="p">)</span>
+
+                <span class="n">retcode</span><span class="p">,</span> <span class="n">stdout</span><span class="p">,</span> <span class="n">stderr</span> <span class="o">=</span> <span class="n">result</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">retcode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="n">Error</span><span class="p">(</span><span class="n">plugin</span><span class="p">)</span>
+                    <span class="n">error</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">stderr</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+                    <span class="c"># Remove this plugin since it&#39;s an error. If we don&#39;t do</span>
+                    <span class="c"># this we&#39;ll end up reporting on this 3 times.</span>
+                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="n">plugin</span><span class="p">]</span>
+                    <span class="k">continue</span>
+
+                <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">stdout</span><span class="p">)):</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">Error</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+                        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="n">plugin</span><span class="p">]</span>
+                        <span class="k">continue</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_reporters</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">plugin</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_counts</span><span class="p">[</span><span class="n">message</span><span class="o">.</span><span class="n">type</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">yield</span> <span class="n">message</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span>
+</div>
+    <span class="k">def</span> <span class="nf">_commit_specific_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Look for plugins that are reporting generic messages.</span>
+
+<span class="sd">        These messages are not specific to any file or line number. They</span>
+<span class="sd">        generally come from plugins that are inspecting the commit as a whole</span>
+<span class="sd">        and reporting on some characteristic. A good example of this would be a</span>
+<span class="sd">        plugin that checked to see if any modifications were made to a docs</span>
+<span class="sd">        directory if modifications were also made to a src directory.</span>
+<span class="sd">        Basically, a &quot;did you write/update the docs&quot; message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">obj</span><span class="p">:</span>
+            <span class="c"># This is falsy, there is nothing of interest here</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c"># This is for file or line specific messages</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+            <span class="c"># Straight up message, normalize this for our loop</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="c"># It&#39;s a list of [TYPE, BODY]</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+                    <span class="c"># Straight up message, normalize this for our loop</span>
+                    <span class="k">yield</span> <span class="n">Message</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">Error</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="c"># Empty message body, this isn&#39;t useful</span>
+                    <span class="k">continue</span>
+                <span class="k">yield</span> <span class="n">Message</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">body</span><span class="o">=</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="c"># We understood this, so no need to continue</span>
+            <span class="k">return</span>
+
+        <span class="c"># This object is not understood</span>
+        <span class="k">yield</span> <span class="n">Error</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_file_specific_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Look for plugins that are reporting file specific messages.</span>
+
+<span class="sd">        These messages are specific to a file but not necessarily to a line</span>
+<span class="sd">        number. In general they apply to a condition that is present that</span>
+<span class="sd">        affects the whole file. An example of this would be detecting</span>
+<span class="sd">        underscores or camel case in the filename.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c"># This is not a file specific messages</span>
+            <span class="k">return</span>
+
+        <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+                <span class="n">group</span> <span class="o">=</span> <span class="p">[</span><span class="n">group</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">Error</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">group</span><span class="p">,</span> <span class="nb">file</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">[</span><span class="n">msg</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">Error</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="nb">file</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c"># There is nothing here of interest</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="c"># Should default to info type</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                        <span class="k">continue</span>
+                    <span class="k">yield</span> <span class="n">Message</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">file</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                        <span class="k">continue</span>
+                    <span class="c"># In the format of [TYPE, BODY]</span>
+                    <span class="k">yield</span> <span class="n">Message</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">type</span><span class="o">=</span><span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="nb">file</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">msg</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+                        <span class="k">continue</span>
+                    <span class="c"># In the format of [LINE, TYPE, BODY]</span>
+                    <span class="k">if</span> <span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="c"># This is line specific, skip this</span>
+                        <span class="k">continue</span>
+                    <span class="k">yield</span> <span class="n">Message</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">msg</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">type</span><span class="o">=</span><span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                        <span class="nb">file</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+                    <span class="k">continue</span>
+
+                <span class="c"># This object is not understood</span>
+                <span class="k">yield</span> <span class="n">Error</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_line_specific_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Look for plugins that are reporting line specific messages.</span>
+
+<span class="sd">        For plugins wishing to identify specific lines, they use line specific</span>
+<span class="sd">        messages. For example, you may have a JavaScript plugin that reports</span>
+<span class="sd">        the existence of ``console.log`` on line 45. This allows the developer</span>
+<span class="sd">        to pinpoint the problem much quicker than file or commit specific</span>
+<span class="sd">        messages.</span>
+
+<span class="sd">        There is a lack of error handling in this method. The commit and file</span>
+<span class="sd">        specific handlers take care of error handling for us. This method gets</span>
+<span class="sd">        to be pretty clean.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c"># This is not a file or line specific messages</span>
+            <span class="k">return</span>
+
+        <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+                <span class="n">group</span> <span class="o">=</span> <span class="p">[</span><span class="n">group</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">[</span><span class="n">msg</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="c"># There is nothing here of interest</span>
+                    <span class="k">continue</span>
+
+                <span class="k">if</span> <span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="c"># This is not line specific</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">msg</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+                    <span class="c"># The body is empty</span>
+                    <span class="k">continue</span>
+                <span class="c"># In the format of [LINE, TYPE, BODY]</span>
+                <span class="k">yield</span> <span class="n">Message</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">msg</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">type</span><span class="o">=</span><span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="nb">file</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">continue</span></div>
+</pre></div>
+
+        </div>
+      </div>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>On GitHub</h3>
+  <ul>
+    <li><a href="http://github.com/robmadole/jig">Get the code</a></li>
+    <li><a href="http://github.com/robmadole/jig/issues">Report an issue</a></li>
+  </ul>
+
+  <iframe src="http://markdotto.github.com/github-buttons/github-btn.html?user=robmadole&repo=jig&type=watch&count=false&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="170px" height="30px"></iframe>
+<div id="searchbox" style="display: none">
+  <h3>Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Jig 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Rob Madole.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

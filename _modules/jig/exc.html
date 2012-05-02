@@ -1,0 +1,206 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jig.exc &mdash; Jig 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/jig.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Jig 0.1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Jig 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+    <div class="documentwrapper">
+      
+      <div class="bodywrapper">
+        <div class="body">
+          
+  <h1>Source code for jig.exc</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Collection of :py:class:`Exception` subclasses used by jig.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="jigException"><a class="viewcode-back" href="../../devapi.html#jig.exc.jigException">[docs]</a><span class="k">class</span> <span class="nc">jigException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base exception.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="ForcedExit"><a class="viewcode-back" href="../../devapi.html#jig.exc.ForcedExit">[docs]</a><span class="k">class</span> <span class="nc">ForcedExit</span><span class="p">(</span><span class="n">jigException</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raised when execution of should stop.</span>
+
+<span class="sd">    This exception is useful in testing. Typically the runner is configured to</span>
+<span class="sd">    not ``sys.exit()`` on exception so this object can be used in its place.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="NotGitRepo"><a class="viewcode-back" href="../../devapi.html#jig.exc.NotGitRepo">[docs]</a><span class="k">class</span> <span class="nc">NotGitRepo</span><span class="p">(</span><span class="n">jigException</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A directory provided does not appear to be a Git repository.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="PreCommitExists"><a class="viewcode-back" href="../../devapi.html#jig.exc.PreCommitExists">[docs]</a><span class="k">class</span> <span class="nc">PreCommitExists</span><span class="p">(</span><span class="n">jigException</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The :file:`pre-commit` file in the hooks directory exists.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="GitRepoNotInitialized"><a class="viewcode-back" href="../../devapi.html#jig.exc.GitRepoNotInitialized">[docs]</a><span class="k">class</span> <span class="nc">GitRepoNotInitialized</span><span class="p">(</span><span class="n">jigException</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The given Git repository has not been initialized for usage.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="AlreadyInitialized"><a class="viewcode-back" href="../../devapi.html#jig.exc.AlreadyInitialized">[docs]</a><span class="k">class</span> <span class="nc">AlreadyInitialized</span><span class="p">(</span><span class="n">jigException</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The given Git repository has been initialized already.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="PluginError"><a class="viewcode-back" href="../../devapi.html#jig.exc.PluginError">[docs]</a><span class="k">class</span> <span class="nc">PluginError</span><span class="p">(</span><span class="n">jigException</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An error occured while working with a plugin.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="CommandError"><a class="viewcode-back" href="../../devapi.html#jig.exc.CommandError">[docs]</a><span class="k">class</span> <span class="nc">CommandError</span><span class="p">(</span><span class="n">jigException</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raise when an error occurs while using any command line tool.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="ExpectationError"><a class="viewcode-back" href="../../devapi.html#jig.exc.ExpectationError">[docs]</a><span class="k">class</span> <span class="nc">ExpectationError</span><span class="p">(</span><span class="n">jigException</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for all error dealing with plugin expectations.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="ExpectationNoTests"><a class="viewcode-back" href="../../devapi.html#jig.exc.ExpectationNoTests">[docs]</a><span class="k">class</span> <span class="nc">ExpectationNoTests</span><span class="p">(</span><span class="n">ExpectationError</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raise when no tests (numbered directories) are found for a plugin.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="ExpectationFileNotFound"><a class="viewcode-back" href="../../devapi.html#jig.exc.ExpectationFileNotFound">[docs]</a><span class="k">class</span> <span class="nc">ExpectationFileNotFound</span><span class="p">(</span><span class="n">ExpectationError</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raised when the expectation file should be present but is not.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="ExpectationParsingError"><a class="viewcode-back" href="../../devapi.html#jig.exc.ExpectationParsingError">[docs]</a><span class="k">class</span> <span class="nc">ExpectationParsingError</span><span class="p">(</span><span class="n">ExpectationError</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raised when errors are found while parsing reStructuredText expectations.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+        </div>
+      </div>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>On GitHub</h3>
+  <ul>
+    <li><a href="http://github.com/robmadole/jig">Get the code</a></li>
+    <li><a href="http://github.com/robmadole/jig/issues">Report an issue</a></li>
+  </ul>
+
+  <iframe src="http://markdotto.github.com/github-buttons/github-btn.html?user=robmadole&repo=jig&type=watch&count=false&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="170px" height="30px"></iframe>
+<div id="searchbox" style="display: none">
+  <h3>Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Jig 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Rob Madole.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

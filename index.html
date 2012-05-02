@@ -1,0 +1,215 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>What is Jig &mdash; Jig 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/jig.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Jig 0.1.0 documentation" href="#" />
+    <link rel="next" title="How to use Jig" href="usage.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="usage.html" title="How to use Jig"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">Jig 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+    <div class="documentwrapper">
+      
+      <img class="hook-logo" src="_static/hook.png" />
+      
+      <div class="bodywrapper">
+        <div class="body">
+          
+  <div class="section" id="what-is-jig">
+<h1>What is Jig<a class="headerlink" href="#what-is-jig" title="Permalink to this headline">¶</a></h1>
+<p><strong>Jig is a Git pre-commit hook on steroids</strong>.</p>
+<p><a class="reference external" href="http://book.git-scm.com/5_git_hooks.html">Git Hooks</a> are little scripts that you can place in your <tt class="docutils literal"><span class="pre">$GIT_DIR/hooks</span></tt>
+directory to trigger actions at certain points. The <tt class="docutils literal"><span class="pre">pre-commit</span></tt> hook is
+useful for performing actions right before Git writes a commit.</p>
+<p>Jig is a command line tool as well as a utility for creating and running &#8220;plugins&#8221;.</p>
+<p>It has a set of <a class="reference external" href="http://github.com/robmadole/jig-plugins">common plugins</a> that will probably be useful to you
+right now, but the real goal is to make it easy for you to write your own.</p>
+<div class="section" id="install-it">
+<span id="install"></span><h2>Install it<a class="headerlink" href="#install-it" title="Permalink to this headline">¶</a></h2>
+<p>The Jig command line tool is written in Python and is available on PyPi.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> pip install jig <span class="o">||</span> easy_install jig
+</pre></div>
+</div>
+<p>This is just a little shell trick that uses <tt class="docutils literal"><span class="pre">easy_install</span></tt> if it can&#8217;t locate
+<tt class="docutils literal"><span class="pre">pip</span></tt>.</p>
+</div>
+<div class="section" id="test-drive">
+<h2>Test drive<a class="headerlink" href="#test-drive" title="Permalink to this headline">¶</a></h2>
+<p>Change directories into your Git repository and initialize it to use Jig.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">cd </span>myrepo
+<span class="gp">$</span> jig init .
+<span class="go">Git repository has been initialized for use with Jig.</span>
+</pre></div>
+</div>
+<p>Install some Jig plugins.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> jig plugin add http://github.com/robmadole/jig-plugins
+<span class="go">Added plugin pep8-checker in bundle jig-plugins to the repository.</span>
+<span class="go">Added plugin pyflakes in bundle jig-plugins to the repository.</span>
+<span class="go">Added plugin whitespace in bundle jig-plugins to the repository.</span>
+<span class="go">Added plugin woops in bundle jig-plugins to the repository.</span>
+</pre></div>
+</div>
+<p>Stage some changes and then commit.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> git add mylib.py
+</pre></div>
+</div>
+<p>Jig will run and let you know if it catches anything.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> git commit -m <span class="s1">&#39;Adding my awesome new library&#39;</span>
+<span class="go">▾  woops</span>
+
+<span class="go">⚠  line 23: mylib.py</span>
+<span class="go">    print statement</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 0 Warn 1 Stop 0</span>
+
+<span class="go">Commit anyway (hit enter), or &quot;c&quot; to cancel the commit</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="where-to-go-next">
+<h2>Where to go next<a class="headerlink" href="#where-to-go-next" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">How to use Jig</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#create-an-empty-git-repository">Create an empty Git repository</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#configure-it-to-use-jig">Configure it to use Jig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#install-some-jig-plugins">Install some Jig plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#run-jig">Run Jig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#change-plugin-settings">Change plugin settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#write-your-own-plugins">Write your own plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pluginapi.html">How to write plugins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pluginapi.html#the-anatomy-of-a-plugin">The anatomy of a plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pluginapi.html#writing-tests-for-your-plugins">Writing tests for your plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pluginapi.html#data-formats">Data formats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pluginapi.html#error-handling">Error handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pluginapi.html#binary-files">Binary files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pluginapi.html#symlinks">Symlinks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pluginapi.html#templates-for-pre-commit-scripts">Templates for pre-commit scripts</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="in-depth-docs">
+<h2>In-depth docs<a class="headerlink" href="#in-depth-docs" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Jig on the command line</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#initialize-a-git-repository-to-use-jig">Initialize a Git repository to use Jig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#manage-your-plugins">Manage your plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#run-jig-manually">Run Jig manually</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devapi.html">Hacking on Jig</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devapi.html#plumbing-of-jig">Plumbing of Jig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devapi.html#tests-and-coverage">Tests and coverage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devapi.html#making-the-documentation">Making the documentation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="license">
+<h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>Jig is licensed under a <a class="reference internal" href="license.html"><em>BSD license</em></a>.</p>
+</div>
+</div>
+
+
+        </div>
+      </div>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+    <h3><a href="#">Jig documentation</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">What is Jig</a><ul>
+<li><a class="reference internal" href="#install-it">Install it</a></li>
+<li><a class="reference internal" href="#test-drive">Test drive</a></li>
+<li><a class="reference internal" href="#where-to-go-next">Where to go next</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#in-depth-docs">In-depth docs</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#license">License</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>On GitHub</h3>
+  <ul>
+    <li><a href="http://github.com/robmadole/jig">Get the code</a></li>
+    <li><a href="http://github.com/robmadole/jig/issues">Report an issue</a></li>
+  </ul>
+
+  <iframe src="http://markdotto.github.com/github-buttons/github-btn.html?user=robmadole&repo=jig&type=watch&count=false&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="170px" height="30px"></iframe>
+<div id="searchbox" style="display: none">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="usage.html" title="How to use Jig"
+             >next</a> |</li>
+        <li><a href="#">Jig 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Rob Madole.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

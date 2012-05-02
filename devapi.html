@@ -1,0 +1,214 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Hacking on Jig &mdash; Jig 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/jig.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Jig 0.1.0 documentation" href="index.html" />
+    <link rel="prev" title="Jig on the command line" href="cli.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="cli.html" title="Jig on the command line"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Jig 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+    <div class="documentwrapper">
+      
+      <div class="bodywrapper">
+        <div class="body">
+          
+  <div class="section" id="hacking-on-jig">
+<h1><a class="toc-backref" href="#id1">Hacking on Jig</a><a class="headerlink" href="#hacking-on-jig" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#hacking-on-jig" id="id1">Hacking on Jig</a><ul>
+<li><a class="reference internal" href="#plumbing-of-jig" id="id2">Plumbing of Jig</a><ul>
+<li><a class="reference internal" href="#how-it-hooks-in" id="id3">How it hooks in</a></li>
+<li><a class="reference internal" href="#how-it-runs" id="id4">How it runs</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tests-and-coverage" id="id5">Tests and coverage</a></li>
+<li><a class="reference internal" href="#making-the-documentation" id="id6">Making the documentation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="plumbing-of-jig">
+<span id="development-plumbing"></span><h2><a class="toc-backref" href="#id2">Plumbing of Jig</a><a class="headerlink" href="#plumbing-of-jig" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="how-it-hooks-in">
+<h3><a class="toc-backref" href="#id3">How it hooks in</a><a class="headerlink" href="#how-it-hooks-in" title="Permalink to this headline">¶</a></h3>
+<p>When you run <a class="reference internal" href="cli.html#cli-init"><em>jig init</em></a> on a Git repository it does two basic things.</p>
+<p>First it creates a <tt class="file docutils literal"><span class="pre">$GIT_REPO/.git/hooks/pre-commit</span></tt> file and makes it executable.</p>
+<p>The file looks something like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/python</span>
+<span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">join</span>
+
+<span class="c"># Make sure that we can find the directory that jig is installed</span>
+<span class="c"># ... (various path modifications, don&#39;t look behind the curtain)</span>
+
+<span class="kn">from</span> <span class="nn">jig.runner</span> <span class="kn">import</span> <span class="n">Runner</span>
+
+<span class="c"># Start up the runner, passing in the repo directory</span>
+<span class="n">jig</span> <span class="o">=</span> <span class="n">Runner</span><span class="p">()</span>
+<span class="n">jig</span><span class="o">.</span><span class="n">fromhook</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;..&#39;</span><span class="p">,</span> <span class="s">&#39;..&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This is really just a redirection of control to the <tt class="xref py py-class docutils literal"><span class="pre">Runner</span></tt> object.
+It does all the work.</p>
+<p>Secondly, it creates a <tt class="file docutils literal"><span class="pre">$GIT_REPO/.jig</span></tt> directory with a <tt class="file docutils literal"><span class="pre">plugins</span></tt>
+directory and an empty <tt class="file docutils literal"><span class="pre">plugins.cfg</span></tt> configuration file within it.</p>
+<p>As you <a class="reference internal" href="cli.html#cli-plugin-add"><em>install plugins</em></a> the configuration file will get
+modified to includes bits of information about whatever plugin you install.</p>
+<p>When you install plugins from a URL, the plugin will be cloned for you
+automatically and then placed in the <tt class="file docutils literal"><span class="pre">.jig/plugins</span></tt> directory.</p>
+<p>If we installed the following plugin by running <tt class="docutils literal"><span class="pre">jig</span> <span class="pre">plugin</span> <span class="pre">install</span> <span class="pre">http://github.com/myusername/myplugin</span></tt> it would be saved in a directory similar to this.
+<tt class="file docutils literal"><span class="pre">.jig/plugins/24a8056749e448b182d44690a04ca0b7/myplugin</span></tt>.</p>
+<p>The configuration file <tt class="file docutils literal"><span class="pre">plugins.cfg</span></tt> will now contain a reference to this
+location.</p>
+<div class="highlight-python"><pre>[plugin:mybundle:myplugin]
+path = ./.jig/plugins/24a8056749e448b182d44690a04ca0b7/myplugin
+crank_widget = yes</pre>
+</div>
+<p>It also contains the <strong>default settings</strong> for this plugin as defined by the
+author. You can change these settings to affect the way the plugin behaves.</p>
+</div>
+<div class="section" id="how-it-runs">
+<h3><a class="toc-backref" href="#id4">How it runs</a><a class="headerlink" href="#how-it-runs" title="Permalink to this headline">¶</a></h3>
+<p>Git automatically runs Jig when <tt class="docutils literal"><span class="pre">git</span> <span class="pre">commit</span></tt> is ran. It happens before your
+staged files become an object in the Git database (before your commit is
+written).</p>
+<p>The neat part of this is that <strong>if Jig returns an exit code of 0</strong> the commit
+will occur. But <strong>if Jig returns a non-zero exit code like 1</strong>, Git will abort the
+commit.</p>
+<p>Jig communicates with plugins using the <a class="reference external" href="http://www.json.org/">JSON</a> data format. Both the input and
+the output are JSON. This is convenient because almost all scripting languages
+that will likey be used to write Jig plugins can easily deal with JSON data.</p>
+<p>A plugin has the ability to pass messages back to Jig that will be formatted
+and displayed in the terminal.</p>
+<img alt="_images/integration.png" src="_images/integration.png" />
+</div>
+</div>
+<div class="section" id="tests-and-coverage">
+<h2><a class="toc-backref" href="#id5">Tests and coverage</a><a class="headerlink" href="#tests-and-coverage" title="Permalink to this headline">¶</a></h2>
+<p>Jig uses <a class="reference external" href="http://readthedocs.org/docs/nose/en/latest/">Nose</a> to run tests and <a class="reference external" href="http://nedbatchelder.com/code/coverage/">coverage.py</a> to perform code coverage
+analysis.</p>
+<p>You need to have a cloned copy of Jig to run either one. You can start with a
+read-only copy:</p>
+<div class="highlight-python"><pre>$ git clone git://github.com/robmadole/jig.git</pre>
+</div>
+<p>Or <a class="reference external" href="https://github.com/robmadole/jig/fork_select">fork the repository</a> on GitHub to make your own changes. The
+<a class="reference internal" href="license.html"><em>Jig License</em></a> is friendly.</p>
+<p id="development-buildout">Jig also uses zc.buildout, which means you need to run a couple of commands to
+download dependencies and create the scripts needed for development.</p>
+<div class="highlight-python"><pre>$ python boostrap.py &amp;&amp; ./bin/buildout</pre>
+</div>
+<p>To run the tests:</p>
+<div class="highlight-python"><pre>$ ./bin/jig-tests</pre>
+</div>
+<p>To run test coverage:</p>
+<div class="highlight-python"><pre>$ ./bin/jig-coverage</pre>
+</div>
+</div>
+<div class="section" id="making-the-documentation">
+<h2><a class="toc-backref" href="#id6">Making the documentation</a><a class="headerlink" href="#making-the-documentation" title="Permalink to this headline">¶</a></h2>
+<p>This documentation is made with <a class="reference external" href="http://sphinx.pocoo.org/">Sphinx</a>. To build the docs make sure you&#8217;ve ran
+the <a class="reference internal" href="#development-buildout"><em>buildout</em></a> first.</p>
+<p>Build the HTML version:</p>
+<div class="highlight-python"><pre>$ cd docs
+$ make html</pre>
+</div>
+<p>The builds will be placed in <tt class="file docutils literal"><span class="pre">build</span></tt>.</p>
+</div>
+</div>
+
+
+        </div>
+      </div>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+    <h3><a href="index.html">Jig documentation</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Hacking on Jig</a><ul>
+<li><a class="reference internal" href="#plumbing-of-jig">Plumbing of Jig</a><ul>
+<li><a class="reference internal" href="#how-it-hooks-in">How it hooks in</a></li>
+<li><a class="reference internal" href="#how-it-runs">How it runs</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tests-and-coverage">Tests and coverage</a></li>
+<li><a class="reference internal" href="#making-the-documentation">Making the documentation</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>On GitHub</h3>
+  <ul>
+    <li><a href="http://github.com/robmadole/jig">Get the code</a></li>
+    <li><a href="http://github.com/robmadole/jig/issues">Report an issue</a></li>
+  </ul>
+
+  <iframe src="http://markdotto.github.com/github-buttons/github-btn.html?user=robmadole&repo=jig&type=watch&count=false&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="170px" height="30px"></iframe>
+<div id="searchbox" style="display: none">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="cli.html" title="Jig on the command line"
+             >previous</a> |</li>
+        <li><a href="index.html">Jig 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Rob Madole.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

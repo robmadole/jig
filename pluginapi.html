@@ -1,0 +1,982 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>How to write plugins &mdash; Jig 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/jig.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Jig 0.1.0 documentation" href="index.html" />
+    <link rel="next" title="Jig on the command line" href="cli.html" />
+    <link rel="prev" title="How to use Jig" href="usage.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="cli.html" title="Jig on the command line"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="usage.html" title="How to use Jig"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Jig 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+    <div class="documentwrapper">
+      
+      <div class="bodywrapper">
+        <div class="body">
+          
+  <div class="section" id="how-to-write-plugins">
+<h1>How to write plugins<a class="headerlink" href="#how-to-write-plugins" title="Permalink to this headline">¶</a></h1>
+<p>Jig by itself is useless. You need &#8220;plugins&#8221; to do the work.</p>
+<p>The following documentation outlines what it takes to build plugins.</p>
+<p>One of the primary reasons Jig exists is to enable you to write your own.</p>
+<div class="section" id="the-anatomy-of-a-plugin">
+<span id="pluginapi-anatomy"></span><h2>The anatomy of a plugin<a class="headerlink" href="#the-anatomy-of-a-plugin" title="Permalink to this headline">¶</a></h2>
+<p>The most basic plugin has just two files:</p>
+<ul class="simple">
+<li>pre-commit</li>
+<li>config.cfg</li>
+</ul>
+<p>(Wait, don&#8217;t run off and try to create these yet. The <a class="reference internal" href="cli.html"><em>Jig command line tool</em></a>
+will do this for you. Read on.)</p>
+<p>The <tt class="file docutils literal"><span class="pre">pre-commit</span></tt> is your script and <tt class="file docutils literal"><span class="pre">config.cfg</span></tt> contains info about your plugin.</p>
+<p>It will recieve JSON data through the <tt class="docutils literal"><span class="pre">stdin</span></tt> stream. It&#8217;s expected to write
+to <tt class="docutils literal"><span class="pre">stdout</span></tt> if it has anything to say (or <tt class="docutils literal"><span class="pre">stderr</span></tt> if it runs into
+problems). Although a plugin doesn&#8217;t have to write anything.</p>
+<p>The <tt class="file docutils literal"><span class="pre">config.cfg</span></tt> file contains the plugin name and bundle. It
+can also contain default settings but they aren&#8217;t required.</p>
+<p>Here&#8217;s an example:</p>
+<div class="highlight-ini"><div class="highlight"><pre><span class="k">[plugin]</span>
+<span class="na">bundle</span> <span class="o">=</span> <span class="s">mybundle</span>
+<span class="na">name</span> <span class="o">=</span> <span class="s">myplugin</span>
+
+<span class="k">[settings]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you plan on making more than one plugin and you&#8217;d like to keep
+them grouped together, keep the <tt class="docutils literal"><span class="pre">bundle</span></tt> identifier the same.</p>
+</div>
+<p>If you want to add settings to your plugin which can be read by your <tt class="docutils literal"><span class="pre">pre-commit</span></tt> script, you can do that like this:</p>
+<div class="highlight-ini"><div class="highlight"><pre><span class="k">[plugin]</span>
+<span class="na">bundle</span> <span class="o">=</span> <span class="s">mybundle</span>
+<span class="na">name</span> <span class="o">=</span> <span class="s">myplugin</span>
+
+<span class="k">[settings]</span>
+<span class="na">verbose</span> <span class="o">=</span> <span class="s">no</span>
+<span class="na">foo</span> <span class="o">=</span> <span class="s">bar</span>
+</pre></div>
+</div>
+<p>Here&#8217;s a very simple <tt class="docutils literal"><span class="pre">pre-commit</span></tt> script written with <a class="reference external" href="http://nodejs.org/">Node.js</a>. You can use
+any scripting language that you wish as long as it&#8217;s installed on the system
+that runs the plugin.</p>
+<div class="highlight-javascript"><pre>#!/usr/bin/env node
+process.stdout.write('Always look on the bright side of life');
+process.exit(0);</pre>
+</div>
+<p>Running this plugin with Jig will give you output like this:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">▾  myplugin</span>
+
+<span class="go">✓  Always look on the bright side of life</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 1 Warn 0 Stop 0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="writing-tests-for-your-plugins">
+<span id="pluginapi-testing"></span><h2>Writing tests for your plugins<a class="headerlink" href="#writing-tests-for-your-plugins" title="Permalink to this headline">¶</a></h2>
+<p>Before we get too deep into data formats, it&#8217;s a good time to mention testing.
+While it&#8217;s true that your plugins are probably short and simple, tests can
+provide you with a lot of benefit.</p>
+<p>Jig provides a framework for writing and running your tests. Let&#8217;s see it in
+action.</p>
+<div class="section" id="command-line">
+<h3>Command line<a class="headerlink" href="#command-line" title="Permalink to this headline">¶</a></h3>
+<p>Tests are ran using Jig&#8217;s command line tool.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> jig plugin <span class="nb">test</span> -h
+<span class="go">usage: jig plugin test [-h] PLUGIN</span>
+
+<span class="go">positional arguments:</span>
+<span class="go">  plugin         Path to the plugin directory</span>
+
+<span class="go">optional arguments:</span>
+<span class="go">  -h, --help     show this help message and exit</span>
+<span class="go">  --verbose, -v  Print the input and output (stdin and stdout)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="create-a-plugin">
+<h3>Create a plugin<a class="headerlink" href="#create-a-plugin" title="Permalink to this headline">¶</a></h3>
+<p>By using <a class="reference internal" href="#pluginapi-pre-commit-templates"><em>templates</em></a>, Jig can get you going quickly.</p>
+<p>Let&#8217;s rewrite that Monty Python lyric plugin in...well Python.</p>
+<p>We&#8217;ll call the plugin <tt class="docutils literal"><span class="pre">bright-side</span></tt> and tell Jig the bundle name is
+<tt class="docutils literal"><span class="pre">pythonlyrics</span></tt>. (Afterall we&#8217;ll probably be creating more of these, might as
+well bundle them together.)</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> jig plugin create bright-side pythonlyrics
+<span class="go">Created plugin as ./bright-side</span>
+</pre></div>
+</div>
+<p>The default template is in Python, if we take a look at the <tt class="file docutils literal"><span class="pre">pre-commit</span></tt>
+we can see that it starts with this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/env python</span>
+</pre></div>
+</div>
+<p>The pre-commit Jig created is too verbose for this example. Remove
+everything in there and replace it with this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/env python</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;Always look on the bright side of life&#39;</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>OK, let&#8217;s run the tests.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> jig plugin tests bright-side
+<span class="go">Could not find any tests: bright-side/tests.</span>
+</pre></div>
+</div>
+<p>No tests. We can fix that.</p>
+</div>
+<div class="section" id="create-test-fixtures">
+<h3>Create test fixtures<a class="headerlink" href="#create-test-fixtures" title="Permalink to this headline">¶</a></h3>
+<p>If you were writing these plugins without using Jig&#8217;s testing framework it
+would be a pain to test them. You&#8217;d either be creating the input data yourself
+by hand or using a carefully crafted Git repository.</p>
+<p>Jig has a way of making this dead simple. It takes a set of numbered directories
+and creates a Git repository for you that your tests can make assertions
+against.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This is a strange concept to understand at first. Look at some of
+the tests in Jig&#8217;s own common plugins if some real examples would help.
+<a class="reference external" href="https://github.com/robmadole/jig-plugins/tree/master">https://github.com/robmadole/jig-plugins/tree/master</a></p>
+</div>
+<p>To create your fixture we need to start a <tt class="docutils literal"><span class="pre">tests</span></tt> directory:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mkdir bright-side/tests
+</pre></div>
+</div>
+<p>The next step is to represent the Git repository&#8217;s <em>root commit</em>. Just as the
+name implies, this is the very first commit in a repository (it&#8217;s special
+in Git terms because it&#8217;s the only commit that doesn&#8217;t have a parent).</p>
+<p>Numbering starts at <tt class="docutils literal"><span class="pre">01</span></tt>. We&#8217;ll create an empty <tt class="docutils literal"><span class="pre">README</span></tt> file because
+we need something of substance for that first commit.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mkdir bright-side/tests/01
+<span class="gp">$</span> touch bright-side/tests/01/README
+</pre></div>
+</div>
+<p>The second commit will be based off the first one, copy the directory to <tt class="file docutils literal"><span class="pre">02</span></tt>.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cp -R bright-side/tests/01 bright-side/tests/02
+</pre></div>
+</div>
+<p>We need something to change between <tt class="docutils literal"><span class="pre">01</span></tt> and <tt class="docutils literal"><span class="pre">02</span></tt> for there to be a commit.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">echo</span> <span class="s2">&quot;The Life of Brian&quot;</span> &gt; bright-side/tests/02/title.txt
+</pre></div>
+</div>
+<p>With these two directories, Jig has enough information to create an empty
+repository with the root commit represented by the <strong>contents</strong> of the <tt class="docutils literal"><span class="pre">01</span></tt>
+directory. The next commit, commit #2, will be based on the <strong>contents</strong> of the
+<tt class="docutils literal"><span class="pre">02</span></tt> directory.</p>
+<p>You don&#8217;t have to interact with Git at all to make this happen. It&#8217;s a feature
+of Jig&#8217;s testing framework and it comes for free.</p>
+<p>Now that we have a test fixture as a Git repository, run the tests.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> jig plugin tests bright-side
+<span class="go">Missing expectation file: bright-side/tests/expect.rst.</span>
+</pre></div>
+</div>
+<p>Still doesn&#8217;t work. But we&#8217;re getting closer.</p>
+</div>
+<div class="section" id="create-the-tests">
+<h3>Create the tests<a class="headerlink" href="#create-the-tests" title="Permalink to this headline">¶</a></h3>
+<p>Jig&#8217;s testing file <tt class="file docutils literal"><span class="pre">expect.rst</span></tt> is a bit unique. Instead of a script that
+runs, you <strong>document your plugin to test it</strong>  using <a class="reference external" href="http://docutils.sourceforge.net/rst.html">reStructuredText</a>.</p>
+<p>Create <tt class="file docutils literal"><span class="pre">bright-side/tests/expect.rst</span></tt> and edit it to read:</p>
+<div class="highlight-rst"><div class="highlight"><pre><span class="gh">Monty Python lyrics</span>
+<span class="gh">===================</span>
+
+The bright-side plugin simply reminds you to look on the bright side of life.
+
+<span class="p">..</span> <span class="ow">expectation</span><span class="p">::</span>
+    <span class="nc">:from:</span> <span class="nf">01</span>
+    <span class="nc">:to:</span> <span class="nf">02</span>
+</pre></div>
+</div>
+<p>reStructuredText is a plaintext markup language. It&#8217;s similar to Markdown or a
+Wiki markup language.</p>
+<p>Let&#8217;s run this test and we can see how this document serves as the description
+of the behavior we expect from the plugin.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> jig plugin <span class="nb">test </span>bright-side
+<span class="go">01 – 02 Fail</span>
+
+<span class="go">Actual</span>
+<span class="go">················································································</span>
+
+<span class="go">▾  bright-side</span>
+
+<span class="go">✓  Always look on the bright side of life</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 1 Warn 0 Stop 0</span>
+
+<span class="go">Diff</span>
+<span class="go">················································································</span>
+
+<span class="go">+ ▾  bright-side</span>
+<span class="go">+</span>
+<span class="go">+ ✓  Always look on the bright side of life</span>
+<span class="go">+</span>
+<span class="go">+ Ran 1 plugin</span>
+<span class="go">+     Info 1 Warn 0 Stop 0</span>
+</pre></div>
+</div>
+<p>Finally we got something.</p>
+<p>The key to this is in the <tt class="docutils literal"><span class="pre">..</span> <span class="pre">expectations::</span></tt> directive you saw in the
+<tt class="file docutils literal"><span class="pre">expect.rst</span></tt> file.</p>
+<p>This tells Jig to run the plugin sending it the difference between the first
+commit (<tt class="docutils literal"><span class="pre">01</span></tt>) and the second commit (<tt class="docutils literal"><span class="pre">02</span></tt>) in JSON format.</p>
+<p>If we update our <tt class="file docutils literal"><span class="pre">expect.rst</span></tt> file one we can get a passing test.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Yes, that&#8217;s Unicode. It&#8217;s best that you copy and paste instead of
+trying to type this out.</p>
+</div>
+<div class="highlight-rst"><div class="highlight"><pre><span class="gh">Monty Python lyrics</span>
+<span class="gh">===================</span>
+
+The bright-side plugin simply reminds you to look on the bright side of life.
+
+<span class="p">..</span> <span class="ow">expectation</span><span class="p">::</span>
+    <span class="nc">:from:</span> <span class="nf">01</span>
+    <span class="nc">:to:</span> <span class="nf">02</span>
+
+    ▾  bright-side
+
+    ✓  Always look on the bright side of life
+
+    Ran 1 plugin
+        Info 1 Warn 0 Stop 0
+</pre></div>
+</div>
+<p>Run the tests again:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> jig plugin <span class="nb">test </span>bright-side
+<span class="go">01 – 02 Pass</span>
+
+<span class="go">Pass 1, Fail 0</span>
+</pre></div>
+</div>
+<p>You&#8217;ve just written automated tests for your new plugin.</p>
+<p>While this is a great first step, it was really simple and not very useful.</p>
+<p>The next sections will explore the input and output format (in JSON) and how
+you can work with this data to make something that actually helps.</p>
+</div>
+</div>
+<div class="section" id="data-formats">
+<h2>Data formats<a class="headerlink" href="#data-formats" title="Permalink to this headline">¶</a></h2>
+<p>For plugins to operate in Jig&#8217;s arena, they have to understand the data coming
+in and the data going out. It&#8217;s JSON both ways.</p>
+<img alt="_images/input-output.png" src="_images/input-output.png" />
+<p>The following outlines what you can expect.</p>
+<div class="section" id="input">
+<span id="pluginapi-input"></span><h3>Input<a class="headerlink" href="#input" title="Permalink to this headline">¶</a></h3>
+<p>The input format is organized by filename. If we turn on verbose output when we
+run the tests we can see exactly what Jig is feeding our <tt class="docutils literal"><span class="pre">bright-side</span></tt>
+plugin.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="hll"><span class="gp">$</span> jig plugin <span class="nb">test</span> --verbose bright-side
+</span>
+<span class="go">01 – 02 Pass</span>
+
+<span class="go">stdin (sent to the plugin)</span>
+
+<span class="go">    {</span>
+<span class="go">      &quot;files&quot;: [</span>
+<span class="go">        {</span>
+<span class="go">          &quot;diff&quot;: [</span>
+<span class="go">            [</span>
+<span class="go">              1,</span>
+<span class="go">              &quot;+&quot;,</span>
+<span class="go">              &quot;The Life of Brian&quot;</span>
+<span class="go">            ]</span>
+<span class="go">          ],</span>
+<span class="go">          &quot;type&quot;: &quot;added&quot;,</span>
+<span class="go">          &quot;name&quot;: &quot;title.txt&quot;,</span>
+<span class="go">          &quot;filename&quot;: &quot;/Users/ericidle/bright-side/tests/02/title.txt&quot;</span>
+<span class="go">        }</span>
+<span class="go">      ],</span>
+<span class="go">      &quot;config&quot;: {}</span>
+<span class="go">    }</span>
+
+<span class="go">stdout (received from the plugin)</span>
+
+<span class="go">    Always look on the bright side of life</span>
+
+<span class="go">················································································</span>
+<span class="go">Pass 1, Fail 0</span>
+</pre></div>
+</div>
+<p>The JSON object has two members, <tt class="docutils literal"><span class="pre">files</span></tt> and <tt class="docutils literal"><span class="pre">config</span></tt>.</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+<span class="hll">  <span class="s2">&quot;files&quot;</span><span class="o">:</span> <span class="p">[</span> <span class="p">...</span> <span class="p">],</span>
+</span><span class="hll">  <span class="s2">&quot;config&quot;</span><span class="o">:</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</span><span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="information-on-files">
+<h4>Information on files<a class="headerlink" href="#information-on-files" title="Permalink to this headline">¶</a></h4>
+<p>The <tt class="docutils literal"><span class="pre">files</span></tt> object contains data about which files changed and what changed
+within them.</p>
+<p>If we take a look at the first element in the <tt class="docutils literal"><span class="pre">files</span></tt> array, we can see it contains an
+object with <tt class="docutils literal"><span class="pre">diff</span></tt>, <tt class="docutils literal"><span class="pre">type</span></tt>, <tt class="docutils literal"><span class="pre">name</span></tt>, and <tt class="docutils literal"><span class="pre">filename</span></tt> member.</p>
+<p>The <tt class="docutils literal"><span class="pre">filename</span></tt> value is the <strong>absolute path</strong> of the file.</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s2">&quot;diff&quot;</span><span class="o">:</span> <span class="p">[</span> <span class="p">...</span> <span class="p">],</span>
+  <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;added&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;title.txt&quot;</span><span class="p">,</span>
+<span class="hll">  <span class="s2">&quot;filename&quot;</span><span class="o">:</span> <span class="s2">&quot;/Users/ericidle/bright-side/tests/02/title.txt&quot;</span>
+</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">name</span></tt> value is the name of the filename <strong>relative to the Git
+repository</strong>.</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s2">&quot;diff&quot;</span><span class="o">:</span> <span class="p">[</span> <span class="p">...</span> <span class="p">],</span>
+  <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;added&quot;</span><span class="p">,</span>
+<span class="hll">  <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;title.txt&quot;</span><span class="p">,</span>
+</span>  <span class="s2">&quot;filename&quot;</span><span class="o">:</span> <span class="s2">&quot;/Users/ericidle/bright-side/tests/02/title.txt&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">type</span></tt> value is the overall action that has occurred to the file. This can
+be one of 3 values.</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">added</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">modified</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">deleted</span></tt></li>
+</ul>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s2">&quot;diff&quot;</span><span class="o">:</span> <span class="p">[</span> <span class="p">...</span> <span class="p">],</span>
+<span class="hll">  <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;added&quot;</span><span class="p">,</span>
+</span>  <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;title.txt&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;filename&quot;</span><span class="o">:</span> <span class="s2">&quot;/Users/ericidle/bright-side/tests/02/title.txt&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">diff</span></tt> is an an array. Each member in the array is also an array and
+always contains three values.</p>
+<ol class="arabic simple">
+<li>Line number</li>
+<li>Type of diff (<tt class="docutils literal"><span class="pre">+</span></tt> is line added, <tt class="docutils literal"><span class="pre">-</span></tt> is line removed, and &#8221; &#8221; is
+unchanged)</li>
+<li>The contents of that line</li>
+</ol>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s2">&quot;diff&quot;</span><span class="o">:</span> <span class="p">[</span>
+<span class="hll">    <span class="p">[</span>
+</span><span class="hll">      <span class="mi">1</span><span class="p">,</span>
+</span><span class="hll">      <span class="s2">&quot;+&quot;</span><span class="p">,</span>
+</span><span class="hll">      <span class="s2">&quot;The Life of Brian&quot;</span>
+</span><span class="hll">    <span class="p">]</span>
+</span>  <span class="p">],</span>
+  <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;added&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;title.txt&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;filename&quot;</span><span class="o">:</span> <span class="s2">&quot;/Users/ericidle/bright-side/tests/02/title.txt&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="config-data">
+<h4>Config data<a class="headerlink" href="#config-data" title="Permalink to this headline">¶</a></h4>
+<p>Along with information about the files, Jig will also pass configuration
+settings for a plugin.</p>
+<p>It will use the default settings found in the <tt class="docutils literal"><span class="pre">[settings]</span></tt> section of
+<tt class="file docutils literal"><span class="pre">$PLUGIN/config.cfg</span></tt> and those settings can be overridden by
+<tt class="file docutils literal"><span class="pre">$GIT_REPO/.jig/plugins.cfg</span></tt>.</p>
+<p>Our <tt class="docutils literal"><span class="pre">bright-side</span></tt> plugin doesn&#8217;t currently have any default settings so let&#8217;s
+add some and see how it affects the JSON input data.</p>
+<p>Edit <tt class="file docutils literal"><span class="pre">bright-side/config.cfg</span></tt>:</p>
+<div class="highlight-ini"><div class="highlight"><pre><span class="k">[plugin]</span>
+<span class="na">bundle</span> <span class="o">=</span> <span class="s">pythonlyrics</span>
+<span class="na">name</span> <span class="o">=</span> <span class="s">bright-side</span>
+
+<span class="k">[settings]</span>
+<span class="hll"><span class="na">sing_also</span> <span class="o">=</span> <span class="s">no</span>
+</span><span class="hll"><span class="na">second_chorus_line</span> <span class="o">=</span> <span class="s">no</span>
+</span></pre></div>
+</div>
+<p>Run the tests again:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> jig plugin <span class="nb">test</span> --verbose bright-side
+<span class="go">01 – 02 Pass</span>
+
+<span class="go">stdin (sent to the plugin)</span>
+
+<span class="go">    {</span>
+<span class="go">      &quot;files&quot;: [</span>
+<span class="go">        ...</span>
+<span class="go">      ],</span>
+<span class="go">      &quot;config&quot;: {</span>
+<span class="go">        &quot;second_chorus_line&quot;: &quot;no&quot;,</span>
+<span class="go">        &quot;sing_also&quot;: &quot;no&quot;</span>
+<span class="go">      }</span>
+<span class="go">    }</span>
+
+<span class="go">...</span>
+</pre></div>
+</div>
+<p>The settings are parsed and made available as <em>string values only</em>. If you want
+other data types you&#8217;ll need to convert them yourself.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Why string values instead of integers or booleans? The INI format
+doesn&#8217;t support data types. As opposed to trying to guess the data type and
+take the chance of getting it incorrect, the conversion is left to the
+plugin author.</p>
+</div>
+<p>While testing, Jig provides a directive that allows us to test our plugin based
+on different settings.</p>
+<p>Edit <tt class="file docutils literal"><span class="pre">bright-side/tests/expect.rst</span></tt> and add another section and test to
+our expectations.</p>
+<div class="highlight-rst"><div class="highlight"><pre><span class="gh">Monty Python lyrics</span>
+<span class="gh">===================</span>
+
+The bright-side plugin simply reminds you to look on the bright side of life.
+
+<span class="p">..</span> <span class="ow">expectation</span><span class="p">::</span>
+    <span class="nc">:from:</span> <span class="nf">01</span>
+    <span class="nc">:to:</span> <span class="nf">02</span>
+
+    ▾  bright-side
+
+    ✓  Always look on the bright side of life
+
+    Ran 1 plugin
+        Info 1 Warn 0 Stop 0
+
+<span class="gh">Sing to me</span>
+<span class="gh">~~~~~~~~~~</span>
+
+<span class="hll">It will sing to you. Change the <span class="s">``sing_also``</span> to <span class="s">``yes``</span> to get some additional
+</span>output.
+
+<span class="p">..</span> <span class="ow">plugin-settings</span><span class="p">::</span>
+
+    sing_also = yes
+    second_chorus_line = no
+
+<span class="p">..</span> <span class="ow">expectation</span><span class="p">::</span>
+    <span class="nc">:from:</span> <span class="nf">01</span>
+    <span class="nc">:to:</span> <span class="nf">02</span>
+
+    ▾  bright-side
+
+    ✓  Always look on the bright side of life
+
+    Ran 1 plugin
+        Info 1 Warn 0 Stop 0
+</pre></div>
+</div>
+<p>Our <tt class="file docutils literal"><span class="pre">pre-commit</span></tt> script hasn&#8217;t been altered to use this new setting so
+running the test again will show that this passes.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> jig plugin <span class="nb">test </span>bright-side
+<span class="go">01 – 02 Pass</span>
+
+<span class="go">01 – 02 Pass</span>
+
+<span class="go">Pass 2, Fail 0</span>
+</pre></div>
+</div>
+<p>Change the :file:<tt class="docutils literal"><span class="pre">bright-side/pre-commit</span></tt> script to this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/env python</span>
+<span class="c"># coding=utf-8</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="hll"><span class="kn">import</span> <span class="nn">json</span>
+</span>
+<span class="hll"><span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+</span>
+<span class="hll"><span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">][</span><span class="s">&#39;sing_also&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;yes&#39;</span><span class="p">:</span>
+</span><span class="hll">    <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;♫ Always look on the bright side of life ♫&#39;</span>
+</span><span class="k">else</span><span class="p">:</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;Always look on the bright side of life&#39;</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The next test result will show a failure because of our altered setting.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">01 – 02 Pass</span>
+
+<span class="go">01 – 02 Fail</span>
+
+<span class="go">Actual</span>
+<span class="go">················································································</span>
+
+<span class="go">▾  bright-side</span>
+
+<span class="go">✓  ♫ Always look on the bright side of life ♫</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 1 Warn 0 Stop 0</span>
+
+<span class="go">Diff</span>
+<span class="go">················································································</span>
+
+<span class="go">  ▾  bright-side</span>
+
+<span class="go">- ✓  Always look on the bright side of life</span>
+<span class="go">+ ✓  ♫ Always look on the bright side of life ♫</span>
+
+<span class="go">  Ran 1 plugin</span>
+<span class="go">      Info 1 Warn 0 Stop 0</span>
+
+<span class="go">Pass 1, Fail 1</span>
+</pre></div>
+</div>
+<p>Change the expectation to look for our singing version of the chorus.</p>
+<div class="highlight-rst"><div class="highlight"><pre><span class="p">..</span> <span class="ow">plugin-settings</span><span class="p">::</span>
+
+    sing_also = yes
+    second_chorus_line = no
+
+<span class="p">..</span> <span class="ow">expectation</span><span class="p">::</span>
+    <span class="nc">:from:</span> <span class="nf">01</span>
+    <span class="nc">:to:</span> <span class="nf">02</span>
+
+    ▾  bright-side
+
+    ✓  ♫ Always look on the bright side of life ♫
+
+    Ran 1 plugin
+        Info 1 Warn 0 Stop 0
+</pre></div>
+</div>
+<p>With that change it should bring our tests back to a passing state.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> jig plugin <span class="nb">test </span>bright-side
+<span class="go">01 – 02 Pass</span>
+
+<span class="go">01 – 02 Pass</span>
+
+<span class="go">Pass 2, Fail 0</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">The <tt class="docutils literal"><span class="pre">..</span> <span class="pre">plugin-settings::</span></tt> directive is sticky to a section. It
+doesn&#8217;t apply just once for the next <tt class="docutils literal"><span class="pre">..</span> <span class="pre">expectation::</span></tt> directive but will
+continue to apply until a section change. Sections in our example are
+separated by <tt class="docutils literal"><span class="pre">~~~~~~~~~~~~~~~</span></tt>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="output">
+<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
+<p>Now that we are familiar with the input format, it&#8217;s time to improve our
+<tt class="file docutils literal"><span class="pre">pre-commit</span></tt> script and give it a little more whizbang by specifying
+output.</p>
+<div class="section" id="info-warnings-and-stops">
+<h4>Info, warnings, and stops<a class="headerlink" href="#info-warnings-and-stops" title="Permalink to this headline">¶</a></h4>
+<p>Jig supports three basic types of messages.</p>
+<ul class="simple">
+<li><strong>info</strong> (you can shorten this to &#8220;i&#8221;)</li>
+<li><strong>warn</strong> (you can shorten this to &#8220;w&#8221;)</li>
+<li><strong>stop</strong> (you can shorten this to &#8220;s&#8221;)</li>
+</ul>
+<p><strong>The default type is ``info``</strong></p>
+<p>They are displayed to the user with differently and tallied individually at the
+end of Jig&#8217;s execution.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">▾  Plugin 1</span>
+
+<span class="go">✓  info</span>
+
+<span class="go">⚠  warn</span>
+
+<span class="go">✕  stop</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="simple-messages">
+<span id="pluginapi-simple-messages"></span><h4>Simple messages<a class="headerlink" href="#simple-messages" title="Permalink to this headline">¶</a></h4>
+<p>A simple message is not specific to a file or a line in a file. It&#8217;s used to
+communicate something to the user that is more general.</p>
+<p>Examples:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="s1">&#39;Your commit looks really good, excellent job&#39;</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>More than one message:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="s1">&#39;Your commit looks really good, excellent job&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Give yourself a pat on the back&#39;</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>This will produce output similar to this:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">▾  My-Plugin</span>
+
+<span class="go">✓  Your commit looks really good, excellent job</span>
+
+<span class="go">✓  Give yourself a pat on the back</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 1 Warn 0 Stop 0</span>
+</pre></div>
+</div>
+<p>The default message type is <tt class="docutils literal"><span class="pre">info</span></tt> but you can change it by providing an array
+of <tt class="docutils literal"><span class="pre">[TYPE,</span> <span class="pre">MESSAGE]</span></tt>.</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">[</span><span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="s1">&#39;Your commit looks a little janky&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="s1">&#39;On second thought, this is a horrible commit&#39;</span><span class="p">]</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>The output will look like this:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">▾  My-Plugin</span>
+
+<span class="go">⚠  Your commit looks a little janky</span>
+
+<span class="go">✕  On second thought, this is a horrible commit</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 0 Warn 1 Stop 1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="file-messages">
+<h4>File messages<a class="headerlink" href="#file-messages" title="Permalink to this headline">¶</a></h4>
+<p>File messages are specific to files but not to a particular line.</p>
+<p>Examples:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s1">&#39;myMainFile.javascript&#39;</span><span class="o">:</span> <span class="p">[</span>
+        <span class="s1">&#39;The extension should probably just be .js&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;You should not camelCase your JavaScript filenames&#39;</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The output will include the filename:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">▾  My-Plugin</span>
+
+<span class="go">✓  myMainFile.javascript</span>
+<span class="go">    The extension should probably just be .js</span>
+
+<span class="go">✓  myMainFile.javascript</span>
+<span class="go">    You should not camelCase your JavaScript filenames</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 2 Warn 0 Stop 0</span>
+</pre></div>
+</div>
+<p>You can specify the type of message:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s1">&#39;myMainFile.javascript&#39;</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;The extension should probably just be .js&#39;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="s1">&#39;You should not camelCase your JavaScript filenames&#39;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="s1">&#39;Really? Putting &quot;File&quot; in the name of your file?&#39;</span><span class="p">]</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The output is:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">▾  My-Plugin</span>
+
+<span class="go">✓  myMainFile.javascript</span>
+<span class="go">    The extension should probably just be .js</span>
+
+<span class="go">⚠  myMainFile.javascript</span>
+<span class="go">    You should not camelCase your JavaScript filenames</span>
+
+<span class="go">✕  myMainFile.javascript</span>
+<span class="go">    Really? Putting &quot;File&quot; in the name of your file?</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 1 Warn 1 Stop 1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="line-messages">
+<h4>Line messages<a class="headerlink" href="#line-messages" title="Permalink to this headline">¶</a></h4>
+<p>These are very similar to file messages but include the line number.</p>
+<p>Examples:</p>
+<div class="highlight-javascript"><pre>{
+    'utils.sh': [
+        [1, 's', 'You don't have a hashbang (#!) as the first line'],
+    ]
+}</pre>
+</div>
+<p>This will include the line number in the output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">▾  My-Plugin</span>
+
+<span class="go">✕  line 1: utils.sh</span>
+<span class="go">    You don&#39;t have a hashbang (#!) as the first line</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 0 Warn 0 Stop 1</span>
+</pre></div>
+</div>
+<p>Multiple messages for the file can be specified:</p>
+<div class="highlight-javascript"><pre>{
+    'utils.sh': [
+        [1, 's', 'You don't have a hashbang (#!) as the first line'],
+        [5, 'i', 'This is a bash style if statement and will fail with sh'],
+        [500, 'w', "Getting a bit long is it not? You could use Python instead...']
+    ]
+}</pre>
+</div>
+<p>The output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">▾  My-Plugin</span>
+
+<span class="go">✕  line 1: utils.sh</span>
+<span class="go">    You don&#39;t have a hashbang (#!) as the first line</span>
+
+<span class="go">✓  line 1: utils.sh</span>
+<span class="go">    This is a bash style if statement and will fail with sh</span>
+
+<span class="go">⚠  line 1: utils.sh</span>
+<span class="go">    Getting a bit long is it not? You could use Python instead...</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 1 Warn 1 Stop 1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="non-json-output">
+<h4>Non-JSON output<a class="headerlink" href="#non-json-output" title="Permalink to this headline">¶</a></h4>
+<p>In our examples for the <a class="reference internal" href="#pluginapi-input"><em>input</em></a> formatting, our
+<tt class="file docutils literal"><span class="pre">pre-commit</span></tt> script simply printed the messages directly to standard out.
+They were not in JSON format. Jig is forgiving of this and will not reject
+messages that come in this way.</p>
+<p>The output will be treated as <a class="reference internal" href="#pluginapi-simple-messages"><em>simple messages</em></a>
+but you&#8217;ll have to format newlines yourself.</p>
+<p>The following examples are equivalent:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># As a string with a newline</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;Simple message one&#39;</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># As JSON</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+    <span class="p">[</span><span class="s">&#39;Simple message one&#39;</span><span class="p">]))</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The output for both of these would be</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">▾  My-Plugin</span>
+
+<span class="go">✓  Simple message one</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 1 Warn 0 Stop 0</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="error-handling">
+<h2>Error handling<a class="headerlink" href="#error-handling" title="Permalink to this headline">¶</a></h2>
+<p>Jig pays attention to both the standard out and the standard error streams.</p>
+<p>If your plugins exits with an exit code of <strong>1</strong>, any data that is written to
+<tt class="docutils literal"><span class="pre">stderr</span></tt> will be displayed to the user.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">▾  jslint</span>
+
+<span class="go">✕  You need the jslint command line tool installed before running this plugin</span>
+
+<span class="go">Ran 1 plugin</span>
+<span class="go">    Info 0 Warn 0 Stop 0</span>
+<span class="go">    (1 plugin reported errors)</span>
+</pre></div>
+</div>
+<p>When you are writing tests for you plugin, these are formatted in a friendly way
+to aid in debugging.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">Actual</span>
+<span class="go">················································································</span>
+
+<span class="go">Exit code: 1</span>
+
+<span class="go">Std out:</span>
+<span class="go">(none)</span>
+
+<span class="go">Std err:</span>
+<span class="go">You need the jslint command line tool installed before running this plugin</span>
+</pre></div>
+</div>
+<div class="section" id="exit-codes">
+<h3>Exit codes<a class="headerlink" href="#exit-codes" title="Permalink to this headline">¶</a></h3>
+<p>Plugins should always exit with <strong>0</strong> or <strong>1</strong>.</p>
+<div class="section" id="exiting-with-0">
+<h4>Exiting with 0<a class="headerlink" href="#exiting-with-0" title="Permalink to this headline">¶</a></h4>
+<p>An exit code of <strong>0</strong> means <em>the plugin functioned normally</em>. Even if it
+generated warnings or stop messages.</p>
+</div>
+<div class="section" id="exiting-with-1">
+<h4>Exiting with 1<a class="headerlink" href="#exiting-with-1" title="Permalink to this headline">¶</a></h4>
+<p>If your plugin fails to function as expected, it should exit witth <strong>1</strong>. This
+indicates to Jig that a problem exists and the output, if any, from the plugin
+is not a normal collection of messages that Jig will understand.</p>
+<p>A common reason for exiting with <strong>1</strong> would be a missing dependency.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">call</span><span class="p">,</span> <span class="n">PIPE</span>
+
+<span class="c"># which exits with 1 if it can&#39;t find the command</span>
+<span class="k">if</span> <span class="n">call</span><span class="p">([</span><span class="s">&#39;which&#39;</span><span class="p">,</span> <span class="s">&#39;jslint&#39;</span><span class="p">],</span> <span class="n">stdout</span><span class="o">=</span><span class="n">PIPE</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="c"># Write to stderr, not stdout</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;Could not find JSlint, do you need to install it?&#39;</span><span class="p">)</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="binary-files">
+<h2>Binary files<a class="headerlink" href="#binary-files" title="Permalink to this headline">¶</a></h2>
+<p>Jig does not currently support binary files. It doesn&#8217;t ignore them, but you
+will not get any data back in the <tt class="docutils literal"><span class="pre">diff</span></tt> section.</p>
+<p>For example, if an image was added you&#8217;ll see something like this:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s2">&quot;files&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;diff&quot;</span><span class="o">:</span> <span class="p">[],</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;added&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;some-image.png&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;filename&quot;</span><span class="o">:</span> <span class="s2">&quot;/Users/ericidle/bright-side/tests/02/some-image.png&quot;</span>
+    <span class="p">},</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="symlinks">
+<h2>Symlinks<a class="headerlink" href="#symlinks" title="Permalink to this headline">¶</a></h2>
+<p>Git supports symlinks but Jig will ignore them. This may change in the future,
+but since they cannot be treated the same as normal files a lot of plugin
+authors would not perform the additional error handling needed.</p>
+<p>If you have a valid case for needing to know about symlinks, submit a <a class="reference external" href="http://github.com/robmadole/jig/issues/new">feature
+request</a>.</p>
+</div>
+<div class="section" id="templates-for-pre-commit-scripts">
+<span id="pluginapi-pre-commit-templates"></span><h2>Templates for pre-commit scripts<a class="headerlink" href="#templates-for-pre-commit-scripts" title="Permalink to this headline">¶</a></h2>
+<p>Jig currently comes with one template.</p>
+<p>When you run the following command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> jig plugin create my-plugin my-bundle
+</pre></div>
+</div>
+<p>The templates can be found at:</p>
+<p><a class="reference external" href="https://github.com/robmadole/jig/tree/master/src/jig/data/pre-commits">https://github.com/robmadole/jig/tree/master/src/jig/data/pre-commits</a></p>
+<p>At the moment the only template is Python. More are planned in the future.</p>
+</div>
+</div>
+
+
+        </div>
+      </div>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+    <h3><a href="index.html">Jig documentation</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">How to write plugins</a><ul>
+<li><a class="reference internal" href="#the-anatomy-of-a-plugin">The anatomy of a plugin</a></li>
+<li><a class="reference internal" href="#writing-tests-for-your-plugins">Writing tests for your plugins</a><ul>
+<li><a class="reference internal" href="#command-line">Command line</a></li>
+<li><a class="reference internal" href="#create-a-plugin">Create a plugin</a></li>
+<li><a class="reference internal" href="#create-test-fixtures">Create test fixtures</a></li>
+<li><a class="reference internal" href="#create-the-tests">Create the tests</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#data-formats">Data formats</a><ul>
+<li><a class="reference internal" href="#input">Input</a><ul>
+<li><a class="reference internal" href="#information-on-files">Information on files</a></li>
+<li><a class="reference internal" href="#config-data">Config data</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#output">Output</a><ul>
+<li><a class="reference internal" href="#info-warnings-and-stops">Info, warnings, and stops</a></li>
+<li><a class="reference internal" href="#simple-messages">Simple messages</a></li>
+<li><a class="reference internal" href="#file-messages">File messages</a></li>
+<li><a class="reference internal" href="#line-messages">Line messages</a></li>
+<li><a class="reference internal" href="#non-json-output">Non-JSON output</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#error-handling">Error handling</a><ul>
+<li><a class="reference internal" href="#exit-codes">Exit codes</a><ul>
+<li><a class="reference internal" href="#exiting-with-0">Exiting with 0</a></li>
+<li><a class="reference internal" href="#exiting-with-1">Exiting with 1</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#binary-files">Binary files</a></li>
+<li><a class="reference internal" href="#symlinks">Symlinks</a></li>
+<li><a class="reference internal" href="#templates-for-pre-commit-scripts">Templates for pre-commit scripts</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>On GitHub</h3>
+  <ul>
+    <li><a href="http://github.com/robmadole/jig">Get the code</a></li>
+    <li><a href="http://github.com/robmadole/jig/issues">Report an issue</a></li>
+  </ul>
+
+  <iframe src="http://markdotto.github.com/github-buttons/github-btn.html?user=robmadole&repo=jig&type=watch&count=false&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="170px" height="30px"></iframe>
+<div id="searchbox" style="display: none">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="cli.html" title="Jig on the command line"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="usage.html" title="How to use Jig"
+             >previous</a> |</li>
+        <li><a href="index.html">Jig 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Rob Madole.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

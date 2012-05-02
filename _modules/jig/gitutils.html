@@ -1,0 +1,191 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jig.gitutils &mdash; Jig 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/jig.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Jig 0.1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Jig 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+    <div class="documentwrapper">
+      
+      <div class="bodywrapper">
+        <div class="body">
+          
+  <h1>Source code for jig.gitutils</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Collection of utilities to deal with Git.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">stat</span> <span class="kn">import</span> <span class="n">S_IXUSR</span><span class="p">,</span> <span class="n">S_IXGRP</span><span class="p">,</span> <span class="n">S_IXOTH</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">stat</span><span class="p">,</span> <span class="n">chmod</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">isdir</span><span class="p">,</span> <span class="n">isfile</span><span class="p">,</span> <span class="n">join</span><span class="p">,</span> <span class="n">realpath</span><span class="p">,</span> <span class="n">dirname</span>
+
+<span class="kn">import</span> <span class="nn">git</span>
+<span class="kn">import</span> <span class="nn">gitdb</span>
+<span class="kn">import</span> <span class="nn">async</span>
+<span class="kn">import</span> <span class="nn">smmap</span>
+<span class="kn">from</span> <span class="nn">jig.exc</span> <span class="kn">import</span> <span class="n">NotGitRepo</span><span class="p">,</span> <span class="n">PreCommitExists</span>
+<span class="kn">from</span> <span class="nn">jig.conf</span> <span class="kn">import</span> <span class="n">BC_DIR_NAME</span>
+
+<span class="c"># Dependencies to make jig run</span>
+<span class="n">BE_CAREFUL_DIR</span> <span class="o">=</span> <span class="n">realpath</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;..&#39;</span><span class="p">))</span>
+<span class="n">GIT_PYTHON_DIR</span> <span class="o">=</span> <span class="n">realpath</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;..&#39;</span><span class="p">))</span>
+<span class="n">GITDB_DIR</span> <span class="o">=</span> <span class="n">realpath</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">gitdb</span><span class="o">.</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;..&#39;</span><span class="p">))</span>
+<span class="n">ASYNC_DIR</span> <span class="o">=</span> <span class="n">realpath</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">async</span><span class="o">.</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;..&#39;</span><span class="p">))</span>
+<span class="n">SMMAP_DIR</span> <span class="o">=</span> <span class="n">realpath</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">smmap</span><span class="o">.</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;..&#39;</span><span class="p">))</span>
+
+<span class="n">PRE_COMMIT_HOOK_SCRIPT</span> <span class="o">=</span> \
+<span class="sd">&quot;&quot;&quot;#!{python_executable}</span>
+<span class="sd">from sys import path</span>
+<span class="sd">from os.path import dirname, join</span>
+
+<span class="sd"># Make sure that we can find the directory that jig is installed</span>
+<span class="sd">path.append(&#39;{be_careful_dir}&#39;)</span>
+<span class="sd">path.append(&#39;{git_python_dir}&#39;)</span>
+<span class="sd">path.append(&#39;{gitdb_dir}&#39;)</span>
+<span class="sd">path.append(&#39;{async_dir}&#39;)</span>
+<span class="sd">path.append(&#39;{smmap_dir}&#39;)</span>
+
+<span class="sd">from jig.runner import Runner</span>
+
+<span class="sd"># Start up the runner, passing in the repo directory</span>
+<span class="sd">bc = Runner()</span>
+<span class="sd">bc.fromhook(join(dirname(__file__), &#39;..&#39;, &#39;..&#39;))</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="is_git_repo"><a class="viewcode-back" href="../../devapi.html#jig.gitutils.is_git_repo">[docs]</a><span class="k">def</span> <span class="nf">is_git_repo</span><span class="p">(</span><span class="n">gitdir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns boolean whether the directory appears to be a Git directory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">isdir</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">gitdir</span><span class="p">,</span> <span class="s">&#39;.git&#39;</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="repo_bcinitialized"><a class="viewcode-back" href="../../devapi.html#jig.gitutils.repo_bcinitialized">[docs]</a><span class="k">def</span> <span class="nf">repo_bcinitialized</span><span class="p">(</span><span class="n">gitdir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns boolean ``True`` if ``jig init GITDIR`` has been ran.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">isdir</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">gitdir</span><span class="p">,</span> <span class="n">BC_DIR_NAME</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="hook"><a class="viewcode-back" href="../../devapi.html#jig.gitutils.hook">[docs]</a><span class="k">def</span> <span class="nf">hook</span><span class="p">(</span><span class="n">gitdir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Places a pre-commit hook in the given directory.</span>
+
+<span class="sd">    The hook will be configured to run using the version of Python that was</span>
+<span class="sd">    used to install jig.</span>
+
+<span class="sd">    Returns the full path to the newly created post-commit hook.</span>
+
+<span class="sd">    Raises :py:exc:`NotGitRepo` if the directory given is not a Git repository.</span>
+<span class="sd">    Raises :py:exc:`PreCommitExists` if there is already a Git hook for</span>
+<span class="sd">    pre-commit present.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_git_repo</span><span class="p">(</span><span class="n">gitdir</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">NotGitRepo</span><span class="p">(</span><span class="s">&#39;{} is not a Git repository.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">gitdir</span><span class="p">))</span>
+
+    <span class="n">pc_filename</span> <span class="o">=</span> <span class="n">realpath</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">gitdir</span><span class="p">,</span> <span class="s">&#39;.git&#39;</span><span class="p">,</span> <span class="s">&#39;hooks&#39;</span><span class="p">,</span> <span class="s">&#39;pre-commit&#39;</span><span class="p">))</span>
+
+    <span class="c"># Is there already a hook?</span>
+    <span class="k">if</span> <span class="n">isfile</span><span class="p">(</span><span class="n">pc_filename</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">PreCommitExists</span><span class="p">(</span><span class="s">&#39;{} already exists and we will not overwrite &#39;</span>
+            <span class="s">&#39;it. If you want to use jig you</span><span class="se">\&#39;</span><span class="s">ll have to sort this out &#39;</span>
+            <span class="s">&#39;yourself.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pc_filename</span><span class="p">))</span>
+
+    <span class="n">script_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;python_executable&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span>
+        <span class="s">&#39;be_careful_dir&#39;</span><span class="p">:</span> <span class="n">BE_CAREFUL_DIR</span><span class="p">,</span>
+        <span class="s">&#39;git_python_dir&#39;</span><span class="p">:</span> <span class="n">GIT_PYTHON_DIR</span><span class="p">,</span>
+        <span class="s">&#39;gitdb_dir&#39;</span><span class="p">:</span> <span class="n">GITDB_DIR</span><span class="p">,</span>
+        <span class="s">&#39;async_dir&#39;</span><span class="p">:</span> <span class="n">ASYNC_DIR</span><span class="p">,</span>
+        <span class="s">&#39;smmap_dir&#39;</span><span class="p">:</span> <span class="n">SMMAP_DIR</span><span class="p">}</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pc_filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">PRE_COMMIT_HOOK_SCRIPT</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">script_kwargs</span><span class="p">))</span>
+
+    <span class="n">sinfo</span> <span class="o">=</span> <span class="n">stat</span><span class="p">(</span><span class="n">pc_filename</span><span class="p">)</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">sinfo</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">|</span> <span class="n">S_IXUSR</span> <span class="o">|</span> <span class="n">S_IXGRP</span> <span class="o">|</span> <span class="n">S_IXOTH</span>
+
+    <span class="c"># Make sure it&#39;s executable</span>
+    <span class="n">chmod</span><span class="p">(</span><span class="n">pc_filename</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pc_filename</span></div>
+</pre></div>
+
+        </div>
+      </div>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>On GitHub</h3>
+  <ul>
+    <li><a href="http://github.com/robmadole/jig">Get the code</a></li>
+    <li><a href="http://github.com/robmadole/jig/issues">Report an issue</a></li>
+  </ul>
+
+  <iframe src="http://markdotto.github.com/github-buttons/github-btn.html?user=robmadole&repo=jig&type=watch&count=false&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="170px" height="30px"></iframe>
+<div id="searchbox" style="display: none">
+  <h3>Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Jig 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Rob Madole.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

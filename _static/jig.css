@@ -1,0 +1,158 @@
+@import url("basic.css");
+
+@import url(http://fonts.googleapis.com/css?family=PT+Serif:400,700,400italic|PT+Sans|PT+Mono);
+
+.hook-logo {
+    float: right;
+    margin-top: 30px;
+    margin-left: 25px;
+}
+
+html {
+    background-color: rgb(232, 232, 232)
+}
+
+body {
+    font-family: 'PT Serif', serif;
+    width: 920px;
+    margin-left: auto;
+    margin-right: auto;
+    color: rgb(64, 64, 64);
+    text-shadow: 1px 1px 1px #fff;
+    filter: dropshadow(color=#fff, offx=1, offy=1);
+}
+
+a {
+    color: rgb(24, 123, 173);
+    text-decoration: none;
+}
+
+a.toc-backref {
+    color: rgb(64, 64, 64);
+}
+
+a:hover, a.toc-backref:hover {
+    text-decoration: underline;
+}
+
+a.headerlink {
+    color: rgb(153, 185, 201);
+    padding-left: 0.2em;
+}
+
+div.documentwrapper {
+    float: left;
+    width: 920px;
+}
+
+div.bodywrapper {
+    margin: 0 0 0 230px;
+}
+
+div.sphinxsidebar {
+    width: 200px;
+    margin-left: -920px;
+    line-height: 1.5em;
+}
+
+div.sphinxsidebar input {
+    border: 1px solid rgb(200, 200, 200);
+    width: 180px;
+}
+
+div.sphinxsidebarwrapper{
+    padding: 20px 0;
+}
+
+div.related {
+    display: none;
+}
+
+div.contents, pre {
+    padding: 20px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+div.contents {
+    border: 1px solid rgb(186, 186, 165);
+    background-color: rgb(236, 237, 211);
+}
+
+pre {
+    border: 1px solid rgb(204, 204, 204);
+    background-color: rgb(240, 240, 240);
+    font-family: 'PT Mono', sans-serif;
+    font-size: 90%;
+    line-height: 1.8em;
+}
+
+/* override pygments style for this */
+div.highlight {
+    background-color: transparent;
+}
+
+div.highlight .hll {
+    -webkit-box-shadow: 1px 1px 3px 0px #888;
+    -moz-box-shadow: 1px 1px 3px 0px #888;
+    box-shadow: 1px 1px 3px 0px #888;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-top: 1px solid white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+    padding: 2px 4px;
+    margin-left: -2px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'PT Sans', sans-serif;
+}
+
+div.admonition {
+    border: 1px dotted rgb(204, 204, 204);
+    border-bottom: 1px dotted rgb(180, 180, 180);
+    border-left: none;
+    border-right: none;
+    padding: 14px 20px 0;
+    background: -moz-linear-gradient(top, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0) 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.65)), color-stop(100%,rgba(255,255,255,0))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top, rgba(255,255,255,0.65) 0%,rgba(255,255,255,0) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top, rgba(255,255,255,0.65) 0%,rgba(255,255,255,0) 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top, rgba(255,255,255,0.65) 0%,rgba(255,255,255,0) 100%); /* IE10+ */
+    background: linear-gradient(top, rgba(255,255,255,0.65) 0%,rgba(255,255,255,0) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a6ffffff', endColorstr='#00ffffff',GradientType=0 ); /* IE6-9 */
+}
+
+p.admonition-title {
+    font-family: 'PT Serif', serif;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+div.sphinxsidebar ul {
+    padding: 0;
+}
+
+tt {
+    color: black;
+    font-size: 115%;
+    padding: 0 5px;
+}
+
+img {
+    max-width: 100%;
+}
+
+div.footer {
+    border-top: 1px solid rgb(180, 180, 180);
+    margin-top: 60px;
+    margin-bottom: 30px;
+}
+
+iframe {
+    display: block;
+}
+
+strong, b {
+    font-weight: 700;
+}
