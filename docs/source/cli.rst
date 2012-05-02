@@ -175,6 +175,30 @@ You can also add more than one plugin at a time.
     Added plugin whitespace in bundle jig-plugins to the repository.
     Added plugin woops in bundle jig-plugins to the repository.
 
+.. _cli-plugin-update:
+
+Updating plugins
+~~~~~~~~~~~~~~~~
+
+If you've installed plugins through a URL, you can update plugins which will
+perform a ``git pull`` on each installed repository.
+
+::
+
+    $ jig plugin update
+    Updating plugins
+
+    Plugin pep8-checker, woops, pyflakes, whitespace in bundle jig-plugins
+        Total 1 (delta 1), reused 0 (delta 0)
+        * refs/remotes/origin/master: fast forward to branch 'master'
+          old..new: a1a0e8b..3c54ac6
+        Updating a1a0e8b..3c54ac6
+        Fast forward
+         pep8-checker/pre-commit |    2 +-
+         1 files changed, 1 insertions(+), 1 deletions(-)
+
+.. note:: This only works if you've installed a plugin via a Git URL.
+
 .. _cli-plugin-remove:
 
 Removing plugins

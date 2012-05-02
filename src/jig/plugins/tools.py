@@ -4,6 +4,8 @@ from stat import S_IXUSR, S_IXGRP, S_IXOTH
 from functools import wraps
 from ConfigParser import SafeConfigParser
 
+import git
+
 from jig.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized)
 from jig.conf import (JIG_DIR_NAME, JIG_PLUGIN_CONFIG_FILENAME,
@@ -11,6 +13,7 @@ from jig.conf import (JIG_DIR_NAME, JIG_PLUGIN_CONFIG_FILENAME,
     PLUGIN_PRE_COMMIT_TEMPLATE_DIR)
 from jig.gitutils import is_git_repo, repo_jiginitialized
 from jig.tools import slugify
+from jig.plugins.manager import PluginManager
 
 
 def _git_check(func):
@@ -94,6 +97,37 @@ def get_jigconfig(gitrepo):
         plugins.readfp(fh)
 
         return plugins
+
+
+@_git_check
+def update_plugins(gitrepo):
+    """
+    For any installed plugins in :file:`.jig/plugins`, update by git pull.
+
+    Will iterate through all cloned repositories and perform a ``git pull``
+    command. This upgrades the plugins.
+
+    Returns an dict of results from running the command. The key is an
+    instance of :py:class:`jig.plugin.manager.PluginManager` corresponding to
+    the plugins that were updated in each director. The value is the output
+    from running the ``git pull`` command inside that directory.
+    """
+    jig_plugin_dir = join(gitrepo, JIG_DIR_NAME, JIG_PLUGIN_DIR)
+
+    results = {}
+    for directory in listdir(jig_plugin_dir):
+        plugin_dir = join(jig_plugin_dir, directory)
+        pm = PluginManager()
+        pm.add(plugin_dir)
+
+        gitobj = git.Git(plugin_dir)
+
+        retcode, stdout, stderr = gitobj.execute(['git', 'pull'],
+            with_extended_output=True)
+
+        results[pm] = stdout or stderr
+
+    return results
 
 
 def create_plugin(in_dir, bundle, name, template='python', settings={}):

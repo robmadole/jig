@@ -8,8 +8,10 @@ from jig.commands.base import BaseCommand
 from jig.conf import JIG_DIR_NAME, JIG_PLUGIN_DIR
 from jig.exc import CommandError, ExpectationError
 from jig.gitutils import clone
+from jig.tools import indent
 from jig.plugins import (get_jigconfig, set_jigconfig, PluginManager,
     create_plugin, available_templates)
+from jig.plugins.tools import update_plugins
 from jig.plugins.testrunner import (PluginTestRunner, PluginTestReporter,
     FailureResult)
 
@@ -22,23 +24,30 @@ _subparsers = _parser.add_subparsers(title='actions',
 
 _listparser = _subparsers.add_parser('list',
     help='list installed plugins',
-    usage='jig plugin list [-h] [-r] [PATH]')
+    usage='jig plugin list [-h] [-r GITREPO] [PATH]')
 _listparser.add_argument('--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _listparser.set_defaults(subcommand='list')
 
 _addparser = _subparsers.add_parser('add',
     help='add a plugin',
-    usage='jig plugin add [-h] [-r] URL|PATH')
+    usage='jig plugin add [-h] [-r GITREPO] URL|PATH')
 _addparser.add_argument('plugin',
     help='URL or path to the plugin directory')
 _addparser.add_argument('--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _addparser.set_defaults(subcommand='add')
 
+_updateparser = _subparsers.add_parser('update',
+    help='update all installed plugins',
+    usage='jig plugin update [-h] [-r GITREPO]')
+_updateparser.add_argument('--gitrepo', '-r', default='.', dest='path',
+    help='Path to the Git repository, default current directory')
+_updateparser.set_defaults(subcommand='update')
+
 _removeparser = _subparsers.add_parser('remove',
     help='remove an installed plugin',
-    usage='jig plugin remove [-h] [-r] NAME [BUNDLE]')
+    usage='jig plugin remove [-h] [-r GITREPO] NAME [BUNDLE]')
 _removeparser.add_argument('name',
     help='Plugin name')
 _removeparser.add_argument('bundle', nargs='?', default=None,
@@ -184,6 +193,34 @@ class Command(BaseCommand):
             plugin = to_dir
 
         return pm.add(plugin)
+
+    def update(self, argv):
+        """
+        Updates any plugins installed through a URL.
+
+        This basically runs ``git pull`` within any directory inside the
+        :file:`.jig/plugis` directory. It's a very simple method of updating
+        plugins that have already been installed.
+        """
+        path = argv.path
+
+        results = update_plugins(path)
+
+        with self.out() as out:
+            if not results:
+                out.append('No plugins to update.')
+                return
+
+            out.append('Updating plugins')
+            out.append('')
+
+            for pm, output in results.items():
+                names = set([i.name for i in pm.plugins])
+                bundles = set([i.bundle for i in pm.plugins])
+
+                out.append('Plugin {} in bundle {}'.format(
+                    ', '.join(names), ', '.join(bundles)))
+                out.extend(indent(output.splitlines()))
 
     def remove(self, argv):
         """

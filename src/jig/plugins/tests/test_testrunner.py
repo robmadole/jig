@@ -17,7 +17,7 @@ from jig.conf import CODEC
 from jig.tools import NumberedDirectoriesToGit
 from jig.plugins import create_plugin, Plugin
 from jig.tests.testcase import JigTestCase, PluginTestCase
-from jig.plugins.testrunner import (PluginTestRunner, _indent,
+from jig.plugins.testrunner import (PluginTestRunner,
     InstrumentedGitDiffIndex, PluginTestReporter, get_expectations,
     Expectation, Result, SuccessResult, FailureResult,
     REPORTER_HORIZONTAL_DIVIDER)
@@ -773,40 +773,3 @@ class TestInstrumentedGitDiffIndex(JigTestCase):
         self.assertEqual(1, len(filenames))
         self.assertEqual(
             '/path/argument.txt', filenames[0])
-
-
-class TestIndent(JigTestCase):
-
-    """
-    The indent method will indent a sequence of strings.
-
-    """
-    def test_indent_string(self):
-        """
-        If the payload is a string it indents and returns a string.
-        """
-        self.assertEqual('    a', _indent('a'))
-
-    def test_indents_list(self):
-        """
-        List payload indents each item and returns a list.
-        """
-        self.assertEqual(
-            [u'    a', u'    b', u'    c'],
-            _indent(['a', 'b', 'c']))
-
-    def test_indents_different_by(self):
-        """
-        Can change the default indent of 4 to a different integer.
-        """
-        self.assertEqual(
-            [u' a', u' b', u' c'],
-            _indent(['a', 'b', 'c'], by=1))
-
-    def test_indents_different_character(self):
-        """
-        Can change the character used to indent to something else.
-        """
-        self.assertEqual(
-            [u'?a', u'?b', u'?c'],
-            _indent(['a', 'b', 'c'], by=1, character='?'))
