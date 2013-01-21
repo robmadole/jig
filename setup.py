@@ -10,7 +10,7 @@ version = '0.1.0'
 
 install_requires = [
     'GitPython>=0.3.2RC1',
-    'docutils==0.8.1']
+    'docutils==0.9.1']
 
 
 setup(name='jig',

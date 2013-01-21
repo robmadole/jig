@@ -19,7 +19,7 @@ def test():
     """
     import nose
 
-    nose.main(argv=['nose'] + sys.argv[1:])
+    nose.main(argv=['nose'] + ['--rednose'] + sys.argv[1:])
 
 
 def coverage():
