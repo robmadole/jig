@@ -1,17 +1,19 @@
 import os
-from setuptools import setup, find_packages
+import imp
+from setuptools import setup, find_packages, Command
+from setuptools.command.test import test as SetuptoolsTest
 
 here = os.path.abspath(os.path.dirname(__file__))
+
 README = open(os.path.join(here, 'README.rst')).read()
 NEWS = open(os.path.join(here, 'NEWS.rst')).read()
-
-
 version = '0.1.0'
+
+version = imp.load_module('jig', *imp.find_module('jig')).__version__
 
 install_requires = [
     'GitPython>=0.3.2RC1',
-    'docutils==0.8.1']
-
+    'docutils>=0.9.1']
 
 setup(name='jig',
     version=version,
@@ -42,7 +44,5 @@ setup(name='jig',
     install_requires=install_requires,
     entry_points={
         'console_scripts': [
-            'jig = jig.entrypoints:main'],
-        'nose.plugins.0.10': [
-            'jig = jig.tests.noseplugin:TestSetup']}
+            'jig = jig.entrypoints:main']}
 )
