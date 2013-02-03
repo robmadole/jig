@@ -19,7 +19,10 @@ def test():
     """
     import nose
 
-    nose.main(argv=['nose'] + ['--rednose'] + sys.argv[1:])
+    from jig.tests.noseplugin import TestSetup
+
+    nose.main(argv=['nose', '--rednose', '-w', 'src'] + sys.argv[1:],
+            addplugins=[TestSetup()])
 
 
 def coverage():
@@ -34,7 +37,7 @@ def coverage():
 
     cov.start()
 
-    nose.run(argv=['nose'])
+    nose.run(argv=['nose', '--rednose'])
 
     cov.stop()
 
