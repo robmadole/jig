@@ -8,11 +8,13 @@ from mock import Mock, patch
 from jig.tests.testcase import (CommandTestCase, PluginTestCase,
     cd_gitrepo, cwd_bounce)
 from jig.tests.mocks import MockPlugin
+from jig.tools import NumberedDirectoriesToGit
 from jig.exc import ForcedExit
 from jig.plugins import (set_jigconfig, get_jigconfig, create_plugin,
     PluginManager)
 from jig.plugins.testrunner import (Expectation, SuccessResult,
     FailureResult, REPORTER_HORIZONTAL_DIVIDER)
+from jig.gitutils import clone
 from jig.commands import plugin
 
 
@@ -170,13 +172,13 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Add a plugin from a Git URL.
         """
-        def clone(plugin, to_dir):
+        def clone_fake(plugin, to_dir):
             makedirs(to_dir)
             create_plugin(to_dir, template='python',
                 bundle='a', name='a')
 
         with patch('jig.commands.plugin.clone') as c:
-            c.side_effect = clone
+            c.side_effect = clone_fake
 
             self.run_command('add --gitrepo {} http://repo'.format(
                 self.gitrepodir))
@@ -186,6 +188,59 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         self.assertEqual('http://repo', c.call_args[0][0])
         self.assertIn('{}/.jig/plugins/'.format(self.gitrepodir),
             c.call_args[0][1])
+
+    def test_update_existing_plugins(self):
+        """
+        Can update an existing plugin.
+        """
+        # Make our remote repository so we have something to pull from
+        origin_repo = mkdtemp()
+        root_commit_dir = join(origin_repo, '01')
+        makedirs(root_commit_dir)
+
+        # Create a plugin in the repo
+        create_plugin(root_commit_dir, template='python',
+            bundle='a', name='a')
+        create_plugin(root_commit_dir, template='python',
+            bundle='b', name='b')
+
+        # This is the directory we will clone
+        ngd = NumberedDirectoriesToGit(origin_repo)
+        dir_to_clone = ngd.repo.working_dir
+
+        # This is a trick, we give it the dir_to_clone when asked to install it
+        def clone_local(plugin, to_dir):
+            # Instead of jumping on the Internet to clone this, we will use the
+            # local numbered directory repository we setup above. This will
+            # allow our update to occur with a git pull and avoid network
+            # traffic which is always faster for tests.
+            clone(dir_to_clone, to_dir)
+
+        # First thing is to install the the plugin
+        with patch('jig.commands.plugin.clone') as c:
+            c.side_effect = clone_local
+
+            self.run_command('add --gitrepo {} http://repo'.format(
+                self.gitrepodir))
+
+        self.run_command('update --gitrepo {}'.format(
+            self.gitrepodir))
+
+        self.assertResults("""
+            Updating plugins
+
+            Plugin a, b in bundle a, b
+                Already up-to-date.""",
+            self.output)
+
+    def test_update_existing_plugins_no_plugins(self):
+        """
+        If an attempt is made to update plugins when none are installed.
+        """
+        self.run_command('update --gitrepo {}'.format(
+            self.gitrepodir))
+
+        self.assertResults("No plugins to update.", self.output)
 
     @cd_gitrepo
     def test_remove_bad_plugin(self):

@@ -1,14 +1,18 @@
-from os import rmdir, stat
+from os import rmdir, stat, makedirs
 from os.path import isfile, join
 from textwrap import dedent
 from tempfile import mkdtemp
 from ConfigParser import ConfigParser
+
+from git import Git
+from mock import patch
 
 from jig.tests.testcase import JigTestCase, PluginTestCase
 from jig.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized)
 from jig.plugins import (initializer, get_jigconfig, set_jigconfig,
     PluginManager, create_plugin, available_templates)
+from jig.plugins.tools import update_plugins
 
 
 class TestPluginConfig(JigTestCase):
@@ -152,3 +156,46 @@ class TestCreatePlugin(PluginTestCase):
 
         self.assertEqual(1, len(pm.plugins))
         self.assertEqual('plugin', pm.plugins[0].name)
+
+
+class TestUpdatePlugins(PluginTestCase):
+
+    """
+    Plugins can be updated if installed via URL.
+
+    """
+    def test_update_empty_result(self):
+        """
+        If no plugins are installed, results are empty
+        """
+        # None are installed so we get an empty list
+        self.assertEqual({}, update_plugins(self.gitrepodir))
+
+    def test_update_results(self):
+        """
+        If we have two plugins that are updated.
+        """
+        plugins_dir = join(self.gitrepodir, '.jig', 'plugins')
+        fake_cloned_plugin = join(plugins_dir, 'abcdef1234567890')
+
+        makedirs(fake_cloned_plugin)
+
+        create_plugin(fake_cloned_plugin, bundle='a', name='a')
+        create_plugin(fake_cloned_plugin, bundle='b', name='b')
+
+        with patch.object(Git, 'execute'):
+            # Fake the git pull command
+            mock_execute = Git.execute
+
+            Git.execute.return_value = (0, 'Already up to date.', '')
+
+            results = update_plugins(self.gitrepodir)
+
+        pm, value = results.items()[0]
+
+        # We have our two plugins from the manager
+        self.assertEquals(2, len(pm.plugins))
+
+        # And it called ``git pull`` on the repository
+        mock_execute.assert_called_once_with(
+            ['git', 'pull'], with_extended_output=True)

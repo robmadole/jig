@@ -2,7 +2,7 @@
 from os.path import join, dirname
 from unittest import TestCase
 
-from jig.tools import NumberedDirectoriesToGit, slugify
+from jig.tools import NumberedDirectoriesToGit, slugify, indent
 
 
 class TestSlugify(TestCase):
@@ -182,3 +182,40 @@ class TestNumberedDirectoriesToGit(TestCase):
 
         # And 4 diffs
         self.assertEqual(4, len(nd2g.diffs()))
+
+
+class TestIndent(TestCase):
+
+    """
+    The indent method will indent a sequence of strings.
+
+    """
+    def test_indent_string(self):
+        """
+        If the payload is a string it indents and returns a string.
+        """
+        self.assertEqual('    a', indent('a'))
+
+    def test_indents_list(self):
+        """
+        List payload indents each item and returns a list.
+        """
+        self.assertEqual(
+            [u'    a', u'    b', u'    c'],
+            indent(['a', 'b', 'c']))
+
+    def test_indents_different_by(self):
+        """
+        Can change the default indent of 4 to a different integer.
+        """
+        self.assertEqual(
+            [u' a', u' b', u' c'],
+            indent(['a', 'b', 'c'], by=1))
+
+    def test_indents_different_character(self):
+        """
+        Can change the character used to indent to something else.
+        """
+        self.assertEqual(
+            [u'?a', u'?b', u'?c'],
+            indent(['a', 'b', 'c'], by=1, character='?'))

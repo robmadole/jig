@@ -14,7 +14,7 @@ from jig.exc import (ExpectationNoTests, ExpectationFileNotFound,
     ExpectationParsingError)
 from jig.conf import (CODEC, PLUGIN_EXPECTATIONS_FILENAME,
     PLUGIN_TESTS_DIRECTORY)
-from jig.tools import NumberedDirectoriesToGit, cwd_bounce
+from jig.tools import NumberedDirectoriesToGit, cwd_bounce, indent
 from jig.diffconvert import describe_diff
 from jig.output import ConsoleView, strip_paint, green_bold, red_bold
 from jig.plugins import PluginManager
@@ -29,33 +29,6 @@ DOCUTILS_DIFFERENT_SECTION_NODES = (nodes.Root, nodes.Structural,
 REPORTER_COLUMN_WIDTH = 80
 # A horizontal dividing line to separate sections
 REPORTER_HORIZONTAL_DIVIDER = u''.join([u'·'] * REPORTER_COLUMN_WIDTH)
-
-
-def _indent(payload, by=4, character=u' '):
-    """
-    Indents a sequence of strings with whitespace.
-
-    By default it will indent by 4 spaces. Change the amount of indent with
-    ``by`` and the character that is used with ``character``.
-
-    Example:
-
-        >>> print(_indent(u'Jig', by=6, character=u'-'))
-        ------Jig
-
-    """
-    return_first = False
-    if isinstance(payload, (basestring)):
-        payload = [payload]
-        return_first = True
-
-    indented = []
-    for line in payload:
-        indented.append(''.join([unicode(character)] * by) + unicode(line))
-
-    if return_first:
-        return indented[0]
-    return indented
 
 
 def get_expectations(input_string):
@@ -393,7 +366,7 @@ class PluginTestReporter(object):
             except ValueError:
                 # Wasn't JSON
                 pass
-            data[i] = _indent(data[i].splitlines())
+            data[i] = indent(data[i].splitlines())
 
         out.append(u'stdin (sent to the plugin)')
         out.append(u'')

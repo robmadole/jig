@@ -17,19 +17,22 @@ class PluginManager(object):
     Provides access to running and managing plugins.
 
     """
-    def __init__(self, config):
+    def __init__(self, config=None):
         """
         Create a plugin manager with the given ``config``.
 
         The ``config`` argument should be an instance of
         :py:class:`SafeConfigParser` and will be the main configuration for an
         jig-initialized Git repository.
+
+        If ``config`` is missing, an empty :py:class:`SafeConfigParser` will be
+        created.
         """
         # The instance of SafeConfigParser we get from :py:method:`config`.
-        self.config = config
+        self.config = config or SafeConfigParser()
 
         # Look through the config and initialize any installed plugins
-        self._plugins = self._init_plugins(config)
+        self._plugins = self._init_plugins(self.config)
 
     def _init_plugins(self, config):
         """

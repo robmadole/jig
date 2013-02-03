@@ -27,6 +27,33 @@ def slugify(text, delim=u'-'):
     return unicode(delim.join(filter(bool, result)))
 
 
+def indent(payload, by=4, character=u' '):
+    """
+    Indents a sequence of strings with whitespace.
+
+    By default it will indent by 4 spaces. Change the amount of indent with
+    ``by`` and the character that is used with ``character``.
+
+    Example:
+
+        >>> print(indent(u'Jig', by=6, character=u'-'))
+        ------Jig
+
+    """
+    return_first = False
+    if isinstance(payload, (basestring)):
+        payload = [payload]
+        return_first = True
+
+    indented = []
+    for line in payload:
+        indented.append(''.join([unicode(character)] * by) + unicode(line))
+
+    if return_first:
+        return indented[0]
+    return indented
+
+
 @contextmanager
 def cwd_bounce(dir):
     """
