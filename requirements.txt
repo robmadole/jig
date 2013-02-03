@@ -1,6 +1,6 @@
 coverage
 mock
-nose=>1.2.1
+nose>=1.2.1
 rednose
 unicode-nazi
 Sphinx
