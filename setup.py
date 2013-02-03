@@ -9,7 +9,8 @@ README = open(os.path.join(here, 'README.rst')).read()
 NEWS = open(os.path.join(here, 'NEWS.rst')).read()
 version = '0.1.0'
 
-version = imp.load_module('jig', *imp.find_module('jig')).__version__
+version = imp.load_source('jig',
+        os.path.join(here, 'src', 'jig', '__init__.py')).__version__
 
 install_requires = [
     'GitPython>=0.3.2RC1',
