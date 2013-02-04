@@ -69,14 +69,14 @@ def hook(gitdir):
     pre-commit present.
     """
     if not is_git_repo(gitdir):
-        raise NotGitRepo('{} is not a Git repository.'.format(
+        raise NotGitRepo('{0} is not a Git repository.'.format(
             gitdir))
 
     pc_filename = realpath(join(gitdir, '.git', 'hooks', 'pre-commit'))
 
     # Is there already a hook?
     if isfile(pc_filename):
-        raise PreCommitExists('{} already exists and we will not overwrite '
+        raise PreCommitExists('{0} already exists and we will not overwrite '
             'it. If you want to use jig you\'ll have to sort this out '
             'yourself.'.format(pc_filename))
 

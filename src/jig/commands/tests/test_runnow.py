@@ -31,7 +31,7 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
         with self.assertRaises(SystemExit) as ec:
             self.run_command(self.gitrepodir)
 
-        self.assertEqual(0, ec.exception.code)
+        self.assertSystemExitCode(ec.exception, 0)
 
         self.assertEqual(u'No staged changes in the repository, '
             'skipping jig.\n', self.output)

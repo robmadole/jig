@@ -32,7 +32,7 @@ def get_command(name):
         >>> get_command('init')
         <jig.commands.init.Command object at 0x10048fed0>
     """
-    mod = __import__('jig.commands.{}'.format(name.lower()),
+    mod = __import__('jig.commands.{0}'.format(name.lower()),
         globals(), locals(), ['Command'], 0)
     return mod.Command
 

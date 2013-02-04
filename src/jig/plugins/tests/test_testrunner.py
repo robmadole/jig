@@ -5,7 +5,6 @@ from os.path import join, dirname
 from codecs import open
 from tempfile import mkdtemp
 from textwrap import dedent
-from collections import OrderedDict
 from copy import copy
 
 from mock import patch
@@ -21,6 +20,11 @@ from jig.plugins.testrunner import (PluginTestRunner,
     InstrumentedGitDiffIndex, PluginTestReporter, get_expectations,
     Expectation, Result, SuccessResult, FailureResult,
     REPORTER_HORIZONTAL_DIVIDER)
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 
 class TestResult(PluginTestCase):
@@ -153,7 +157,7 @@ class TestPluginTestRunner(PluginTestCase):
         with self.assertRaises(ExpectationNoTests) as ec:
             PluginTestRunner(plugin_dir)
 
-        self.assertIn('Could not find any tests', ec.exception.message)
+        self.assertIn('Could not find any tests', str(ec.exception))
 
     def test_no_expectations(self):
         """
@@ -168,7 +172,7 @@ class TestPluginTestRunner(PluginTestCase):
         with self.assertRaises(ExpectationFileNotFound) as ec:
             PluginTestRunner(plugin_dir)
 
-        self.assertIn('Missing expectation file', ec.exception.message)
+        self.assertIn('Missing expectation file', str(ec.exception))
 
     def test_loads_tests_and_expectations(self):
         """
@@ -604,7 +608,7 @@ class TestGetExpectations(PluginTestCase):
 
         self.assertIn(
             'expectation directive requires `to` and `from` arguments',
-            ec.exception.message)
+            str(ec.exception))
 
     def test_non_integer_arguments(self):
         """
@@ -620,10 +624,10 @@ class TestGetExpectations(PluginTestCase):
                 ''')))
 
         self.assertIn('Error in "expectation" directive',
-            ec.exception.message)
+            str(ec.exception))
         # And it's warning us about not being able to convert to an integer
         self.assertIn('invalid literal for int()',
-            ec.exception.message)
+            str(ec.exception))
 
     def test_expectation_no_settings(self):
         """
@@ -757,7 +761,7 @@ class TestInstrumentedGitDiffIndex(JigTestCase):
 
         self.assertEqual(1, len(filenames))
         self.assertEqual(
-            '{}/argument.txt'.format(self.testrepodir),
+            '{0}/argument.txt'.format(self.testrepodir),
             filenames[0])
 
     def test_will_replace(self):

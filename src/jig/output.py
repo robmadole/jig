@@ -15,21 +15,21 @@ def green_bold(payload):
     """
     Format payload as green.
     """
-    return u'\x1b[32;1m{}\x1b[39;22m'.format(payload)
+    return u'\x1b[32;1m{0}\x1b[39;22m'.format(payload)
 
 
 def yellow_bold(payload):
     """
     Format payload as yellow.
     """
-    return u'\x1b[33;1m{}\x1b[39;22m'.format(payload)
+    return u'\x1b[33;1m{0}\x1b[39;22m'.format(payload)
 
 
 def red_bold(payload):
     """
     Format payload as red.
     """
-    return u'\x1b[31;1m{}\x1b[39;22m'.format(payload)
+    return u'\x1b[31;1m{0}\x1b[39;22m'.format(payload)
 
 
 def strip_paint(payload):
@@ -221,10 +221,10 @@ class ConsoleView(object):
             last_plugin = None
             for msg in messages:
                 if last_plugin != msg.plugin:
-                    out.append(u'\u25be  {}'.format(msg.plugin.name))
+                    out.append(u'\u25be  {0}'.format(msg.plugin.name))
                     out.append('')
                     last_plugin = msg.plugin
-                colorized = u'{}  {}'.format(
+                colorized = u'{0}  {1}'.format(
                     type_to_symbol[msg.type], self._format_message(msg))
                 out.extend(colorized.splitlines())
                 out.append('')
@@ -279,15 +279,15 @@ class ConsoleView(object):
         body = u''
 
         if msg.line:
-            header += u'line {}: '.format(msg.line)
+            header += u'line {0}: '.format(msg.line)
 
         if msg.file:
             header += msg.file
 
         if header:
-            body = u'    {}'.format(msg.body)
+            body = u'    {0}'.format(msg.body)
         else:
-            body = u'{}'.format(msg.body)
+            body = u'{0}'.format(msg.body)
 
         if header:
             out.append(header)

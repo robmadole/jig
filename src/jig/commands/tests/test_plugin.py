@@ -64,7 +64,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         self._add_plugin(create_plugin(self.plugindir, template='python',
             bundle='test03', name='plugin03'))
 
-        self.run_command('list -r {}'.format(self.gitrepodir))
+        self.run_command('list -r {0}'.format(self.gitrepodir))
 
         self.assertResults(u'''
             Installed plugins
@@ -86,7 +86,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         self._add_plugin(create_plugin(self.plugindir, template='python',
             bundle='test', name='plugin03'))
 
-        self.run_command('list -r {}'.format(self.gitrepodir))
+        self.run_command('list -r {0}'.format(self.gitrepodir))
 
         self.assertResults(u'''
             Installed plugins
@@ -109,7 +109,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         self._add_plugin(create_plugin(self.plugindir, template='python',
             bundle='a', name='a'))
 
-        self.run_command('list -r {}'.format(self.gitrepodir))
+        self.run_command('list -r {0}'.format(self.gitrepodir))
 
         self.assertResults('''
             Installed plugins
@@ -129,7 +129,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         tmp_dir = mkdtemp()
 
         with self.assertRaises(ForcedExit):
-            self.run_command('add {}'.format(tmp_dir))
+            self.run_command('add {0}'.format(tmp_dir))
 
         self.assertRegexpMatches(self.error,
             u'The plugin file (.+)config.cfg is missing')
@@ -143,7 +143,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             bundle='a', name='a')
 
         # We are going to test whether it defaults --gitrepo to cwd
-        self.run_command('add {}'.format(plugin_dir))
+        self.run_command('add {0}'.format(plugin_dir))
 
         config = get_jigconfig(self.gitrepodir)
 
@@ -161,7 +161,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         plugin_dir = create_plugin(self.plugindir, template='python',
             bundle='a', name='a')
 
-        self.run_command('add --gitrepo {} {}'.format(
+        self.run_command('add --gitrepo {0} {1}'.format(
             self.gitrepodir, plugin_dir))
 
         self.assertEqual(
@@ -180,13 +180,13 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         with patch('jig.commands.plugin.clone') as c:
             c.side_effect = clone_fake
 
-            self.run_command('add --gitrepo {} http://repo'.format(
+            self.run_command('add --gitrepo {0} http://repo'.format(
                 self.gitrepodir))
 
         # And clone was called with our URL and would have performed the
         # operation in our test directory.
         self.assertEqual('http://repo', c.call_args[0][0])
-        self.assertIn('{}/.jig/plugins/'.format(self.gitrepodir),
+        self.assertIn('{0}/.jig/plugins/'.format(self.gitrepodir),
             c.call_args[0][1])
 
     def test_update_existing_plugins(self):
@@ -220,10 +220,10 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         with patch('jig.commands.plugin.clone') as c:
             c.side_effect = clone_local
 
-            self.run_command('add --gitrepo {} http://repo'.format(
+            self.run_command('add --gitrepo {0} http://repo'.format(
                 self.gitrepodir))
 
-        self.run_command('update --gitrepo {}'.format(
+        self.run_command('update --gitrepo {0}'.format(
             self.gitrepodir))
 
         self.assertResults("""
@@ -237,7 +237,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         If an attempt is made to update plugins when none are installed.
         """
-        self.run_command('update --gitrepo {}'.format(
+        self.run_command('update --gitrepo {0}'.format(
             self.gitrepodir))
 
         self.assertResults("No plugins to update.", self.output)
@@ -262,7 +262,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         plugin_dir = create_plugin(self.plugindir, template='python',
             bundle='bundle', name='name')
 
-        self.run_command('add -r {} {}'.format(self.gitrepodir, plugin_dir))
+        self.run_command('add -r {0} {1}'.format(self.gitrepodir, plugin_dir))
 
         # Remove with the --gitrepo defaulting to cwd again
         self.run_command('remove name bundle')
@@ -284,7 +284,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         plugin_dir = create_plugin(self.plugindir, template='python',
             bundle='bundle', name='name')
 
-        self.run_command('add -r {} {}'.format(self.gitrepodir, plugin_dir))
+        self.run_command('add -r {0} {1}'.format(self.gitrepodir, plugin_dir))
 
         # Leave the bundle name off so it can be guessed.
         self.run_command('remove name')
@@ -306,12 +306,12 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         plugin_dir2 = create_plugin(mkdtemp(), template='python',
             bundle='bundle2', name='name')
 
-        self.run_command('add -r {} {}'.format(self.gitrepodir, plugin_dir1))
-        self.run_command('add -r {} {}'.format(self.gitrepodir, plugin_dir2))
+        self.run_command('add -r {0} {1}'.format(self.gitrepodir, plugin_dir1))
+        self.run_command('add -r {0} {1}'.format(self.gitrepodir, plugin_dir2))
 
         with self.assertRaises(ForcedExit):
             # Leave the bundle out, this should make our command error out
-            self.run_command('remove -r {} name'.format(self.gitrepodir))
+            self.run_command('remove -r {0} name'.format(self.gitrepodir))
 
         self.assertEqual(
             u'More than one plugin has the name of name. Use the list '
@@ -340,11 +340,11 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
         with self.assertRaises(ForcedExit):
             # We just created a plugin in this directory, so it should fail
-            self.run_command('create --dir {} name bundle'.format(save_dir))
+            self.run_command('create --dir {0} name bundle'.format(save_dir))
 
         self.assertEqual(
             u'A plugin with this name already exists in this '
-            u'directory: {}.\n'.format(save_dir),
+            u'directory: {0}.\n'.format(save_dir),
             self.error)
 
     def test_create_plugin(self):
@@ -361,7 +361,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Creates a plugin in a given directory.
         """
-        self.run_command('create --dir {} name bundle'.format(self.plugindir))
+        self.run_command('create --dir {0} name bundle'.format(self.plugindir))
 
         self.assertTrue(isdir(join(self.plugindir, 'name')))
 
@@ -370,7 +370,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         Creates a plugin with the default language of python.
         """
         self.run_command(
-            'create --dir {} --language python name bundle'.format(
+            'create --dir {0} --language python name bundle'.format(
                 self.plugindir))
 
         with open(join(self.plugindir, 'name', 'pre-commit')) as fh:
@@ -386,10 +386,10 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             bundle='bundle', name='name')
 
         with self.assertRaises(ForcedExit):
-            self.run_command('test {}'.format(plugin_dir))
+            self.run_command('test {0}'.format(plugin_dir))
 
         self.assertIn('Could not find any tests:', self.error)
-        self.assertIn('{}/tests'.format(plugin_dir), self.error)
+        self.assertIn('{0}/tests'.format(plugin_dir), self.error)
 
     def test_formats_results(self):
         """
@@ -407,7 +407,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             ptr.return_value = Mock()
             ptr.return_value.run = Mock(return_value=results)
 
-            self.run_command('test {}'.format(plugin_dir))
+            self.run_command('test {0}'.format(plugin_dir))
 
         self.assertResults(u'''
             01 – 02 Pass
@@ -431,7 +431,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             ptr.return_value.run = Mock(return_value=results)
 
             with self.assertRaises(ForcedExit):
-                self.run_command('test {}'.format(plugin_dir))
+                self.run_command('test {0}'.format(plugin_dir))
 
         self.assertResults(u'''
             01 – 02 Fail
@@ -490,7 +490,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             ptr.return_value = Mock()
             ptr.return_value.run = Mock(return_value=results)
 
-            self.run_command('test -v {}'.format(plugin_dir))
+            self.run_command('test -v {0}'.format(plugin_dir))
 
         self.assertResults(u'''
             01 – 02 Pass

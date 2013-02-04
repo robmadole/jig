@@ -1,9 +1,8 @@
 # coding=utf-8
 import shlex
-import unittest
 from os import makedirs
 from os.path import join, dirname
-from subprocess import check_output, STDOUT, CalledProcessError
+from subprocess import STDOUT, CalledProcessError
 from functools import wraps
 from textwrap import dedent
 
@@ -15,6 +14,17 @@ from jig.plugins import initializer
 from jig.diffconvert import GitDiffIndex
 from jig.tools import NumberedDirectoriesToGit, cwd_bounce
 from jig.output import strip_paint, ConsoleView
+
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+try:
+    from subprocess import check_output
+except ImportError:
+    from jig.backports import check_output
 
 
 def cd_gitrepo(func):
@@ -68,6 +78,17 @@ class JigTestCase(unittest.TestCase):
         actual = strip_paint(actual.strip())
 
         self.assertEqual(expected, actual)
+
+    def assertSystemExitCode(self, exception, code):
+        """
+        Assert that a :py:exception:`SystemExit` has a specific exit code.
+
+        Note: this is Python 2.7/2.6 compatible since that exception changed slightly.
+        """
+        if hasattr(exception, 'code'):
+            self.assertEqual(exception.code, code)
+        else:
+            self.assertEqual(exception, code)
 
     def runcmd(self, cmd):
         """
@@ -253,7 +274,7 @@ class PluginTestCase(JigTestCase):
         """
         Adds the plugin to a main jig config.
         """
-        section = 'plugin:test01:{}'.format(plugindir)
+        section = 'plugin:test01:{0}'.format(plugindir)
         config.add_section(section)
         config.set(section, 'path',
             join(self.fixturesdir, plugindir))

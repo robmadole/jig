@@ -39,7 +39,7 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
             with self.assertRaises(SystemExit) as ec:
                 self.runner.fromhook(self.gitrepodir)  # pragma: no branch
 
-            self.assertEqual(0, ec.exception.code)
+            self.assertSystemExitCode(ec.exception, 0)
 
             self.assertEqual(
                 'Ran 1 plugin, nothing to report\n',
@@ -147,7 +147,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         with self.assertRaises(ForcedExit) as ec:
             self.runner.results(self.gitrepodir)
 
-        self.assertEqual(1, ec.exception.message)
+        self.assertEqual('1', str(ec.exception))
         self.assertEqual('This repository has not been initialized. Run '
             'jig init GITREPO to set it up.\n',
             self.error)

@@ -1,9 +1,12 @@
 # coding=utf-8
-from collections import OrderedDict
-
 from jig.tests.testcase import JigTestCase, ViewTestCase
 from jig.tests.mocks import MockPlugin
 from jig.output import ConsoleView, Message, Error, ResultsCollater
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 
 class TestConsoleView(ViewTestCase):

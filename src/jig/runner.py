@@ -1,6 +1,5 @@
 import json
 import sys
-from collections import OrderedDict
 
 from git import Repo
 
@@ -10,6 +9,11 @@ from jig.diffconvert import GitDiffIndex
 from jig.plugins import get_jigconfig, PluginManager
 from jig.commands import get_command, list_commands
 from jig.output import ConsoleView
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 
 class Runner(object):

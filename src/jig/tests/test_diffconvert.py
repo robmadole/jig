@@ -1,6 +1,5 @@
 from os import symlink
 from os.path import join, realpath
-from unittest import TestCase
 from functools import wraps
 from textwrap import dedent
 from pprint import PrettyPrinter
@@ -56,7 +55,7 @@ def assertDiff(func):
     return wrapper
 
 
-class TestDescribeDiff(TestCase):
+class TestDescribeDiff(JigTestCase):
     """
     Test our diff description method.
     """

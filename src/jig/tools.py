@@ -106,7 +106,7 @@ class NumberedDirectoriesToGit(object):
     """
     def __init__(self, numdir):
         if not isdir(numdir):
-            raise ValueError('Not a directory: {}.'.format(numdir))
+            raise ValueError('Not a directory: {0}.'.format(numdir))
 
         self.numdir = numdir
         self.target = mkdtemp()
@@ -182,7 +182,7 @@ class NumberedDirectoriesToGit(object):
 
             unlink(join(self.target, path))
 
-        repo.index.commit('Commit from numbered directory {}'.format(d))
+        repo.index.commit('Commit from numbered directory {0}'.format(d))
 
     def _flattendirectory(self, d, strip=None):
         """
@@ -192,7 +192,7 @@ class NumberedDirectoriesToGit(object):
         """
         for (dirpath, dirname, filenames) in walk(d):
             for fn in filenames:
-                sdir = dirpath.replace('{}'.format(strip), '').lstrip('/')
+                sdir = dirpath.replace('{0}'.format(strip), '').lstrip('/')
                 if sdir.startswith('.git'):
                     continue
                 yield join(sdir, fn)

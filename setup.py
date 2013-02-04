@@ -1,3 +1,4 @@
+import sys
 import os
 import imp
 from setuptools import setup, find_packages, Command
@@ -15,6 +16,12 @@ version = imp.load_source('jig',
 install_requires = [
     'GitPython>=0.3.2RC1',
     'docutils>=0.9.1']
+
+# Shims for missing stuff
+major, minor, patch, releaselevel, serial = sys.version_info
+if major == 2 and minor == 6:
+    install_requires += ['ordereddict==1.1', 'unittest2==0.5.1',
+            'argparse==1.2.1']
 
 setup(name='jig',
     version=version,

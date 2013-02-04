@@ -64,7 +64,7 @@ _createparser.add_argument('name',
 _createparser.add_argument('bundle',
     help='Bundle name')
 _createparser.add_argument('--language', '-l', dest='template',
-    default='python', help='Scripting language: {}'.format(
+    default='python', help='Scripting language: {0}'.format(
         ', '.join(available_templates())))
 _createparser.add_argument('--dir', '-d', default='.',
     help='Create in this directory')
@@ -170,7 +170,7 @@ class Command(BaseCommand):
             set_jigconfig(path, pm.config)
 
             for p in added:
-                out.append('Added plugin {} in bundle {} to the '
+                out.append('Added plugin {0} in bundle {1} to the '
                     'repository.'.format(p.name, p.bundle))
 
     def _add_path_or_url(self, pm, plugin, gitdir):
@@ -218,7 +218,7 @@ class Command(BaseCommand):
                 names = set([i.name for i in pm.plugins])
                 bundles = set([i.bundle for i in pm.plugins])
 
-                out.append('Plugin {} in bundle {}'.format(
+                out.append('Plugin {0} in bundle {1}'.format(
                     ', '.join(names), ', '.join(bundles)))
                 out.extend(indent(output.splitlines()))
 
@@ -246,7 +246,7 @@ class Command(BaseCommand):
                 if len(plugins[name]) > 1:
                     # There are more than one plugin by this name
                     raise CommandError('More than one plugin has the name of '
-                        '{}. Use the list command to see installed '
+                        '{0}. Use the list command to see installed '
                         'plugins.'.format(name))
 
                 bundle = plugins[name][0].bundle
@@ -255,7 +255,7 @@ class Command(BaseCommand):
 
             set_jigconfig(path, pm.config)
 
-            out.append('Removed plugin {}'.format(name))
+            out.append('Removed plugin {0}'.format(name))
 
     def create(self, argv):
         """
@@ -268,7 +268,7 @@ class Command(BaseCommand):
 
         with self.out() as out:
             if template not in available_templates():
-                raise CommandError('Language {} is not supported yet, you '
+                raise CommandError('Language {0} is not supported yet, you '
                     'can fork this project and add it though!'.format(
                         template))
 
@@ -276,12 +276,12 @@ class Command(BaseCommand):
                 plugin_dir = create_plugin(save_dir, bundle, name,
                     template=template)
 
-                out.append('Created plugin as {}'.format(plugin_dir))
+                out.append('Created plugin as {0}'.format(plugin_dir))
             except OSError as ose:
                 if ose.errno == errno.EEXIST:
                     # File exists
                     raise CommandError('A plugin with this name already '
-                        'exists in this directory: {}.'.format(save_dir))
+                        'exists in this directory: {0}.'.format(save_dir))
                 # Something else, raise it again
                 raise ose   # pragma: no cover
 
@@ -311,4 +311,4 @@ class Command(BaseCommand):
                 # No failures, ok to send this to stdout
                 out.extend(test_results)
             except ExpectationError as e:
-                raise CommandError(e.message)
+                raise CommandError(str(e))

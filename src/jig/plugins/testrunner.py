@@ -3,7 +3,7 @@ import json
 from codecs import open
 from os.path import join, abspath
 from StringIO import StringIO
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 from operator import itemgetter
 from ConfigParser import SafeConfigParser
 
@@ -20,6 +20,11 @@ from jig.output import ConsoleView, strip_paint, green_bold, red_bold
 from jig.plugins import PluginManager
 from jig.plugins.manager import PluginDataJSONEncoder
 from jig.diffconvert import GitDiffIndex
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 # What docutil nodes signify a structural or sectional break
 DOCUTILS_DIFFERENT_SECTION_NODES = (nodes.Root, nodes.Structural,
@@ -186,7 +191,7 @@ class SuccessResult(Result):
     """
 
     def __repr__(self):   # pragma: no cover
-        return '<SuccessResult from={} to={}>'.format(*self.expectation.range)
+        return '<SuccessResult from={0} to={1}>'.format(*self.expectation.range)
 
 
 class FailureResult(Result):
@@ -196,7 +201,7 @@ class FailureResult(Result):
 
     """
     def __repr__(self):   # pragma: no cover
-        return '<FailureResult from={} to={}>'.format(*self.expectation.range)
+        return '<FailureResult from={0} to={1}>'.format(*self.expectation.range)
 
 
 class InstrumentedGitDiffIndex(GitDiffIndex):
@@ -238,7 +243,7 @@ class PluginTestRunner(object):
             test_directory = join(plugin_dir, PLUGIN_TESTS_DIRECTORY)
             self.timeline = NumberedDirectoriesToGit(test_directory)
         except ValueError:
-            raise ExpectationNoTests('Could not find any tests: {}.'.format(
+            raise ExpectationNoTests('Could not find any tests: {0}.'.format(
                 test_directory))
 
         try:
@@ -251,7 +256,7 @@ class PluginTestRunner(object):
             self.expectations = list(get_expectations(expectation_text))
         except (IOError, OSError):
             raise ExpectationFileNotFound(
-                'Missing expectation file: {}.'.format(expect_filename))
+                'Missing expectation file: {0}.'.format(expect_filename))
 
     def run(self):
         """
@@ -322,7 +327,7 @@ class PluginTestRunner(object):
                 view.print_results({plugin: (retcode, data, stderr)})
             else:
                 results.append(FailureResult(exp,
-                    'Exit code: {}\n\nStd out:\n{}\n\nStd err:\n{}'.format(
+                    'Exit code: {0}\n\nStd out:\n{1}\n\nStd err:\n{2}'.format(
                         retcode, stdout or '(none)', stderr or '(none)'),
                     plugin))
                 continue
@@ -430,14 +435,14 @@ class PluginTestReporter(object):
                     # No operation but return
                     decorator = lambda a: a
 
-                out.append(decorator(u'{} {}'.format(diff_type, line)))
+                out.append(decorator(u'{0} {1}'.format(diff_type, line)))
 
             out.append(u'')
 
         pass_count = len([i for i in results if isinstance(i, SuccessResult)])
         fail_count = len([i for i in results if isinstance(i, FailureResult)])
 
-        out.append(u'Pass {}, Fail {}'.format(pass_count, fail_count))
+        out.append(u'Pass {0}, Fail {1}'.format(pass_count, fail_count))
 
         return u'\n'.join(out)
 
@@ -486,7 +491,7 @@ class PluginSettingsDirective(Directive):
         code = u'\n'.join(self.content)
 
         # Use the config parser to get our settings
-        config_fp = StringIO('[settings]\n{}'.format(code))
+        config_fp = StringIO('[settings]\n{0}'.format(code))
         config = SafeConfigParser()
         config.readfp(config_fp)
         node = plugin_settings_node(code, code)

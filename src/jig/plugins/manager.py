@@ -5,10 +5,14 @@ from subprocess import Popen, PIPE
 from ConfigParser import SafeConfigParser
 from ConfigParser import Error as ConfigParserError
 from ConfigParser import NoSectionError
-from collections import OrderedDict
 
 from jig.exc import PluginError
 from jig.conf import PLUGIN_CONFIG_FILENAME, PLUGIN_PRE_COMMIT_SCRIPT
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 
 class PluginManager(object):
@@ -57,7 +61,7 @@ class PluginManager(object):
                 except ConfigParserError:
                     # Something happened when parsing the config
                     raise PluginError('Could not parse config file for '
-                        '{} in {}.'.format(name, path))
+                        '{0} in {1}.'.format(name, path))
 
             # Get rid of the path, we don't need to send this as part of the
             # config for the plugin
@@ -131,7 +135,7 @@ class PluginManager(object):
 
         if not isfile(config_filename):
 
-            raise PluginError('The plugin file {} is missing.'.format(
+            raise PluginError('The plugin file {0} is missing.'.format(
                 config_filename))
 
         config = SafeConfigParser()

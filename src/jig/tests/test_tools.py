@@ -1,11 +1,11 @@
 # coding=utf-8
 from os.path import join, dirname
-from unittest import TestCase
 
 from jig.tools import NumberedDirectoriesToGit, slugify, indent
+from jig.tests.testcase import JigTestCase
 
 
-class TestSlugify(TestCase):
+class TestSlugify(JigTestCase):
 
     """
     Converting strings into slugs.
@@ -30,7 +30,7 @@ class TestSlugify(TestCase):
         self.assertEqual(u'abc-def-ghi', slugify(u'Abç \u0000 Def Ghi'))
 
 
-class TestNumberedDirectoriesToGit(TestCase):
+class TestNumberedDirectoriesToGit(JigTestCase):
 
     """
     Utility for converting snapshots into Git repos.
@@ -184,7 +184,7 @@ class TestNumberedDirectoriesToGit(TestCase):
         self.assertEqual(4, len(nd2g.diffs()))
 
 
-class TestIndent(TestCase):
+class TestIndent(JigTestCase):
 
     """
     The indent method will indent a sequence of strings.
