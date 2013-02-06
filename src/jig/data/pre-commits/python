@@ -27,7 +27,7 @@ for f in files:
         for line, kind, content in f['diff']:
             # For every line, write a message
             out[f['name']].append(
-                (line, 'info', '{} is {}'.format(content, kind)))
+                (line, 'info', '{0} is {1}'.format(content, kind)))
     else:
         out[f['name']] = 'File has been modified'
 

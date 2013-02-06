@@ -134,14 +134,13 @@ class TestCreatePlugin(PluginTestCase):
         sinfo = stat(pre_commit_file)
         self.assertEqual(33261, sinfo.st_mode)
 
-        self.assertEqual(dedent("""
-            [plugin]
-            bundle = test
-            name = plugin
+        config = ConfigParser()
+        config.read(join(plugin_dir, 'config.cfg'))
 
-            [settings]
-            """).strip(),
-            open(join(plugin_dir, 'config.cfg')).read().strip())
+        self.assertEqual(set(('settings', 'plugin')), set(config.sections()))
+        self.assertEqual('test', config.get('plugin', 'bundle'))
+        self.assertEqual('plugin', config.get('plugin', 'name'))
+        self.assertEqual([], config.items('settings'))
 
     def test_new_plugin_compat_plugin_manager(self):
         """
