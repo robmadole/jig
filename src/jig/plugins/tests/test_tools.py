@@ -1,3 +1,4 @@
+from stat import S_IXUSR
 from os import rmdir, stat, makedirs
 from os.path import isfile, join
 from textwrap import dedent
@@ -132,7 +133,7 @@ class TestCreatePlugin(PluginTestCase):
 
         # And it's executable
         sinfo = stat(pre_commit_file)
-        self.assertEqual(33261, sinfo.st_mode)
+        self.assertTrue(S_IXUSR & sinfo.st_mode)
 
         config = ConfigParser()
         config.read(join(plugin_dir, 'config.cfg'))

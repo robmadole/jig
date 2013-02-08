@@ -15,18 +15,11 @@ class TestCommands(ViewTestCase):
 
     """
 
-    help_output = '''
+    help_output_marker = '''
         usage: jig [-h] COMMAND
 
         optional arguments:
-          -h, --help  show this help message and exit
-
-        jig commands:
-          init        Initialize a Git repository for use with Jig
-          plugin      Manage this repository's Jig plugins
-          runnow      Run all plugins and show the results
-
-        See `jig COMMAND --help` for more information'''
+          -h, --help  show this help message and exit'''
 
     def setUp(self):
         self.view = create_view()
@@ -45,7 +38,7 @@ class TestCommands(ViewTestCase):
         for stdout_call in p.write.call_args_list:
             output += stdout_call[0][0]
 
-        self.assertResults(self.help_output, output)
+        self.assertResultsIn(self.help_output_marker, output)
 
     def test_main_help(self):
         """
@@ -55,7 +48,7 @@ class TestCommands(ViewTestCase):
 
         self.view.print_help(commands)
 
-        self.assertResults(self.help_output, self.output)
+        self.assertResultsIn(self.help_output_marker, self.output)
 
 
 class TestBaseCommand(CommandTestCase):

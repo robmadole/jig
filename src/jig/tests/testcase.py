@@ -79,6 +79,16 @@ class JigTestCase(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
+    def assertResultsIn(self, expected, actual):
+        """
+        Assert that a string is in the expected argument.
+        """
+        expected = dedent(expected).strip()
+
+        actual = strip_paint(actual.strip())
+
+        self.assertIn(expected, actual)
+
     def assertSystemExitCode(self, exception, code):
         """
         Assert that a :py:exception:`SystemExit` has a specific exit code.
