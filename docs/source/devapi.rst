@@ -95,37 +95,40 @@ read-only copy:
 Or `fork the repository`_ on GitHub to make your own changes. The
 :doc:`Jig License <license>` is friendly.
 
-.. _development-buildout:
+.. _development-setup:
 
-Jig also uses zc.buildout, which means you need to run a couple of commands to
-download dependencies and create the scripts needed for development.
+Jig uses virtualenv_, Pip and a requirements file to setup a development environment.
+
+We also suggest using virtualenvwrapper_ which is used in the following example.
 
 ::
 
-    $ python boostrap.py && ./bin/buildout
+    $ mkvirtualenv -p python2.7 jig-python27
+    $ pip install -r requirements.txt
 
 To run the tests:
 
 ::
 
-    $ ./bin/jig-tests
+    $ python script/test
 
 To run test coverage:
 
 ::
 
-    $ ./bin/jig-coverage
+    $ python script/coverage
 
 .. _Nose: http://readthedocs.org/docs/nose/en/latest/
 .. _coverage.py: http://nedbatchelder.com/code/coverage/
 .. _fork the repository: https://github.com/robmadole/jig/fork_select
+.. _virtualenv: http://pypi.python.org/pypi/virtualenv
+.. _virtualenvwrapper: http://pypi.python.org/pypi/virtualenvwrapper
 
 Making the documentation
 ------------------------
 
 This documentation is made with Sphinx_. To build the docs make sure you've ran
-the :ref:`buildout <development-buildout>` first.
-
+the :ref:`buildout <development-setup>` first.
 
 Build the HTML version:
 
