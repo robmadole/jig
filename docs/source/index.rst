@@ -26,6 +26,8 @@ The Jig command line tool is written in Python and is available on PyPi.
 This is just a little shell trick that uses ``easy_install`` if it can't locate
 ``pip``.
 
+Jig currently supports Python 2.6 and Python 2.7.
+
 Test drive
 ----------
 

@@ -1,4 +1,5 @@
 import sys
+import codecs
 from functools import wraps
 from StringIO import StringIO
 from contextlib import contextmanager
@@ -77,6 +78,15 @@ def lookup_type(strtype):
 
     # Default to INFO
     return INFO
+
+
+def utf8_writer(filelike):
+    """
+    Wrap a file-like object with a UTF-8 wrapper.
+
+    :param file filelike: the file-like object to wrap
+    """
+    return codecs.getwriter('utf-8')(filelike)
 
 
 class Message(object):
@@ -162,12 +172,14 @@ class ConsoleView(object):
         try:
             yield collected
 
-            fo = self._collect['stdout'] if self.collect_output else sys.stdout
+            stdout = utf8_writer(sys.stdout)
+            fo = self._collect['stdout'] if self.collect_output else stdout
 
             for line in collected:
                 fo.write(unicode(line) + u'\n')
         except Exception as e:
-            fo = self._collect['stderr'] if self.collect_output else sys.stderr
+            stderr = utf8_writer(sys.stderr)
+            fo = self._collect['stderr'] if self.collect_output else stderr
             fo.write(unicode(e) + u'\n')
 
             try:

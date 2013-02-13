@@ -29,15 +29,18 @@ def coverage():
     """
     Create console and HTML coverage reports for the full test suite.
     """
-    from coverage import coverage
     import nose
+    from coverage import coverage
+
+    from jig.tests.noseplugin import TestSetup
 
     cov = coverage(branch=True, config_file=False, source=['jig'],
         omit=['*noseplugin*', '*entrypoints*', '*testcase*'])
 
     cov.start()
 
-    nose.run(argv=['nose'])
+    nose.run(argv=['nose', '-w', 'src'] + sys.argv[1:],
+            addplugins=[TestSetup()])
 
     cov.stop()
 
