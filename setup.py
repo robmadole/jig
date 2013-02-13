@@ -1,29 +1,28 @@
 import sys
 import os
 import imp
-from setuptools import setup, find_packages, Command
-from setuptools.command.test import test as SetuptoolsTest
+from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 
 README = open(os.path.join(here, 'README.rst')).read()
 NEWS = open(os.path.join(here, 'NEWS.rst')).read()
-version = '0.1.0'
 
-version = imp.load_source('jig',
-        os.path.join(here, 'src', 'jig', '__init__.py')).__version__
+version = imp.load_source(
+    'jig', os.path.join(here, 'src', 'jig', '__init__.py')).__version__
 
 install_requires = [
     'GitPython>=0.3.2RC1',
     'docutils>=0.9.1']
 
-# Shims for missing stuff
+# Shims for missing stuff in Python 2.6
 major, minor, patch, releaselevel, serial = sys.version_info
-if major == 2 and minor == 6:
+if major == 2 and minor <= 7:
     install_requires += ['ordereddict==1.1', 'unittest2==0.5.1',
-            'argparse==1.2.1']
+                         'argparse==1.2.1']
 
-setup(name='jig',
+setup(
+    name='jig',
     version=version,
     description="Check your code for stuff before you `git commit`",
     long_description=README + '\n\n' + NEWS,
