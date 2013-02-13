@@ -142,3 +142,19 @@ The builds will be placed in :file:`build`.
 .. _Sphinx: http://sphinx.pocoo.org/
 
 .. _JSON: http://www.json.org/
+
+Cutting a release
+-----------------
+
+Releases are cut from the develop branch, start there.
+
+#. Make sure that master has been merged down to develop
+#. Create the release branch (see gitflow_, Jig uses this branching model)
+#. Edit :file:`NEWS.rst`
+#. Edit :file:`src/jig/__init__.py`
+#. Edit :file:`docs/source/conf.py` version number
+#. Commit, checkout master and ``git merge --no-ff`` the release branch
+#. Release to PyPi ``python setup.py sdist register upload``
+#. Zip the docs up and upload
+
+.. _gitflow: http://nvie.com/posts/a-successful-git-branching-model/
