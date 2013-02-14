@@ -64,7 +64,7 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
             ⚠  line 1: b.txt
                 b is +
 
-            Ran 1 plugin
+            \ud83d\udca5  Jig ran 1 plugin
                 Info 0 Warn 1 Stop 0
             """, self.output)
 

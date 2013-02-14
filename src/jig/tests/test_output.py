@@ -5,7 +5,7 @@ from jig.output import ConsoleView, Message, Error, ResultsCollater
 
 try:
     from collections import OrderedDict
-except ImportError:
+except ImportError:   # pragma: no cover
     from ordereddict import OrderedDict
 
 
@@ -37,7 +37,7 @@ class TestConsoleView(ViewTestCase):
 
             ✕  An error occurred
 
-            Ran 1 plugin
+            \ud83d\udca5  Jig ran 1 plugin
                 Info 0 Warn 0 Stop 0
                 (1 plugin reported errors)
             ''', self.output)
@@ -58,7 +58,7 @@ class TestConsoleView(ViewTestCase):
 
             ✓  commit
 
-            Ran 1 plugin
+            \ud83d\udca5  Jig ran 1 plugin
                 Info 1 Warn 0 Stop 0
             """, self.output)
 
@@ -79,7 +79,7 @@ class TestConsoleView(ViewTestCase):
             ⚠  a.txt
                 file
 
-            Ran 1 plugin
+            \ud83d\udca5  Jig ran 1 plugin
                 Info 0 Warn 1 Stop 0
             """, self.output)
 
@@ -100,7 +100,7 @@ class TestConsoleView(ViewTestCase):
             ✕  line 1: a.txt
                 stop
 
-            Ran 1 plugin
+            \ud83d\udca5  Jig ran 1 plugin
                 Info 0 Warn 0 Stop 1
             """, self.output)
 
@@ -135,7 +135,7 @@ class TestConsoleView(ViewTestCase):
 
             ✓  b
 
-            Ran 2 plugins
+            \ud83d\udca5  Jig ran 2 plugins
                 Info 4 Warn 0 Stop 0
             """, self.output)
 

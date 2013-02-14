@@ -12,7 +12,7 @@ from jig.output import ConsoleView
 
 try:
     from collections import OrderedDict
-except ImportError:
+except ImportError:   # pragma: no cover
     from ordereddict import OrderedDict
 
 
@@ -42,10 +42,16 @@ class Runner(object):
             # Git will run a pre-commit hook with stdin pointed at /dev/null.
             # We will reconnect to the tty so that raw_input works.
             sys.stdin = open('/dev/tty')
-            answer = raw_input(
-                '\nCommit anyway (hit enter), or "c" to cancel the commit: ')
-            if answer and answer[0].lower() == 'c':
-                sys.exit(1)
+            while True:
+                try:
+                    answer = raw_input(
+                        '\nCommit anyway (hit "c"), or stop (hit "s"): ')
+                except KeyboardInterrupt:
+                    sys.exit(1)
+                if answer and answer[0].lower() == 's':
+                    sys.exit(1)
+                elif answer and answer[0].lower() == 'c':
+                    break
 
         sys.exit(0)
 

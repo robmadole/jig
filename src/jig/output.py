@@ -6,6 +6,10 @@ from contextlib import contextmanager
 
 from jig.exc import ForcedExit
 
+OK_SIGN = u'\U0001f44c'
+ATTENTION = u'\U0001f449'
+EXPLODE = u'\U0001f4a5'
+
 # Message types
 INFO = u'info'
 WARN = u'warn'
@@ -212,8 +216,8 @@ class ConsoleView(object):
             # Nothing to report
             with self.out() as out:
                 form = u'plugin' if len(plugins) == 1 else u'plugins'
-                out.append(u'Ran {plen} {form}, nothing to report'.format(
-                    plen=len(plugins), form=form))
+                out.append(u'{ok_sign}  Jig ran {plen} {form}, nothing to report'.format(
+                    ok_sign=OK_SIGN, plen=len(plugins), form=form))
                 return
 
         # Gather the distinct message types from the results
@@ -241,13 +245,14 @@ class ConsoleView(object):
                 out.extend(colorized.splitlines())
                 out.append('')
 
-            out.append(u'Ran {plen} {form}'.format(
-                plen=len(plugins), form=form))
-
             ic, wc, sc = [i[1] for i in collater.counts.items()]
             info = green_bold(ic) if ic else ic
             warn = yellow_bold(wc) if wc else wc
             stop = red_bold(sc) if sc else sc
+
+            sign = EXPLODE if sc > 0 else ATTENTION
+            out.append(u'{explode}  Jig ran {plen} {form}'.format(
+                explode=EXPLODE, plen=len(plugins), form=form))
 
             out.append(u'    Info {ic} Warn {wc} Stop {sc}'.format(
                 ic=info, wc=warn, sc=stop))

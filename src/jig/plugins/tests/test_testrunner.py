@@ -23,7 +23,7 @@ from jig.plugins.testrunner import (PluginTestRunner,
 
 try:
     from collections import OrderedDict
-except ImportError:
+except ImportError:   # pragma: no cover
     from ordereddict import OrderedDict
 
 
@@ -216,7 +216,7 @@ class TestPluginTestRunner(PluginTestCase):
                 ✓  line 1: a.txt
                     aa is +
 
-                Ran 1 plugin
+                \ud83d\udca5  Jig ran 1 plugin
                     Info 2 Warn 0 Stop 0''')
 
         ptr = PluginTestRunner(plugin_dir)
@@ -246,7 +246,7 @@ class TestPluginTestRunner(PluginTestCase):
 
                 ✓  Gobbildy gook
 
-                Ran 1 plugin
+                \ud83d\udca5  Jig ran 1 plugin
                     Info 2 Warn 0 Stop 0''')
 
         ptr = PluginTestRunner(plugin_dir)
@@ -280,7 +280,7 @@ class TestPluginTestRunner(PluginTestCase):
                 ✓  a.txt
                     File has been modified
 
-                Ran 1 plugin
+                \ud83d\udca5  Jig ran 1 plugin
                     Info 1 Warn 0 Stop 0''')
 
         ptr = PluginTestRunner(plugin_dir)
@@ -317,7 +317,7 @@ class TestPluginTestRunner(PluginTestCase):
 
             ✓  Non-JSON
 
-            Ran 1 plugin
+            \ud83d\udca5  Jig ran 1 plugin
                 Info 1 Warn 0 Stop 0
             ''', results[0].actual)
 
@@ -380,7 +380,7 @@ class TestPluginTestRunner(PluginTestCase):
                 ✓  src/a.txt
                     File has been modified
 
-                Ran 1 plugin
+                \ud83d\udca5  Jig ran 1 plugin
                     Info 1 Warn 0 Stop 0
 
             .. expectation::
@@ -392,7 +392,7 @@ class TestPluginTestRunner(PluginTestCase):
                 ✓  src/a.txt
                     File has been modified
 
-                Ran 1 plugin
+                \ud83d\udca5  Jig ran 1 plugin
                     Info 1 Warn 0 Stop 0
 
             .. expectation::
@@ -404,7 +404,7 @@ class TestPluginTestRunner(PluginTestCase):
                 ✓  src/b.txt
                     File has been modified
 
-                Ran 1 plugin
+                \ud83d\udca5  Jig ran 1 plugin
                     Info 1 Warn 0 Stop 0''')
 
         ptr = PluginTestRunner(plugin_dir)

@@ -23,7 +23,7 @@ from jig.diffconvert import GitDiffIndex
 
 try:
     from collections import OrderedDict
-except ImportError:
+except ImportError:   # pragma: no cover
     from ordereddict import OrderedDict
 
 # What docutil nodes signify a structural or sectional break
