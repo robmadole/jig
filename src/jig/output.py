@@ -252,7 +252,7 @@ class ConsoleView(object):
 
             sign = EXPLODE if sc > 0 else ATTENTION
             out.append(u'{explode}  Jig ran {plen} {form}'.format(
-                explode=EXPLODE, plen=len(plugins), form=form))
+                explode=sign, plen=len(plugins), form=form))
 
             out.append(u'    Info {ic} Warn {wc} Stop {sc}'.format(
                 ic=info, wc=warn, sc=stop))

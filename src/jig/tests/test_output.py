@@ -1,7 +1,8 @@
 # coding=utf-8
 from jig.tests.testcase import JigTestCase, ViewTestCase
 from jig.tests.mocks import MockPlugin
-from jig.output import ConsoleView, Message, Error, ResultsCollater
+from jig.output import (
+    ConsoleView, Message, Error, ResultsCollater, OK_SIGN, ATTENTION, EXPLODE)
 
 try:
     from collections import OrderedDict
@@ -37,10 +38,10 @@ class TestConsoleView(ViewTestCase):
 
             ✕  An error occurred
 
-            \ud83d\udca5  Jig ran 1 plugin
+            {0}  Jig ran 1 plugin
                 Info 0 Warn 0 Stop 0
                 (1 plugin reported errors)
-            ''', self.output)
+            '''.format(ATTENTION), self.output)
 
     def test_commit_specific_message(self):
         """
@@ -58,9 +59,9 @@ class TestConsoleView(ViewTestCase):
 
             ✓  commit
 
-            \ud83d\udca5  Jig ran 1 plugin
+            {0}  Jig ran 1 plugin
                 Info 1 Warn 0 Stop 0
-            """, self.output)
+            """.format(ATTENTION), self.output)
 
     def test_file_specific_message(self):
         """
@@ -79,9 +80,9 @@ class TestConsoleView(ViewTestCase):
             ⚠  a.txt
                 file
 
-            \ud83d\udca5  Jig ran 1 plugin
+            {0}  Jig ran 1 plugin
                 Info 0 Warn 1 Stop 0
-            """, self.output)
+            """.format(ATTENTION), self.output)
 
     def test_line_specific_message(self):
         """
@@ -100,9 +101,9 @@ class TestConsoleView(ViewTestCase):
             ✕  line 1: a.txt
                 stop
 
-            \ud83d\udca5  Jig ran 1 plugin
+            {0}  Jig ran 1 plugin
                 Info 0 Warn 0 Stop 1
-            """, self.output)
+            """.format(EXPLODE), self.output)
 
     def test_two_plugins(self):
         """
@@ -135,9 +136,9 @@ class TestConsoleView(ViewTestCase):
 
             ✓  b
 
-            \ud83d\udca5  Jig ran 2 plugins
+            {0}  Jig ran 2 plugins
                 Info 4 Warn 0 Stop 0
-            """, self.output)
+            """.format(ATTENTION), self.output)
 
 
 class TestMessage(JigTestCase):
