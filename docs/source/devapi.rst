@@ -148,13 +148,15 @@ Cutting a release
 
 Releases are cut from the develop branch, start there.
 
-#. Make sure that master has been merged down to develop
 #. Create the release branch (see gitflow_, Jig uses this branching model)
 #. Edit :file:`NEWS.rst`
 #. Edit :file:`src/jig/__init__.py`
 #. Edit :file:`docs/source/conf.py` version number
-#. Commit, checkout master and ``git merge --no-ff`` the release branch
+#. Commit, checkout ``master`` and ``git merge --no-ff`` the release branch
+#. Tag the release ``git tag``
+#. ``git push --tags origin master``
 #. Release to PyPi ``python setup.py sdist register upload``
+#. Checkout ``develop`` and merge ``master``
 #. Zip the docs up and upload
 
 .. _gitflow: http://nvie.com/posts/a-successful-git-branching-model/

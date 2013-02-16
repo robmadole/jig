@@ -11,7 +11,7 @@ from jig.conf import PLUGIN_CONFIG_FILENAME, PLUGIN_PRE_COMMIT_SCRIPT
 
 try:
     from collections import OrderedDict
-except ImportError:
+except ImportError:   # pragma: no cover
     from ordereddict import OrderedDict
 
 

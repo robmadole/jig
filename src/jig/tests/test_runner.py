@@ -42,7 +42,7 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
             self.assertSystemExitCode(ec.exception, 0)
 
             self.assertEqual(
-                'Ran 1 plugin, nothing to report\n',
+                u'\U0001f44c  Jig ran 1 plugin, nothing to report\n',
                 self.output)
 
     def test_will_not_prompt_if_no_messages(self):
@@ -83,15 +83,15 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
             patch('jig.runner.sys'),
             self.assertRaises(SystemExit)
         ) as (ri, r_sys, ec):
-            # Fake the raw_input call to return 'c'
+            # Fake the raw_input call to return 's'
             r_sys.exit.side_effect = SystemExit
-            ri.return_value = 'c'
+            ri.return_value = 's'
 
             self.runner.fromhook(self.gitrepodir)
 
         # The user was prompted about committing or canceling
-        ri.assert_called_once_with('\nCommit anyway (hit enter), '
-            'or "c" to cancel the commit: ')
+        ri.assert_called_once_with(
+            '\nCommit anyway (hit "c"), or stop (hit "s"): ')
         # When they said cancel we exited with non-zero
         r_sys.exit.assert_called_once_with(1)
 
@@ -111,15 +111,40 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
             patch('jig.runner.sys')
         ) as (ri, r_sys):
             # Fake the raw_input call to return 'c'
-            ri.return_value = ''
+            ri.return_value = 'c'
 
             self.runner.fromhook(self.gitrepodir)
 
         # The user was prompted about committing or canceling
-        ri.assert_called_once_with('\nCommit anyway (hit enter), '
-            'or "c" to cancel the commit: ')
+        ri.assert_called_once_with(
+            '\nCommit anyway (hit "c"), or stop (hit "s"): ')
         # When they said cancel we exited with non-zero
         r_sys.exit.assert_called_once_with(0)
+
+    def test_will_abort_on_keyboard_interrupt(self):
+        """
+        The user can CTRL-C out of it and the commit is canceled.
+        """
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
+
+        # Create staged changes
+        self.commit(self.gitrepodir, 'a.txt', 'a')
+        self.stage(self.gitrepodir, 'b.txt', 'b')
+
+        with nested(
+            patch('jig.runner.raw_input', create=True),
+            patch('jig.runner.sys'),
+            self.assertRaises(SystemExit)
+        ) as (ri, r_sys, ec):
+            # Fake the raw_input call to return 'c'
+            ri.side_effect = KeyboardInterrupt
+            r_sys.exit.side_effect = SystemExit
+
+            self.runner.fromhook(self.gitrepodir)
+
+        # We exited with 1 to indicate the commit should abort
+        r_sys.exit.assert_called_once_with(1)
 
 
 class TestRunnerResults(RunnerTestCase, PluginTestCase):

@@ -1,6 +1,14 @@
 News
 ====
 
+*Release 0.1.3 - February 16th, 2013*
+
+* Makes the indicator between warning messages and stop messages
+  easy to discern at a quick glance
+* When Jig runs via the Git pre-commit hook, the output is more pronounced
+* Update the plugin test runner to ignore the summary lines at the bottom of
+  the output
+
 *Release 0.1.2 - February 13th, 2013*
 
 * Support for Python 2.6 when running plugins ``jig plugin test``

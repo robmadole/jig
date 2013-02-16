@@ -16,6 +16,7 @@ from jig.conf import CODEC
 from jig.tools import NumberedDirectoriesToGit
 from jig.plugins import create_plugin, Plugin
 from jig.tests.testcase import JigTestCase, PluginTestCase
+from jig.output import ATTENTION, EXPLODE
 from jig.plugins.testrunner import (PluginTestRunner,
     InstrumentedGitDiffIndex, PluginTestReporter, get_expectations,
     Expectation, Result, SuccessResult, FailureResult,
@@ -23,7 +24,7 @@ from jig.plugins.testrunner import (PluginTestRunner,
 
 try:
     from collections import OrderedDict
-except ImportError:
+except ImportError:   # pragma: no cover
     from ordereddict import OrderedDict
 
 
@@ -214,10 +215,7 @@ class TestPluginTestRunner(PluginTestCase):
                     a is -
 
                 ✓  line 1: a.txt
-                    aa is +
-
-                Ran 1 plugin
-                    Info 2 Warn 0 Stop 0''')
+                    aa is +''')
 
         ptr = PluginTestRunner(plugin_dir)
 
@@ -244,10 +242,7 @@ class TestPluginTestRunner(PluginTestCase):
 
                 ▾  plugin
 
-                ✓  Gobbildy gook
-
-                Ran 1 plugin
-                    Info 2 Warn 0 Stop 0''')
+                ✓  Gobbildy gook''')
 
         ptr = PluginTestRunner(plugin_dir)
 
@@ -278,10 +273,7 @@ class TestPluginTestRunner(PluginTestCase):
                 ▾  plugin
 
                 ✓  a.txt
-                    File has been modified
-
-                Ran 1 plugin
-                    Info 1 Warn 0 Stop 0''')
+                    File has been modified''')
 
         ptr = PluginTestRunner(plugin_dir)
 
@@ -315,11 +307,7 @@ class TestPluginTestRunner(PluginTestCase):
         self.assertResults(u'''
             ▾  plugin
 
-            ✓  Non-JSON
-
-            Ran 1 plugin
-                Info 1 Warn 0 Stop 0
-            ''', results[0].actual)
+            ✓  Non-JSON''', results[0].actual)
 
     def test_non_zero_exit_code(self):
         """
@@ -380,9 +368,6 @@ class TestPluginTestRunner(PluginTestCase):
                 ✓  src/a.txt
                     File has been modified
 
-                Ran 1 plugin
-                    Info 1 Warn 0 Stop 0
-
             .. expectation::
                 :from: 02
                 :to: 03
@@ -392,9 +377,6 @@ class TestPluginTestRunner(PluginTestCase):
                 ✓  src/a.txt
                     File has been modified
 
-                Ran 1 plugin
-                    Info 1 Warn 0 Stop 0
-
             .. expectation::
                 :from: 03
                 :to: 04
@@ -402,10 +384,7 @@ class TestPluginTestRunner(PluginTestCase):
                 ▾  plugin
 
                 ✓  src/b.txt
-                    File has been modified
-
-                Ran 1 plugin
-                    Info 1 Warn 0 Stop 0''')
+                    File has been modified''')
 
         ptr = PluginTestRunner(plugin_dir)
 

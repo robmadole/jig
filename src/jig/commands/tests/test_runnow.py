@@ -7,6 +7,7 @@ from mock import patch
 from jig.tests.testcase import CommandTestCase, PluginTestCase
 from jig.plugins import set_jigconfig
 from jig.exc import ForcedExit
+from jig.output import ATTENTION, EXPLODE
 from jig.commands import runnow
 
 
@@ -64,9 +65,9 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
             ⚠  line 1: b.txt
                 b is +
 
-            Ran 1 plugin
+            {0}  Jig ran 1 plugin
                 Info 0 Warn 1 Stop 0
-            """, self.output)
+            """.format(ATTENTION), self.output)
 
     def test_handles_error(self):
         """
