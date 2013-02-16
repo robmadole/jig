@@ -34,8 +34,9 @@ def coverage():
 
     from jig.tests.noseplugin import TestSetup
 
-    cov = coverage(branch=True, config_file=False, source=['jig'],
-        omit=['*noseplugin*', '*entrypoints*', '*testcase*'])
+    cov = coverage(
+        branch=True, config_file=False, source=['jig'],
+        omit=['*noseplugin*', '*entrypoints*', '*testcase*', '*backports'])
 
     cov.start()
 
@@ -45,4 +46,4 @@ def coverage():
     cov.stop()
 
     cov.report()
-    cov.html_report(directory='cover')
+    cov.html_report(directory='../cover')
