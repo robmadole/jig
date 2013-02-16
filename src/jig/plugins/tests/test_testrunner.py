@@ -215,10 +215,7 @@ class TestPluginTestRunner(PluginTestCase):
                     a is -
 
                 ✓  line 1: a.txt
-                    aa is +
-
-                {0}  Jig ran 1 plugin
-                    Info 2 Warn 0 Stop 0'''.format(ATTENTION))
+                    aa is +''')
 
         ptr = PluginTestRunner(plugin_dir)
 
@@ -245,10 +242,7 @@ class TestPluginTestRunner(PluginTestCase):
 
                 ▾  plugin
 
-                ✓  Gobbildy gook
-
-                {0}  Jig ran 1 plugin
-                    Info 2 Warn 0 Stop 0'''.format(ATTENTION))
+                ✓  Gobbildy gook''')
 
         ptr = PluginTestRunner(plugin_dir)
 
@@ -279,10 +273,7 @@ class TestPluginTestRunner(PluginTestCase):
                 ▾  plugin
 
                 ✓  a.txt
-                    File has been modified
-
-                {0}  Jig ran 1 plugin
-                    Info 1 Warn 0 Stop 0'''.format(ATTENTION))
+                    File has been modified''')
 
         ptr = PluginTestRunner(plugin_dir)
 
@@ -316,11 +307,7 @@ class TestPluginTestRunner(PluginTestCase):
         self.assertResults(u'''
             ▾  plugin
 
-            ✓  Non-JSON
-
-            {0}  Jig ran 1 plugin
-                Info 1 Warn 0 Stop 0
-            '''.format(ATTENTION), results[0].actual)
+            ✓  Non-JSON''', results[0].actual)
 
     def test_non_zero_exit_code(self):
         """
@@ -381,9 +368,6 @@ class TestPluginTestRunner(PluginTestCase):
                 ✓  src/a.txt
                     File has been modified
 
-                {0}  Jig ran 1 plugin
-                    Info 1 Warn 0 Stop 0
-
             .. expectation::
                 :from: 02
                 :to: 03
@@ -393,9 +377,6 @@ class TestPluginTestRunner(PluginTestCase):
                 ✓  src/a.txt
                     File has been modified
 
-                {0}  Jig ran 1 plugin
-                    Info 1 Warn 0 Stop 0
-
             .. expectation::
                 :from: 03
                 :to: 04
@@ -403,10 +384,7 @@ class TestPluginTestRunner(PluginTestCase):
                 ▾  plugin
 
                 ✓  src/b.txt
-                    File has been modified
-
-                {0}  Jig ran 1 plugin
-                    Info 1 Warn 0 Stop 0'''.format(ATTENTION))
+                    File has been modified''')
 
         ptr = PluginTestRunner(plugin_dir)
 

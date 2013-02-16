@@ -1,5 +1,6 @@
 # coding=utf-8
 import json
+import re
 from codecs import open
 from os.path import join, abspath
 from StringIO import StringIO
@@ -34,6 +35,11 @@ DOCUTILS_DIFFERENT_SECTION_NODES = (nodes.Root, nodes.Structural,
 REPORTER_COLUMN_WIDTH = 80
 # A horizontal dividing line to separate sections
 REPORTER_HORIZONTAL_DIVIDER = u''.join([u'·'] * REPORTER_COLUMN_WIDTH)
+
+RESULTS_SUMMARY_SIGNATURE_RE = re.compile(
+    r'^.*Jig\ ran.*$', re.MULTILINE)
+RESULTS_SUMMARY_COUNT_RE = re.compile(
+    r'^.*Info\ \d*\ Warn\ \d*\ Stop\ \d*$', re.MULTILINE)
 
 
 def get_expectations(input_string):
@@ -189,7 +195,6 @@ class SuccessResult(Result):
     The expectation for a single plugins tests matched its output.
 
     """
-
     def __repr__(self):   # pragma: no cover
         return '<SuccessResult from={0} to={1}>'.format(*self.expectation.range)
 
@@ -337,6 +342,12 @@ class PluginTestRunner(object):
             actual = strip_paint(view._collect['stdout'].getvalue() or
                 view._collect['stderr'].getvalue())
 
+            # Also remove the summary and count at the end, these are not
+            # really all that useful to test and just end up making the
+            # expect.rst files overly verbose
+            actual = RESULTS_SUMMARY_SIGNATURE_RE.sub('', actual)
+            actual = RESULTS_SUMMARY_COUNT_RE.sub('', actual)
+
             resargs = (exp, actual, plugin, stdin, stdout)
             if actual.strip() != exp.output.strip():
                 results.append(FailureResult(*resargs))
@@ -480,7 +491,6 @@ class PluginSettingsDirective(Directive):
             underscore_in_filenames = no
             capital_letters_in_filenames = no
     """
-
     has_content = True
     required_arguments = 0
     optional_arguments = 0
@@ -513,11 +523,7 @@ class ExpectationDirective(Directive):
             ▾  File name checker
 
             ✓  New file looks OK (matches filename rules)
-
-            Ran 1 plugin
-                Info 1 Warn 0 Stop 0
     """
-
     has_content = True
     required_arguments = 0
     optional_arguments = 2
