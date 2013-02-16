@@ -72,9 +72,6 @@ Running this plugin with Jig will give you output like this:
 
     ✓  Always look on the bright side of life
 
-    Ran 1 plugin
-        Info 1 Warn 0 Stop 0
-
 .. _pluginapi-testing:
 
 Writing tests for your plugins
@@ -246,18 +243,12 @@ of the behavior we expect from the plugin.
 
     ✓  Always look on the bright side of life
 
-    Ran 1 plugin
-        Info 1 Warn 0 Stop 0
-
     Diff
     ················································································
 
     + ▾  bright-side
     + 
     + ✓  Always look on the bright side of life
-    + 
-    + Ran 1 plugin
-    +     Info 1 Warn 0 Stop 0
 
 Finally we got something.
 
@@ -286,9 +277,6 @@ If we update our :file:`expect.rst` file one we can get a passing test.
         ▾  bright-side
 
         ✓  Always look on the bright side of life
-
-        Ran 1 plugin
-            Info 1 Warn 0 Stop 0
 
 Run the tests again:
 
@@ -521,9 +509,6 @@ our expectations.
 
         ✓  Always look on the bright side of life
 
-        Ran 1 plugin
-            Info 1 Warn 0 Stop 0
-
     Sing to me
     ~~~~~~~~~~
 
@@ -542,9 +527,6 @@ our expectations.
         ▾  bright-side
 
         ✓  Always look on the bright side of life
-
-        Ran 1 plugin
-            Info 1 Warn 0 Stop 0
 
 Our :file:`pre-commit` script hasn't been altered to use this new setting so
 running the test again will show that this passes.
@@ -593,9 +575,6 @@ The next test result will show a failure because of our altered setting.
 
     ✓  ♫ Always look on the bright side of life ♫
 
-    Ran 1 plugin
-        Info 1 Warn 0 Stop 0
-
     Diff
     ················································································
 
@@ -603,9 +582,6 @@ The next test result will show a failure because of our altered setting.
 
     - ✓  Always look on the bright side of life
     + ✓  ♫ Always look on the bright side of life ♫
-
-      Ran 1 plugin
-          Info 1 Warn 0 Stop 0
 
     Pass 1, Fail 1
 
@@ -625,9 +601,6 @@ Change the expectation to look for our singing version of the chorus.
         ▾  bright-side
 
         ✓  ♫ Always look on the bright side of life ♫
-
-        Ran 1 plugin
-            Info 1 Warn 0 Stop 0
 
 With that change it should bring our tests back to a passing state.
 
@@ -712,9 +685,6 @@ This will produce output similar to this:
 
     ✓  Give yourself a pat on the back
 
-    Ran 1 plugin
-        Info 1 Warn 0 Stop 0
-
 The default message type is ``info`` but you can change it by providing an array
 of ``[TYPE, MESSAGE]``.
 
@@ -734,9 +704,6 @@ The output will look like this:
     ⚠  Your commit looks a little janky
 
     ✕  On second thought, this is a horrible commit
-
-    Ran 1 plugin
-        Info 0 Warn 1 Stop 1
 
 File messages
 .............
@@ -766,9 +733,6 @@ The output will include the filename:
     ✓  myMainFile.javascript
         You should not camelCase your JavaScript filenames
 
-    Ran 1 plugin
-        Info 2 Warn 0 Stop 0
-
 You can specify the type of message:
 
 .. code-block:: javascript
@@ -796,9 +760,6 @@ The output is:
     ✕  myMainFile.javascript
         Really? Putting "File" in the name of your file?
 
-    Ran 1 plugin
-        Info 1 Warn 1 Stop 1
-
 Line messages
 .............
 
@@ -822,9 +783,6 @@ This will include the line number in the output:
 
     ✕  line 1: utils.sh
         You don't have a hashbang (#!) as the first line
-
-    Ran 1 plugin
-        Info 0 Warn 0 Stop 1
 
 Multiple messages for the file can be specified:
 
@@ -852,9 +810,6 @@ The output:
 
     ⚠  line 1: utils.sh
         Getting a bit long is it not? You could use Python instead...
-
-    Ran 1 plugin
-        Info 1 Warn 1 Stop 1
 
 Non-JSON output
 ...............
@@ -890,9 +845,6 @@ The output for both of these would be
 
     ✓  Simple message one
 
-    Ran 1 plugin
-        Info 1 Warn 0 Stop 0
-
 Error handling
 --------------
 
@@ -906,10 +858,6 @@ If your plugins exits with an exit code of **1**, any data that is written to
     ▾  jslint
 
     ✕  You need the jslint command line tool installed before running this plugin
-
-    Ran 1 plugin
-        Info 0 Warn 0 Stop 0
-        (1 plugin reported errors)
 
 When you are writing tests for you plugin, these are formatted in a friendly way
 to aid in debugging.
