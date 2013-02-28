@@ -66,7 +66,7 @@ def hook(gitdir):
 
     Raises :py:exc:`NotGitRepo` if the directory given is not a Git repository.
     Raises :py:exc:`PreCommitExists` if there is already a Git hook for
-    pre-commit present.
+        pre-commit present.
     """
     if not is_git_repo(gitdir):
         raise NotGitRepo('{0} is not a Git repository.'.format(
@@ -76,9 +76,7 @@ def hook(gitdir):
 
     # Is there already a hook?
     if isfile(pc_filename):
-        raise PreCommitExists('{0} already exists and we will not overwrite '
-            'it. If you want to use jig you\'ll have to sort this out '
-            'yourself.'.format(pc_filename))
+        raise PreCommitExists('{0} already exists'.format(pc_filename))
 
     script_kwargs = {
         'python_executable': sys.executable,

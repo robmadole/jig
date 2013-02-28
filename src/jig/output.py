@@ -84,6 +84,24 @@ def lookup_type(strtype):
     return INFO
 
 
+def _get_hint(hint):
+    """
+    Retrieves a hint by the given name from :module:`jig.commands.hints`.
+
+    :param string hintname: the ALL_CAPS constant defined in the hints module
+    :rtype: list
+    """
+    from jig.commands import hints
+
+    if isinstance(hint, list):
+        return hint
+
+    try:
+        return getattr(hints, hint)
+    except AttributeError:
+        return []
+
+
 def utf8_writer(filelike):
     """
     Wrap a file-like object with a UTF-8 wrapper.
@@ -185,6 +203,10 @@ class ConsoleView(object):
             stderr = utf8_writer(sys.stderr)
             fo = self._collect['stderr'] if self.collect_output else stderr
             fo.write(unicode(e) + u'\n')
+
+            if hasattr(e, 'hint'):
+                for line in _get_hint(e.hint):
+                    fo.write(unicode(line) + u'\n')
 
             try:
                 retcode = e.retcode

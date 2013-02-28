@@ -5,6 +5,8 @@ from urlparse import urlparse
 from uuid import uuid4 as uuid
 
 from jig.commands.base import BaseCommand
+from jig.commands.hints import (
+    NO_PLUGINS_INSTALLED, USE_RUNNOW, FORK_PROJECT_GITHUB)
 from jig.conf import JIG_DIR_NAME, JIG_PLUGIN_DIR
 from jig.exc import CommandError, ExpectationError
 from jig.gitutils import clone
@@ -137,6 +139,7 @@ class Command(BaseCommand):
 
             if not bundles:
                 out.append(u'No plugins installed.')
+                out.extend(NO_PLUGINS_INSTALLED)
                 return
 
             out.append(u'Installed plugins\n')
@@ -152,6 +155,8 @@ class Command(BaseCommand):
                 for plugin in sort_plugins:
                     out.append(u'{plugin:.<25} {name}'.format(
                         name=name, plugin=plugin.name))
+
+            out.extend(USE_RUNNOW)
 
     def add(self, argv):
         """
@@ -172,6 +177,8 @@ class Command(BaseCommand):
             for p in added:
                 out.append('Added plugin {0} in bundle {1} to the '
                     'repository.'.format(p.name, p.bundle))
+
+            out.extend(USE_RUNNOW)
 
     def _add_path_or_url(self, pm, plugin, gitdir):
         """
@@ -204,9 +211,12 @@ class Command(BaseCommand):
         """
         path = argv.path
 
-        results = update_plugins(path)
-
         with self.out() as out:
+            # Make sure that this directory has been initialized for Jig
+            get_jigconfig(path)
+
+            results = update_plugins(path)
+
             if not results:
                 out.append('No plugins to update.')
                 return
@@ -268,9 +278,9 @@ class Command(BaseCommand):
 
         with self.out() as out:
             if template not in available_templates():
-                raise CommandError('Language {0} is not supported yet, you '
-                    'can fork this project and add it though!'.format(
-                        template))
+                raise CommandError(
+                    'Language {0} is not supported yet'.format(template),
+                    hint=FORK_PROJECT_GITHUB)
 
             try:
                 plugin_dir = create_plugin(save_dir, bundle, name,

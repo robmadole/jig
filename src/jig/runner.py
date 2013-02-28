@@ -87,7 +87,7 @@ class Runner(object):
         with self.view.out() as out:
             if not repo_jiginitialized(self.gitrepo):
                 raise GitRepoNotInitialized('This repository has not been '
-                    'initialized. Run jig init GITREPO to set it up.')
+                    'initialized.')
 
         pm = PluginManager(get_jigconfig(self.gitrepo))
 
