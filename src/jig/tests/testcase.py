@@ -42,6 +42,19 @@ def cd_gitrepo(func):
     return wrapper
 
 
+def result_with_hint(payload, hint):
+    """
+    Formats a one-line message with a hint.
+
+    This is useful for testing the output of commands that utilize the
+    :module:`jig.commands.hints` module.
+
+    :param unicode payload: the first line of the result
+    :param list hint: one of the attributes of :class:`jig.commands.hints`
+    """
+    return dedent(payload).strip() + u'\n' + u'\n'.join(hint)
+
+
 class JigTestCase(unittest.TestCase):
 
     """

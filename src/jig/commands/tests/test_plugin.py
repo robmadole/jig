@@ -6,7 +6,7 @@ from tempfile import mkdtemp
 from mock import Mock, patch
 
 from jig.tests.testcase import (CommandTestCase, PluginTestCase,
-    cd_gitrepo, cwd_bounce)
+    cd_gitrepo, cwd_bounce, result_with_hint)
 from jig.tests.mocks import MockPlugin
 from jig.tools import NumberedDirectoriesToGit
 from jig.exc import ForcedExit
@@ -16,6 +16,8 @@ from jig.plugins.testrunner import (Expectation, SuccessResult,
     FailureResult, REPORTER_HORIZONTAL_DIVIDER)
 from jig.gitutils import clone
 from jig.commands import plugin
+from jig.commands.hints import (
+    FORK_PROJECT_GITHUB, NO_PLUGINS_INSTALLED, USE_RUNNOW)
 
 
 class TestPluginCommand(CommandTestCase, PluginTestCase):
@@ -49,8 +51,10 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         # directory.
         self.run_command('list')
 
-        self.assertEqual(
-            u'No plugins installed.\n',
+        self.assertResults(
+            result_with_hint(
+                u'No plugins installed.',
+                NO_PLUGINS_INSTALLED),
             self.output)
 
     def test_list_plugins_different_bundle(self):
@@ -66,14 +70,14 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
         self.run_command('list -r {0}'.format(self.gitrepodir))
 
-        self.assertResults(u'''
+        self.assertResults(result_with_hint(u'''
             Installed plugins
 
             Plugin name               Bundle name
             plugin01................. test01
             plugin02................. test02
             plugin03................. test03
-            ''', self.output)
+            ''', USE_RUNNOW), self.output)
 
     def test_list_plugins_same_bundle(self):
         """
@@ -88,14 +92,14 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
         self.run_command('list -r {0}'.format(self.gitrepodir))
 
-        self.assertResults(u'''
+        self.assertResults(result_with_hint(u'''
             Installed plugins
 
             Plugin name               Bundle name
             plugin01................. test
             plugin02................. test
             plugin03................. test
-            ''', self.output)
+            ''', USE_RUNNOW), self.output)
 
     def test_lists_alphabetically(self):
         """
@@ -111,14 +115,14 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
         self.run_command('list -r {0}'.format(self.gitrepodir))
 
-        self.assertResults('''
+        self.assertResults(result_with_hint(u'''
             Installed plugins
 
             Plugin name               Bundle name
             a........................ a
             b........................ b
             c........................ c
-            ''', self.output)
+            ''', USE_RUNNOW), self.output)
 
     @cd_gitrepo
     def test_add_bad_plugin(self):
@@ -150,8 +154,17 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         # The config now contains our section
         self.assertTrue(config.has_section('plugin:a:a'))
 
-        self.assertEqual(
-            u'Added plugin a in bundle a to the repository.\n',
+        self.assertResults(
+            u'''
+            Added plugin a in bundle a to the repository.
+
+            Run the plugins in the current repository with this command:
+
+                $ jig runnow
+
+            Jig works off of your staged files in the Git repository index.
+            You place things in the index with `git add`. You will need to stage
+            some files before you can run Jig.''',
             self.output)
 
     def test_add_plugin_to_git_repo(self):
@@ -164,8 +177,17 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         self.run_command('add --gitrepo {0} {1}'.format(
             self.gitrepodir, plugin_dir))
 
-        self.assertEqual(
-            u'Added plugin a in bundle a to the repository.\n',
+        self.assertResults(
+            u'''
+            Added plugin a in bundle a to the repository.
+
+            Run the plugins in the current repository with this command:
+
+                $ jig runnow
+
+            Jig works off of your staged files in the Git repository index.
+            You place things in the index with `git add`. You will need to stage
+            some files before you can run Jig.''',
             self.output)
 
     def test_add_plugin_by_url(self):
@@ -326,9 +348,10 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             # We just created a plugin in this directory, so it should fail
             self.run_command('create -l php name bundle')
 
-        self.assertEqual(
-            u'Language php is not supported yet, you can fork this '
-            u'project and add it though!\n',
+        self.assertResults(
+            result_with_hint(
+                u'Language php is not supported yet.',
+                FORK_PROJECT_GITHUB),
             self.error)
 
     def test_create_plugin_already_exists(self):

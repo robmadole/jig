@@ -279,7 +279,7 @@ class Command(BaseCommand):
         with self.out() as out:
             if template not in available_templates():
                 raise CommandError(
-                    'Language {0} is not supported yet'.format(template),
+                    'Language {0} is not supported yet.'.format(template),
                     hint=FORK_PROJECT_GITHUB)
 
             try:

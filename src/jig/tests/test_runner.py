@@ -4,7 +4,9 @@ from contextlib import nested
 
 from mock import patch
 
-from jig.tests.testcase import RunnerTestCase, PluginTestCase
+from jig.tests.testcase import (
+    RunnerTestCase, PluginTestCase, result_with_hint)
+from jig.commands.hints import GIT_REPO_NOT_INITIALIZED
 from jig.tests.mocks import MockPlugin
 from jig.exc import ForcedExit
 from jig.plugins import set_jigconfig, Plugin
@@ -173,8 +175,10 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
             self.runner.results(self.gitrepodir)
 
         self.assertEqual('1', str(ec.exception))
-        self.assertEqual('This repository has not been initialized. Run '
-            'jig init GITREPO to set it up.\n',
+        self.assertResults(
+            result_with_hint(
+                u'This repository has not been initialized.',
+                GIT_REPO_NOT_INITIALIZED),
             self.error)
 
     def test_no_plugins(self):
