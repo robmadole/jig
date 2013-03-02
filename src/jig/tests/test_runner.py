@@ -123,6 +123,30 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
         # When they said cancel we exited with non-zero
         r_sys.exit.assert_called_once_with(0)
 
+    def test_will_continue_to_prompt_until_correctly_answered(self):
+        """
+        The user must answer 'c' or 's' and nothing else.
+        """
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
+
+        # Create staged changes
+        self.commit(self.gitrepodir, 'a.txt', 'a')
+        self.stage(self.gitrepodir, 'b.txt', 'b')
+
+        with nested(
+            patch('jig.runner.raw_input', create=True),
+            patch('jig.runner.sys')
+        ) as (ri, r_sys):
+            # Fake the raw_input call to return 'c' only after giving
+            # two incorrect options.
+            ri.side_effect = ['1', '2', 'c']
+
+            self.runner.fromhook(self.gitrepodir)
+
+        # raw_input was called 3 times until it received a proper response
+        self.assertEqual(3, ri.call_count)
+
     def test_will_abort_on_keyboard_interrupt(self):
         """
         The user can CTRL-C out of it and the commit is canceled.

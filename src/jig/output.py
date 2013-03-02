@@ -96,10 +96,7 @@ def _get_hint(hint):
     if isinstance(hint, list):
         return hint
 
-    try:
-        return getattr(hints, hint)
-    except AttributeError:
-        return []
+    return getattr(hints, hint)
 
 
 def utf8_writer(filelike):

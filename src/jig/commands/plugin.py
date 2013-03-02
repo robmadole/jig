@@ -33,9 +33,10 @@ _listparser.set_defaults(subcommand='list')
 
 _addparser = _subparsers.add_parser('add',
     help='add a plugin',
-    usage='jig plugin add [-h] [-r GITREPO] URL|PATH')
+    usage='jig plugin add [-h] [-r GITREPO] URL|URL@BRANCH|PATH')
 _addparser.add_argument('plugin',
-    help='URL or path to the plugin directory')
+    help='URL or path to the plugin directory, if URL you can '
+    'specify @BRANCHNAME to clone other than the default')
 _addparser.add_argument('--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _addparser.set_defaults(subcommand='add')
@@ -195,8 +196,16 @@ class Command(BaseCommand):
         if url.scheme:
             # This is a URL, let's clone it first into .jig/plugins
             # directory.
+            plugin_parts = plugin.rsplit('@', 1)
+
+            branch = None
+            try:
+                branch = plugin_parts[1]
+            except IndexError:
+                pass
+
             to_dir = join(gitdir, JIG_DIR_NAME, JIG_PLUGIN_DIR, uuid().hex)
-            clone(plugin, to_dir)
+            clone(plugin_parts[0], to_dir, branch)
             plugin = to_dir
 
         return pm.add(plugin)

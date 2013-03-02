@@ -64,7 +64,7 @@ NO_PLUGINS_INSTALLED = _hint(
     u"""
     You can install plugins by running:
 
-        $ jig plugin add URL|PATH
+        $ jig plugin add URL|URL@BRANCH|PATH
 
     There is a standard set available you can try:
 
