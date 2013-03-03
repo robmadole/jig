@@ -10,14 +10,17 @@ AFTER_INIT = _hint(
 
         $ echo ".jig" >> .gitignore
 
-    Next, install some plugins. Jig has a standard set you may like:
+    Next install some plugins. Jig has a standard set you may like:
 
         $ jig plugin add http://github.com/robmadole/jig-plugins
     """)
 
 PRE_COMMIT_EXISTS = _hint(
     u"""
-    Check the pre-commit file and see if you are using it.
+    For Jig to operate automatically when you commit we need to create
+    a new pre-commit hook.
+
+    Check the existing pre-commit file and see if you are using it.
 
     If you do not need the existing pre-commit script, you can delete it
     and then run jig init again in this repository.
@@ -28,10 +31,6 @@ NOT_GIT_REPO = _hint(
     To initialize a directory for use with Git, run:
 
         $ git init [directory]
-
-    If you are in the directory you wish to initialize:
-
-        $ git init .
 
     After you do this you can try your Jig command again.
     """)
@@ -57,7 +56,7 @@ ALREADY_INITIALIZED = _hint(
 
     If you need to re-initialize for some reason you can manually remove
     the .jig directory in the root of the repository. This is probably not
-    necessary.
+    necessary and will delete all your settings and installed plugins.
     """)
 
 NO_PLUGINS_INSTALLED = _hint(
@@ -84,8 +83,7 @@ USE_RUNNOW = _hint(
 
 FORK_PROJECT_GITHUB = _hint(
     u"""
-    You can fork this project on GitHub. It would be most appreciated any
-    contributions you wish to make.
+    You can fork this project on GitHub.
 
     http://github.com/robmadole/jig
     """)
