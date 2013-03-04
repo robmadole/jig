@@ -113,3 +113,24 @@ def clone(repository, to_dir):
         return gitobj
     except git.GitCommandError as gce:
         raise GitCloneError(str(gce))
+
+
+def remote_has_updates(repository):
+    """
+    Fetches the remote and check for available updates.
+
+    :param string repository: path to the Git repository
+    """
+    # Get the latest tree from all remotes
+    [i.fetch() for i in git.Repo(repository).remotes]
+
+    repo = git.Repo(repository)
+
+    active = repo.active_branch
+    tracking = repo.active_branch.tracking_branch()
+
+    is_different = active.commit != tracking.commit
+    is_tracking_newer = \
+        tracking.commit.committed_date > active.commit.committed_date
+
+    return is_different and is_tracking_newer
