@@ -2,7 +2,9 @@ from os import mkdir, stat, chmod, listdir
 from os.path import join, isdir
 from stat import S_IXUSR, S_IXGRP, S_IXOTH
 from functools import wraps
-from ConfigParser import SafeConfigParser
+from datetime import datetime
+from calendar import timegm
+from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 
 import git
 
@@ -128,6 +130,53 @@ def update_plugins(gitrepo):
         results[pm] = stdout or stderr
 
     return results
+
+
+@_git_check
+def last_checked_for_updates(gitrepo):
+    """
+    Find out the last time plugins were checked for updates.
+
+    :param string gitrepo: path to the initialized Git repository
+    :returns: Unix timestamp the last time it was checked, ``0`` if this is
+        the first time.
+    """
+    retval = 0
+
+    config = get_jigconfig(gitrepo)
+
+    try:
+        timestamp = int(config.get('jig', 'last_checked_for_updates'))
+        retval = datetime.utcfromtimestamp(timestamp)
+    except (NoSectionError, NoOptionError):
+        pass
+
+    return retval
+
+
+@_git_check
+def set_checked_for_updates(gitrepo, date=None):
+    """
+    Set the date checked for updated plugins.
+
+    By default, unless otherwise specified, it uses ``datetime.utcnow()`` as
+    the date object.
+
+    :param string gitrepo: path to the initialized Git repository
+    """
+    if not date:
+        date = datetime.utcnow()
+
+    date = timegm(date.replace(microsecond=0).timetuple())
+
+    config = get_jigconfig(gitrepo)
+
+    if not config.has_section('jig'):
+        config.add_section('jig')
+
+    config.set('jig', 'last_checked_for_updates', unicode(date))
+
+    return config
 
 
 def create_plugin(in_dir, bundle, name, template='python', settings={}):

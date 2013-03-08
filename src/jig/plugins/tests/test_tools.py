@@ -3,7 +3,9 @@ from os import rmdir, stat, makedirs
 from os.path import isfile, join
 from textwrap import dedent
 from tempfile import mkdtemp
+from calendar import timegm
 from ConfigParser import ConfigParser
+from datetime import datetime, timedelta
 
 from git import Git
 from mock import patch
@@ -13,7 +15,8 @@ from jig.exc import (NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized)
 from jig.plugins import (initializer, get_jigconfig, set_jigconfig,
     PluginManager, create_plugin, available_templates)
-from jig.plugins.tools import update_plugins
+from jig.plugins.tools import (
+    update_plugins, last_checked_for_updates, set_checked_for_updates)
 
 
 class TestPluginConfig(JigTestCase):
@@ -199,3 +202,57 @@ class TestUpdatePlugins(PluginTestCase):
         # And it called ``git pull`` on the repository
         mock_execute.assert_called_once_with(
             ['git', 'pull'], with_extended_output=True)
+
+
+class TestCheckedForUpdates(PluginTestCase):
+
+    """
+    Determining and setting the date plugins were last checked for updates.
+
+    """
+    def test_set_last_checked(self):
+        """
+        Can set the date last checked.
+        """
+        now = timegm(datetime.utcnow().replace(microsecond=0).timetuple())
+        config = set_checked_for_updates(self.gitrepodir)
+
+        actual = int(config.get('jig', 'last_checked_for_updates'))
+
+        self.assertEqual(actual, now)
+
+    def test_no_last_checked(self):
+        """
+        If the repo has never been checked for an update.
+        """
+        last_check = last_checked_for_updates(self.gitrepodir)
+
+        self.assertEqual(0, last_check)
+
+    def test_last_checked(self):
+        """
+        Can determine the last time checked.
+        """
+        now = datetime.utcnow().replace(microsecond=0)
+
+        set_jigconfig(self.gitrepodir,
+                      config=set_checked_for_updates(self.gitrepodir))
+
+        date = last_checked_for_updates(self.gitrepodir)
+
+        self.assertEqual(now, date)
+
+    def test_set_last_checked_older_date(self):
+        """
+        Can set the date to an older value than now.
+        """
+        now = datetime.utcnow()
+        older = now - timedelta(days=5)
+        config = set_checked_for_updates(self.gitrepodir, date=older)
+
+        now = timegm(now.timetuple())
+        actual = int(config.get('jig', 'last_checked_for_updates'))
+        expected = timegm(older.replace(microsecond=0).timetuple())
+
+        self.assertEqual(actual, expected)
+        self.assertGreater(now, actual)
