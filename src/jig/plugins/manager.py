@@ -60,10 +60,7 @@ class PluginManager(object):
                     plugin_config.readfp(fh)   # pragma: no branch
                 except ConfigParserError as cpe:
                     # Something happened when parsing the config
-                    try:
-                        line = cpe.errors.pop()[0]
-                    except (AttributeError, IndexError):
-                        line = 'unknown'
+                    line = cpe.errors.pop()[0]
                     raise PluginError('Could not parse config file for '
                         '{0} in {1}, line {2}.'.format(name, path, line))
 

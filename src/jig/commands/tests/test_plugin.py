@@ -194,7 +194,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Add a plugin from a Git URL.
         """
-        def clone_fake(plugin, to_dir):
+        def clone_fake(plugin, to_dir, branch=None):
             makedirs(to_dir)
             create_plugin(to_dir, template='python',
                 bundle='a', name='a')
@@ -210,6 +210,25 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         self.assertEqual('http://repo', c.call_args[0][0])
         self.assertIn('{0}/.jig/plugins/'.format(self.gitrepodir),
             c.call_args[0][1])
+        self.assertEqual(None, c.call_args[0][2])
+
+    def test_add_plugin_by_url_with_branch(self):
+        """
+        Add a plugin from a Git URL, targeting a specific branch.
+        """
+        def clone_fake(plugin, to_dir, branch=None):
+            makedirs(to_dir)
+            create_plugin(to_dir, template='python',
+                bundle='a', name='a')
+
+        with patch('jig.commands.plugin.clone') as c:
+            c.side_effect = clone_fake
+
+            self.run_command('add --gitrepo {0} http://url.com/repo@alternate'.format(
+                self.gitrepodir))
+
+        # And the branch name was passed to clone
+        self.assertEqual('alternate', c.call_args[0][2])
 
     def test_update_existing_plugins(self):
         """
@@ -231,7 +250,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         dir_to_clone = ngd.repo.working_dir
 
         # This is a trick, we give it the dir_to_clone when asked to install it
-        def clone_local(plugin, to_dir):
+        def clone_local(plugin, to_dir, branch):
             # Instead of jumping on the Internet to clone this, we will use the
             # local numbered directory repository we setup above. This will
             # allow our update to occur with a git pull and avoid network

@@ -34,14 +34,21 @@ def coverage():
 
     from jig.tests.noseplugin import TestSetup
 
+    omit = [
+        '*noseplugin*',
+        '*entrypoints*',
+        '*testcase*',
+        '*backports.py',
+        '*jig/__init__.py']
+
     cov = coverage(
         branch=True, config_file=False, source=['jig'],
-        omit=['*noseplugin*', '*entrypoints*', '*testcase*', '*backports'])
+        omit=omit)
 
     cov.start()
 
     nose.run(argv=['nose', '-w', 'src'] + sys.argv[1:],
-            addplugins=[TestSetup()])
+             addplugins=[TestSetup()])
 
     cov.stop()
 

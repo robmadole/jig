@@ -63,3 +63,21 @@ class TestClone(JigTestCase):
         clone(self.gitrepodir, to_dir)
 
         self.assertTrue(is_git_repo(to_dir))
+
+    def test_clone_branch(self):
+        """
+        Clone a specific branch of a repository.
+        """
+        with patch.object(Git, 'execute'):
+            to_dir = join(self.workingdir, 'a')
+
+            Git.execute.return_value = 'Cloning into X'
+
+            gitobj = clone(
+                'http://github.com/user/repo',
+                to_dir,
+                branch='alternate')
+
+            Git.execute.assert_called_with(
+                ['git', 'clone', '--branch', 'alternate',
+                'http://github.com/user/repo', to_dir])

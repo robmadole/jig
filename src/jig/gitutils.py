@@ -98,17 +98,29 @@ def hook(gitdir):
     return pc_filename
 
 
-def clone(repository, to_dir):
+def clone(repository, to_dir, branch=None):
     """
     Clone a Git repository to a directory.
 
     Where ``repository`` is a string representing a path or URL to the
     repository and ``to_dir`` is where the repository will be cloned.
+
+    :param string repository: path or URL to the repository to clone
+    :param string todir: where to clone the repository to
+    :param string branch: branch to checkout instead of the repository's
+        default
     """
     gitobj = git.Git()
 
     try:
-        gitobj.execute(['git', 'clone', repository, to_dir])
+        cmd = ['git', 'clone']
+
+        if branch:
+            cmd.extend(['--branch', branch])
+
+        cmd.extend([repository, to_dir])
+
+        gitobj.execute(cmd)
 
         return gitobj
     except git.GitCommandError as gce:
