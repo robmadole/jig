@@ -106,7 +106,8 @@ class JigTestCase(unittest.TestCase):
         """
         Assert that a :py:exception:`SystemExit` has a specific exit code.
 
-        Note: this is Python 2.7/2.6 compatible since that exception changed slightly.
+        Note: this is Python 2.7/2.6 compatible since that exception changed
+        slightly.
         """
         if hasattr(exception, 'code'):
             self.assertEqual(exception.code, code)
@@ -300,7 +301,7 @@ class PluginTestCase(JigTestCase):
         section = 'plugin:test01:{0}'.format(plugindir)
         config.add_section(section)
         config.set(section, 'path',
-            join(self.fixturesdir, plugindir))
+                   join(self.fixturesdir, plugindir))
 
 
 class CommandTestCase(ViewTestCase):

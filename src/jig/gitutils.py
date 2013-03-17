@@ -5,8 +5,10 @@ import sys
 from stat import S_IXUSR, S_IXGRP, S_IXOTH
 from os import stat, chmod
 from os.path import isdir, isfile, join, realpath, dirname
+from textwrap import dedent
 
 import git
+from git.exc import GitCommandError
 import gitdb
 import async
 import smmap
@@ -22,23 +24,23 @@ ASYNC_DIR = realpath(join(dirname(async.__file__), '..'))
 SMMAP_DIR = realpath(join(dirname(smmap.__file__), '..'))
 
 PRE_COMMIT_HOOK_SCRIPT = \
-"""#!{python_executable}
-from sys import path
-from os.path import dirname, join
+    dedent("""#!{python_executable}
+    from sys import path
+    from os.path import dirname, join
 
-# Make sure that we can find the directory that jig is installed
-path.append('{be_careful_dir}')
-path.append('{git_python_dir}')
-path.append('{gitdb_dir}')
-path.append('{async_dir}')
-path.append('{smmap_dir}')
+    # Make sure that we can find the directory that jig is installed
+    path.append('{be_careful_dir}')
+    path.append('{git_python_dir}')
+    path.append('{gitdb_dir}')
+    path.append('{async_dir}')
+    path.append('{smmap_dir}')
 
-from jig.runner import Runner
+    from jig.runner import Runner
 
-# Start up the runner, passing in the repo directory
-jig = Runner()
-jig.fromhook(join(dirname(__file__), '..', '..'))
-"""
+    # Start up the runner, passing in the repo directory
+    jig = Runner()
+    jig.fromhook(join(dirname(__file__), '..', '..'))
+    """)
 
 
 def is_git_repo(gitdir):
@@ -133,16 +135,26 @@ def remote_has_updates(repository):
 
     :param string repository: path to the Git repository
     """
-    # Get the latest tree from all remotes
-    [i.fetch() for i in git.Repo(repository).remotes]
+    try:
+        repo = git.Repo(repository)
 
-    repo = git.Repo(repository)
+        # Get the latest tree from all remotes
+        [i.fetch() for i in repo.remotes]
 
-    active = repo.active_branch
-    tracking = repo.active_branch.tracking_branch()
+        active = repo.active_branch
+        tracking = repo.active_branch.tracking_branch()
 
-    is_different = active.commit != tracking.commit
-    is_tracking_newer = \
-        tracking.commit.committed_date > active.commit.committed_date
+        is_different = active.commit != tracking.commit
+        is_tracking_newer = \
+            tracking.commit.committed_date > active.commit.committed_date
+    except (AttributeError, GitCommandError, AssertionError):
+        # The Python Git library issues some strange errors during
+        # a fetch on occasion, so this "diaper"ish except is intended
+        # to allow the process to continue without failing with a traceback.
+
+        # Let the result be that new commits are available even though we had
+        # an error. During a fetch this is typically the case.
+        is_different = True
+        is_tracking_newer = True
 
     return is_different and is_tracking_newer
