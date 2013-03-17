@@ -24,7 +24,8 @@ ASYNC_DIR = realpath(join(dirname(async.__file__), '..'))
 SMMAP_DIR = realpath(join(dirname(smmap.__file__), '..'))
 
 PRE_COMMIT_HOOK_SCRIPT = \
-    dedent("""#!{python_executable}
+    dedent("""\
+    #!{python_executable}
     from sys import path
     from os.path import dirname, join
 
@@ -40,7 +41,7 @@ PRE_COMMIT_HOOK_SCRIPT = \
     # Start up the runner, passing in the repo directory
     jig = Runner()
     jig.fromhook(join(dirname(__file__), '..', '..'))
-    """)
+    """).strip()
 
 
 def is_git_repo(gitdir):
