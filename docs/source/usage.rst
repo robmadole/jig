@@ -11,14 +11,16 @@ The following is a detailed step-by-step guide that takes you through:
 Create an empty Git repository
 ------------------------------
 
-Let's test this out first with a new repository. ::
+Let's test this out first with a new repository.
+
+.. code-block:: console
 
     $ mkdir gitrepo; cd $_
     $ git init .
 
 Create the root commit. Git repositories are not very useful without it.
 
-::
+.. code-block:: console
 
     $ echo "Testing Jig" > README
     $ git add README; git commit -m 'First commit!'
@@ -35,14 +37,31 @@ repository and run this command:
 
 If you haven't, :ref:`install Jig now <install>`.
 
-::
+.. code-block:: console
 
     $ cd gitrepo
     $ jig init .
     Git repository has been initialized for use with Jig.
 
+    You should tell Git to ignore the new .jig directory. Run this:
+
+        $ echo ".jig" >> .gitignore
+
+    Next install some plugins. Jig has a standard set you may like:
+
+        $ jig plugin add http://github.com/robmadole/jig-plugins
+
 If you're curious, you can :ref:`see what this thing has done
 <development-plumbing>` to your repository.
+
+Go ahead and ignore the ``.jig`` directory and we'll use that as our root
+commit.
+
+.. code-block:: console
+
+    $ echo ".jig" >> .gitignore
+    $ git add .gitignore
+    $ git commit -m 'First commit'
 
 Install some Jig plugins
 ------------------------
@@ -50,13 +69,22 @@ Install some Jig plugins
 Jig uses "plugins" to do the real work. Your Jig config file (in
 :file:`.jig/plugins.cfg`) is empty which means you have no plugins installed.
 
-::
+.. code-block:: console
 
     $ jig plugin add http://github.com/robmadole/jig-plugins
+    Added plugin jshint in bundle jig-plugins to the repository.
     Added plugin pep8-checker in bundle jig-plugins to the repository.
     Added plugin pyflakes in bundle jig-plugins to the repository.
     Added plugin whitespace in bundle jig-plugins to the repository.
     Added plugin woops in bundle jig-plugins to the repository.
+
+    Run the plugins in the current repository with this command:
+
+        $ jig runnow
+
+    Jig works off of your staged files in the Git repository index.
+    You place things in the index with `git add`. You will need to stage
+    some files before you can run Jig.
 
 Let's test our pep8-checker. `PEP8`_ is an endorsed style guide for writing
 Python code. Johann Rocholl `created a tool`_ that checks for compliance.
@@ -64,13 +92,13 @@ Python code. Johann Rocholl `created a tool`_ that checks for compliance.
 Create a new file and put all of our imports on one line. This is contrary to
 PEP8. How dreadful.
 
-::
+.. code-block:: console
 
     $ echo "import this; import that; import other" > myapp.py
 
 Jig only works off the files you've staged for a commit.
 
-::
+.. code-block:: console
 
     $ git add myapp.py
 
@@ -79,7 +107,7 @@ Run Jig
 
 With our staged file, we're ready to commit.
 
-::
+.. code-block:: console
 
     $ git commit -m 'Writing some hard to read Python code'
     ▾  pep8-checker
@@ -88,22 +116,24 @@ With our staged file, we're ready to commit.
         import this; import that; import other
          - E702 multiple statements on one line (semicolon)
 
-    Ran 1 plugin
-        Info 0 Warn 1 Stop 0
+    ▾  pyflakes
 
-    Commit anyway (hit enter), or "c" to cancel the commit
+    ⚠  line 1: myapp.py
+        'this' imported but unused
 
-Jig isn't pushy. You can hit enter to commit anyway or :kbd:`c` cancels the
-commit and gives you a chance to make changes.
+    ⚠  line 1: myapp.py
+        'other' imported but unused
 
-What can the `common plugins`_ do besides check PEP8?
+    ⚠  line 1: myapp.py
+        'that' imported but unused
 
-* Pyflakes - analyze Python files and check for various erros (written by the
-  Divmod developers)
-* Whitespace - look for lines with nothing but whitespace plus mixed tabs and
-  spaces
-* Woops - check for silly errors (like leaving a ``console.log(foo)`` in your
-  JavaScript)
+       Jig ran 5 plugins
+        Info 0 Warn 4 Stop 0
+
+    Commit anyway (hit "c"), or stop (hit "s"):
+
+Type :kbd:`c` and enter to commit anyway or :kbd:`s` to stop the commit,
+giving you a chance to make changes.
 
 Change plugin settings
 ----------------------
@@ -112,6 +142,7 @@ Plugins will sometimes have settings that you can configure. Edit the
 :file:`.jig/plugins.cfg` and feel free to change how the plugins behave.
 
 .. code-block:: ini
+
     :emphasize-lines: 3, 13
 
     [plugin:jig-plugins:pep8-checker]

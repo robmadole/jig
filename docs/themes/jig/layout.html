@@ -1,4 +1,7 @@
 {% extends "basic/layout.html" %}
+
+{% set script_files = script_files + ["_static/retina.js"] %}
+
 {%- block sidebarsourcelink %}
 {%- endblock %}
 
@@ -37,7 +40,7 @@
 {%- block document %}
     <div class="documentwrapper">
       {% if pagename == 'index' %}
-      <img class="hook-logo" src="_static/hook.png" />
+      <img class="hook-logo" src="_static/hook.png" data-at2x="_static/hook@2x.png" />
       {% endif %}
     {%- if render_sidebar %}
       <div class="bodywrapper">
