@@ -1,6 +1,7 @@
 import argparse
 
 from jig.commands.base import BaseCommand
+from jig.commands.hints import AFTER_INIT
 from jig.gitutils import hook
 from jig.plugins import initializer
 
@@ -24,3 +25,4 @@ class Command(BaseCommand):
 
             out.append('Git repository has been initialized for use '
                 'with Jig.')
+            out.extend(AFTER_INIT)

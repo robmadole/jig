@@ -1,4 +1,5 @@
 from os.path import dirname, join
+from datetime import timedelta
 
 ## General settings
 
@@ -30,6 +31,9 @@ PLUGIN_PRE_COMMIT_SCRIPT = 'pre-commit'
 # Where can plugin pre-commit examples be found
 PLUGIN_PRE_COMMIT_TEMPLATE_DIR = \
     join(dirname(__file__), 'data', 'pre-commits')
+
+# How often to check for plugin updates
+PLUGIN_CHECK_FOR_UPDATES = timedelta(days=5)
 
 # The directory inside of the plugins directory that contains tests
 PLUGIN_TESTS_DIRECTORY = 'tests'

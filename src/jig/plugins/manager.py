@@ -58,10 +58,11 @@ class PluginManager(object):
                 plugin_config = SafeConfigParser()
                 try:
                     plugin_config.readfp(fh)   # pragma: no branch
-                except ConfigParserError:
+                except ConfigParserError as cpe:
                     # Something happened when parsing the config
+                    line = cpe.errors.pop()[0]
                     raise PluginError('Could not parse config file for '
-                        '{0} in {1}.'.format(name, path))
+                        '{0} in {1}, line {2}.'.format(name, path, line))
 
             # Get rid of the path, we don't need to send this as part of the
             # config for the plugin

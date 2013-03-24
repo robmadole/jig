@@ -56,8 +56,10 @@ def assertDiff(func):
 
 
 class TestDescribeDiff(JigTestCase):
+
     """
     Test our diff description method.
+
     """
     @assertDiff
     def test_all_addition(self):
@@ -336,7 +338,8 @@ class TestGitDiffIndex(JigTestCase):
         # It should be added because this is a new file
         self.assertEqual('added', file1['type'])
         # This one is the full path to the file
-        self.assertEqual(realpath(join(self.testrepodir, 'argument.txt')),
+        self.assertEqual(
+            realpath(join(self.testrepodir, 'argument.txt')),
             realpath(file1['filename']))
 
     def test_modified(self):
@@ -393,13 +396,16 @@ class TestGitDiffIndex(JigTestCase):
 
         self.assertEqual(2, len(list(gdi.files())))
 
-        files = sorted([i for i in gdi.files()],
+        files = sorted(
+            [i for i in gdi.files()],
             key=itemgetter('name'))
 
-        self.assertEqual('famous-deaths.txt',
+        self.assertEqual(
+            'famous-deaths.txt',
             files[0]['name'])
 
-        self.assertEqual('italian-lesson.txt',
+        self.assertEqual(
+            'italian-lesson.txt',
             files[1]['name'])
 
     def test_name_contains_subdirectories(self):
@@ -412,14 +418,17 @@ class TestGitDiffIndex(JigTestCase):
         # plus the addition of 2 files, so it makes our count 4.
         self.assertEqual(4, len(list(gdi.files())))
 
-        files = sorted([i for i in gdi.files()],
+        files = sorted(
+            [i for i in gdi.files()],
             key=itemgetter('name'))
 
         # Make sure that the name contains our sub-directory.
-        self.assertEqual('scripts/famous-deaths.txt',
+        self.assertEqual(
+            'scripts/famous-deaths.txt',
             files[2]['name'])
 
-        self.assertEqual('scripts/italian-lesson.txt',
+        self.assertEqual(
+            'scripts/italian-lesson.txt',
             files[3]['name'])
 
     def test_binary_diff(self):
@@ -433,6 +442,15 @@ class TestGitDiffIndex(JigTestCase):
 
         # But we don't include the diff since it's binary data
         self.assertEqual([], gdi.files().next()['diff'])
+
+    def test_ignores_jig_directory(self):
+        """
+        Does not include anything in the .jig directory.
+        """
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[6])
+
+        # We should see our file
+        self.assertEqual(0, len(list(gdi.files())))
 
     def test_symlinks(self):
         """

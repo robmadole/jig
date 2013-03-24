@@ -5,6 +5,8 @@ from urlparse import urlparse
 from uuid import uuid4 as uuid
 
 from jig.commands.base import BaseCommand
+from jig.commands.hints import (
+    NO_PLUGINS_INSTALLED, USE_RUNNOW, FORK_PROJECT_GITHUB)
 from jig.conf import JIG_DIR_NAME, JIG_PLUGIN_DIR
 from jig.exc import CommandError, ExpectationError
 from jig.gitutils import clone
@@ -31,9 +33,10 @@ _listparser.set_defaults(subcommand='list')
 
 _addparser = _subparsers.add_parser('add',
     help='add a plugin',
-    usage='jig plugin add [-h] [-r GITREPO] URL|PATH')
+    usage='jig plugin add [-h] [-r GITREPO] URL|URL@BRANCH|PATH')
 _addparser.add_argument('plugin',
-    help='URL or path to the plugin directory')
+    help='URL or path to the plugin directory, if URL you can '
+    'specify @BRANCHNAME to clone other than the default')
 _addparser.add_argument('--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _addparser.set_defaults(subcommand='add')
@@ -137,6 +140,7 @@ class Command(BaseCommand):
 
             if not bundles:
                 out.append(u'No plugins installed.')
+                out.extend(NO_PLUGINS_INSTALLED)
                 return
 
             out.append(u'Installed plugins\n')
@@ -152,6 +156,8 @@ class Command(BaseCommand):
                 for plugin in sort_plugins:
                     out.append(u'{plugin:.<25} {name}'.format(
                         name=name, plugin=plugin.name))
+
+            out.extend(USE_RUNNOW)
 
     def add(self, argv):
         """
@@ -173,6 +179,8 @@ class Command(BaseCommand):
                 out.append('Added plugin {0} in bundle {1} to the '
                     'repository.'.format(p.name, p.bundle))
 
+            out.extend(USE_RUNNOW)
+
     def _add_path_or_url(self, pm, plugin, gitdir):
         """
         Adds a plugin by filename or URL.
@@ -188,8 +196,16 @@ class Command(BaseCommand):
         if url.scheme:
             # This is a URL, let's clone it first into .jig/plugins
             # directory.
+            plugin_parts = plugin.rsplit('@', 1)
+
+            branch = None
+            try:
+                branch = plugin_parts[1]
+            except IndexError:
+                pass
+
             to_dir = join(gitdir, JIG_DIR_NAME, JIG_PLUGIN_DIR, uuid().hex)
-            clone(plugin, to_dir)
+            clone(plugin_parts[0], to_dir, branch)
             plugin = to_dir
 
         return pm.add(plugin)
@@ -204,9 +220,12 @@ class Command(BaseCommand):
         """
         path = argv.path
 
-        results = update_plugins(path)
-
         with self.out() as out:
+            # Make sure that this directory has been initialized for Jig
+            get_jigconfig(path)
+
+            results = update_plugins(path)
+
             if not results:
                 out.append('No plugins to update.')
                 return
@@ -268,9 +287,9 @@ class Command(BaseCommand):
 
         with self.out() as out:
             if template not in available_templates():
-                raise CommandError('Language {0} is not supported yet, you '
-                    'can fork this project and add it though!'.format(
-                        template))
+                raise CommandError(
+                    'Language {0} is not supported yet.'.format(template),
+                    hint=FORK_PROJECT_GITHUB)
 
             try:
                 plugin_dir = create_plugin(save_dir, bundle, name,

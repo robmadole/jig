@@ -1,7 +1,8 @@
 # coding=utf-8
 from tempfile import mkdtemp
 
-from jig.tests.testcase import CommandTestCase, cd_gitrepo
+from jig.tests.testcase import CommandTestCase, cd_gitrepo, result_with_hint
+from jig.commands.hints import AFTER_INIT
 from jig.exc import ForcedExit
 from jig.commands import init
 
@@ -20,8 +21,10 @@ class TestInitCommand(CommandTestCase):
         """
         self.run_command(self.gitrepodir)
 
-        self.assertEqual(
-            u'Git repository has been initialized for use with Jig.\n',
+        self.assertResults(
+            result_with_hint(
+                u'Git repository has been initialized for use with Jig.',
+                AFTER_INIT),
             self.output)
 
     @cd_gitrepo
@@ -33,8 +36,10 @@ class TestInitCommand(CommandTestCase):
         # use the current working directory.
         self.run_command()
 
-        self.assertEqual(
-            u'Git repository has been initialized for use with Jig.\n',
+        self.assertResults(
+            result_with_hint(
+                u'Git repository has been initialized for use with Jig.',
+                AFTER_INIT),
             self.output)
 
     def test_handles_error(self):

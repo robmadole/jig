@@ -44,6 +44,7 @@ Install some Jig plugins.
 .. code-block:: console
 
     $ jig plugin add http://github.com/robmadole/jig-plugins
+    Added plugin jshint in bundle jig-plugins to the repository.
     Added plugin pep8-checker in bundle jig-plugins to the repository.
     Added plugin pyflakes in bundle jig-plugins to the repository.
     Added plugin whitespace in bundle jig-plugins to the repository.
@@ -92,6 +93,7 @@ License
 -------
 
 Jig is licensed under a :doc:`BSD license <license>`.
+
 
 .. _Git Hooks: http://book.git-scm.com/5_git_hooks.html
 .. _PEP8: http://www.python.org/dev/peps/pep-0008/

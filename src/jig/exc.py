@@ -9,7 +9,13 @@ class JigException(Exception):
     Base exception.
 
     """
-    pass
+    def __init__(self, *args, **kwargs):
+        hint = kwargs.pop('hint', None)
+
+        super(JigException, self).__init__(*args, **kwargs)
+
+        if hint is not None:
+            self.hint = hint
 
 
 class ForcedExit(JigException):
@@ -30,7 +36,7 @@ class NotGitRepo(JigException):
     A directory provided does not appear to be a Git repository.
 
     """
-    pass
+    hint = 'NOT_GIT_REPO'
 
 
 class PreCommitExists(JigException):
@@ -39,7 +45,7 @@ class PreCommitExists(JigException):
     The :file:`pre-commit` file in the hooks directory exists.
 
     """
-    pass
+    hint = 'PRE_COMMIT_EXISTS'
 
 
 class GitRepoNotInitialized(JigException):
@@ -48,7 +54,7 @@ class GitRepoNotInitialized(JigException):
     The given Git repository has not been initialized for usage.
 
     """
-    pass
+    hint = 'GIT_REPO_NOT_INITIALIZED'
 
 
 class GitCloneError(JigException):
@@ -66,7 +72,7 @@ class AlreadyInitialized(JigException):
     The given Git repository has been initialized already.
 
     """
-    pass
+    hint = 'ALREADY_INITIALIZED'
 
 
 class PluginError(JigException):

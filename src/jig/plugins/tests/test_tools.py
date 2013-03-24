@@ -3,17 +3,23 @@ from os import rmdir, stat, makedirs
 from os.path import isfile, join
 from textwrap import dedent
 from tempfile import mkdtemp
+from calendar import timegm
 from ConfigParser import ConfigParser
+from datetime import datetime, timedelta
 
 from git import Git
 from mock import patch
 
 from jig.tests.testcase import JigTestCase, PluginTestCase
-from jig.exc import (NotGitRepo, AlreadyInitialized,
+from jig.exc import (
+    NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized)
-from jig.plugins import (initializer, get_jigconfig, set_jigconfig,
+from jig.plugins import (
+    initializer, get_jigconfig, set_jigconfig,
     PluginManager, create_plugin, available_templates)
-from jig.plugins.tools import update_plugins
+from jig.plugins.tools import (
+    update_plugins, last_checked_for_updates, set_checked_for_updates,
+    plugins_have_updates)
 
 
 class TestPluginConfig(JigTestCase):
@@ -116,14 +122,16 @@ class TestCreatePlugin(PluginTestCase):
         rmdir(self.plugindir)
 
         with self.assertRaises(ValueError):
-            create_plugin(self.plugindir, template='python',
+            create_plugin(
+                self.plugindir, template='python',
                 bundle='test', name='plugin')
 
     def test_creates_plugin(self):
         """
         Can create a plugin.
         """
-        plugin_dir = create_plugin(self.plugindir, template='python',
+        plugin_dir = create_plugin(
+            self.plugindir, template='python',
             bundle='test', name='plugin')
 
         pre_commit_file = join(plugin_dir, 'pre-commit')
@@ -147,7 +155,8 @@ class TestCreatePlugin(PluginTestCase):
         """
         New plugins are compatible with the :py:class:`PluginManager`
         """
-        plugin_dir = create_plugin(self.plugindir, template='python',
+        plugin_dir = create_plugin(
+            self.plugindir, template='python',
             bundle='test', name='plugin')
 
         pm = PluginManager(self.jigconfig)
@@ -199,3 +208,145 @@ class TestUpdatePlugins(PluginTestCase):
         # And it called ``git pull`` on the repository
         mock_execute.assert_called_once_with(
             ['git', 'pull'], with_extended_output=True)
+
+
+class TestPluginsHaveUpdates(PluginTestCase):
+
+    """
+    For multiple installed plugins, each can be checked for remote updates.
+
+    """
+    def setUp(self):
+        plugins_dir = join(self.gitrepodir, '.jig', 'plugins')
+
+        # Create 3 installed plugin directories. This simulates installing
+        # plugins from different urls.
+        for letter in 'abc':
+            makedirs(join(plugins_dir, letter))
+
+    def test_no_updates(self):
+        """
+        If no remote repositories have updates.
+        """
+        with patch('jig.plugins.tools.remote_has_updates') as rhu:
+            # For each call to ``remote_has_updates``, answer False
+            rhu.side_effect = [False, False, False]
+
+            has_updates = plugins_have_updates(self.gitrepodir)
+
+        self.assertEqual(3, rhu.call_count)
+        self.assertFalse(has_updates)
+
+    def test_has_updates(self):
+        """
+        If one remote repository has updates.
+        """
+        with patch('jig.plugins.tools.remote_has_updates') as rhu:
+            # Have the last call to ``remote_has_updates`` answer True
+            rhu.side_effect = [False, False, True]
+
+            has_updates = plugins_have_updates(self.gitrepodir)
+
+        self.assertEqual(3, rhu.call_count)
+        # This time the answer is True because one plugin said it had updates
+        self.assertTrue(has_updates)
+
+    def test_all_have_updates(self):
+        """
+        If all repositories have updates.
+        """
+        with patch('jig.plugins.tools.remote_has_updates') as rhu:
+            # This time they all report that they have updates
+            rhu.side_effect = [True, True, True]
+
+            has_updates = plugins_have_updates(self.gitrepodir)
+
+        # We only need to get one True, no need to check the rest
+        self.assertEqual(1, rhu.call_count)
+        self.assertTrue(has_updates)
+
+
+class TestCheckedForUpdates(PluginTestCase):
+
+    """
+    Determining and setting the date plugins were last checked for updates.
+
+    """
+    def test_set_last_checked(self):
+        """
+        Can set the date last checked.
+        """
+        now = timegm(datetime.utcnow().replace(microsecond=0).timetuple())
+        config = set_checked_for_updates(self.gitrepodir)
+
+        actual = int(config.get('jig', 'last_checked_for_updates'))
+
+        self.assertEqual(actual, now)
+
+    def test_no_last_checked(self):
+        """
+        If the repo has never been checked for an update.
+        """
+        config = get_jigconfig(self.gitrepodir)
+        config.remove_section('jig')
+        set_jigconfig(self.gitrepodir, config)
+
+        last_check = last_checked_for_updates(self.gitrepodir)
+
+        self.assertEqual(0, last_check)
+
+    def test_bad_last_checked(self):
+        """
+        If the repo has a bad last checked value.
+        """
+        config = get_jigconfig(self.gitrepodir)
+        config.set('jig', 'last_checked_for_updates', 'bad')
+        set_jigconfig(self.gitrepodir, config)
+
+        last_check = last_checked_for_updates(self.gitrepodir)
+
+        self.assertEqual(0, last_check)
+
+    def test_last_checked(self):
+        """
+        Can determine the last time checked.
+        """
+        now = datetime.utcnow().replace(microsecond=0)
+
+        set_jigconfig(self.gitrepodir,
+                      config=set_checked_for_updates(self.gitrepodir))
+
+        date = last_checked_for_updates(self.gitrepodir)
+
+        self.assertEqual(now, date)
+
+    def test_set_last_checked_older_date(self):
+        """
+        Can set the date to an older value than now.
+        """
+        now = datetime.utcnow()
+        older = now - timedelta(days=5)
+        config = set_checked_for_updates(self.gitrepodir, date=older)
+
+        now = timegm(now.timetuple())
+        actual = int(config.get('jig', 'last_checked_for_updates'))
+        expected = timegm(older.replace(microsecond=0).timetuple())
+
+        self.assertEqual(actual, expected)
+        self.assertGreater(now, actual)
+
+    def test_already_checked_before(self):
+        """
+        If this is not the first time a check has been set.
+        """
+        set_jigconfig(self.gitrepodir,
+                      config=set_checked_for_updates(self.gitrepodir))
+
+        date1 = last_checked_for_updates(self.gitrepodir)
+
+        set_jigconfig(self.gitrepodir,
+                      config=set_checked_for_updates(self.gitrepodir))
+
+        date2 = last_checked_for_updates(self.gitrepodir)
+
+        self.assertEqual(date1, date2)
