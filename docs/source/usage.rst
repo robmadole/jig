@@ -142,8 +142,7 @@ Plugins will sometimes have settings that you can configure. Edit the
 :file:`.jig/plugins.cfg` and feel free to change how the plugins behave.
 
 .. code-block:: ini
-
-    :emphasize-lines: 3, 13
+   :emphasize-lines: 3, 13
 
     [plugin:jig-plugins:pep8-checker]
     path = ../jig-plugins/pep8-checker

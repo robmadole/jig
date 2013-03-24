@@ -3,7 +3,7 @@ News
 
 *Release 0.1.4 - March 24th, 2013*
 
-* Jig commands not include more useful messages
+* Jig commands now include more useful messages
 * Periodically checks if installed plugins have updates and prompts to install
   the latest plugins
 * Ignores the .jig directory when running (GitHub Issue #1)
