@@ -2,16 +2,20 @@ from os import mkdir, stat, chmod, listdir
 from os.path import join, isdir
 from stat import S_IXUSR, S_IXGRP, S_IXOTH
 from functools import wraps
-from ConfigParser import SafeConfigParser
+from datetime import datetime
+from calendar import timegm
+from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 
 import git
 
-from jig.exc import (NotGitRepo, AlreadyInitialized,
+from jig.exc import (
+    NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized)
-from jig.conf import (JIG_DIR_NAME, JIG_PLUGIN_CONFIG_FILENAME,
+from jig.conf import (
+    JIG_DIR_NAME, JIG_PLUGIN_CONFIG_FILENAME,
     JIG_PLUGIN_DIR, PLUGIN_CONFIG_FILENAME, PLUGIN_PRE_COMMIT_SCRIPT,
     PLUGIN_PRE_COMMIT_TEMPLATE_DIR)
-from jig.gitutils import is_git_repo, repo_jiginitialized
+from jig.gitutils import is_git_repo, repo_jiginitialized, remote_has_updates
 from jig.tools import slugify
 from jig.plugins.manager import PluginManager
 
@@ -29,8 +33,9 @@ def _git_check(func):
     def wrapper(gitrepo, *args, **kwargs):
         # Is it a Git repo?
         if not is_git_repo(gitrepo):
-            raise NotGitRepo('Trying to initialize a directory that is not a '
-                'Git repository.')
+            raise NotGitRepo(
+                'Trying to initialize a directory that is '
+                'not a Git repository.')
 
         return func(gitrepo, *args, **kwargs)
     return wrapper
@@ -54,7 +59,14 @@ def initializer(gitrepo):
     mkdir(jig_dir)
     mkdir(join(jig_dir, JIG_PLUGIN_DIR))
 
-    return set_jigconfig(gitrepo)
+    set_jigconfig(gitrepo)
+
+    # Initialize the date plugins were last checked to right now
+    config = set_jigconfig(
+        gitrepo,
+        set_checked_for_updates(gitrepo))
+
+    return config
 
 
 @_git_check
@@ -122,12 +134,75 @@ def update_plugins(gitrepo):
 
         gitobj = git.Git(plugin_dir)
 
-        retcode, stdout, stderr = gitobj.execute(['git', 'pull'],
-            with_extended_output=True)
+        retcode, stdout, stderr = gitobj.execute(
+            ['git', 'pull'], with_extended_output=True)
 
         results[pm] = stdout or stderr
 
     return results
+
+
+@_git_check
+def plugins_have_updates(gitrepo):
+    """
+    Return True if any installed plugins have updates.
+
+    :param string gitrepo: path to the Git repository
+    """
+    jig_plugin_dir = join(gitrepo, JIG_DIR_NAME, JIG_PLUGIN_DIR)
+
+    for directory in listdir(jig_plugin_dir):
+        if remote_has_updates(join(jig_plugin_dir, directory)):
+            return True
+
+    return False
+
+
+@_git_check
+def last_checked_for_updates(gitrepo):
+    """
+    Find out the last time plugins were checked for updates.
+
+    :param string gitrepo: path to the initialized Git repository
+    :returns: Unix timestamp the last time it was checked, ``0`` if this is
+        the first time.
+    """
+    retval = 0
+
+    config = get_jigconfig(gitrepo)
+
+    try:
+        timestamp = int(config.get('jig', 'last_checked_for_updates'))
+        retval = datetime.utcfromtimestamp(timestamp)
+    except (NoSectionError, NoOptionError, ValueError):
+        pass
+
+    return retval
+
+
+@_git_check
+def set_checked_for_updates(gitrepo, date=None):
+    """
+    Set the date checked for updated plugins.
+
+    By default, unless otherwise specified, it uses ``datetime.utcnow()`` as
+    the date object.
+
+    :param string gitrepo: path to the initialized Git repository
+    """
+    if not date:
+        date = datetime.utcnow()
+
+    date = timegm(date.replace(microsecond=0).timetuple())
+
+    config = get_jigconfig(gitrepo)
+
+    if not config.has_section('jig'):
+        config.add_section('jig')
+
+    config.set('jig', 'last_checked_for_updates', unicode(date))
+
+    return config
 
 
 def create_plugin(in_dir, bundle, name, template='python', settings={}):

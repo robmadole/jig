@@ -7,7 +7,7 @@ The command line tool is split into sub-commands.
 
 Jig's help menu is available by running ``jig`` or ``jig --help``.
 
-::
+.. code-block:: console
 
     $ jig --help
     usage: jig [-h] COMMAND
@@ -34,7 +34,7 @@ directory.
 This process is very similar to what Git itself does. Oddly enough the
 sub-command is named the same.
 
-::
+.. code-block:: console
 
     $ jig init --help
     usage: jig init [-h] [PATH]
@@ -49,21 +49,34 @@ sub-command is named the same.
 
 The initialization process is quick and painless.
 
-::
+.. code-block:: console
 
     $ mkdir gitrepo; cd $_
     $ git init .; jig init .
-    Initialized empty Git repository in /Users/robmadole/gitrepo/.git/
     Git repository has been initialized for use with Jig.
 
-If there is a pre-existing hook, Jig will not overwrite it.
+    You should tell Git to ignore the new .jig directory. Run this:
 
-::
+        $ echo ".jig" >> .gitignore
+
+    Next install some plugins. Jig has a standard set you may like:
+
+        $ jig plugin add http://github.com/robmadole/jig-plugins
+
+    If there is a pre-existing hook, Jig will not overwrite it.
+
+.. code-block:: console
 
     $ jig init .
-    /Users/robmadole/gitrepo/.git/hooks/pre-commit already exists and we will
-    not overwrite it. If you want to use jig you'll have to sort this out
-    yourself.
+    /Users/robmadole/gitrepo/.git/hooks/pre-commit already exists
+
+    For Jig to operate automatically when you commit we need to create
+    a new pre-commit hook.
+
+    Check the existing pre-commit file and see if you are using it.
+
+    If you do not need the existing pre-commit script, you can delete it
+    and then run jig init again in this repository.
 
 .. _cli-plugin:
 
@@ -76,7 +89,7 @@ the author chooses.
 More than one plugin can be installed. They can be added or removed. You can
 even use Jig to run :ref:`automated tests <pluginapi-testing>` on your plugins.
 
-::
+.. code-block:: console
 
     $ jig plugin --help
     usage: jig plugin [-h] ACTION
@@ -104,7 +117,7 @@ Listing installed plugins
 To list all installed plugins use the following command. Any installed plugin
 will be ran when the ``pre-commit`` hook or ``jig runnow`` is ran.
 
-::
+.. code-block:: console
 
     $ jig plugin list --help
     usage: jig plugin list [-h] [-r] [PATH]
@@ -116,7 +129,7 @@ will be ran when the ``pre-commit`` hook or ``jig runnow`` is ran.
 
 Listing the plugin provides a quick summary like this:
 
-::
+.. code-block:: console
 
     $ jig plugin list
     Installed plugins
@@ -127,6 +140,14 @@ Listing the plugin provides a quick summary like this:
     whitespace............... jig-plugins
     woops.................... jig-plugins
 
+    Run the plugins in the current repository with this command:
+
+        $ jig runnow
+
+    Jig works off of your staged files in the Git repository index.
+    You place things in the index with `git add`. You will need to stage
+    some files before you can run Jig.
+
 .. _cli-plugin-add:
 
 Adding plugins
@@ -134,13 +155,14 @@ Adding plugins
 
 Jig doesn't pre-install anything for you. You have to explicitly add them.
 
-::
+.. code-block:: console
 
     $ jig plugin add --help
-    usage: jig plugin add [-h] [-r] URL|PATH
+    usage: jig plugin add [-h] [-r GITREPO] URL|URL@BRANCH|PATH
 
     positional arguments:
-      plugin                URL or path to the plugin directory
+      plugin                URL or path to the plugin directory, if URL you can
+                            specify @BRANCHNAME to clone other than the default
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -153,27 +175,35 @@ it will attempt to clone it.
 .. note:: Right now Jig only supports cloning Git repositories. This may change
           in the future.
 
-::
+.. code-block:: console
 
     $ jig plugin add http://github.com/robmadole/jig-plugins
 
 
 Or from local filesystem.
 
-::
+.. code-block:: console
 
     $ jig plugin add ./plugins/myplugin
     Added plugin myplugin in bundle mybundle to the repository.
 
 You can also add more than one plugin at a time.
 
-::
+.. code-block:: console
 
     $ jig plugin add ./plugins
     Added plugin pep8-checker in bundle jig-plugins to the repository.
     Added plugin pyflakes in bundle jig-plugins to the repository.
     Added plugin whitespace in bundle jig-plugins to the repository.
     Added plugin woops in bundle jig-plugins to the repository.
+
+    Run the plugins in the current repository with this command:
+
+        $ jig runnow
+
+    Jig works off of your staged files in the Git repository index.
+    You place things in the index with `git add`. You will need to stage
+    some files before you can run Jig.
 
 .. _cli-plugin-update:
 
@@ -183,7 +213,7 @@ Updating plugins
 If you've installed plugins through a URL, you can update plugins which will
 perform a ``git pull`` on each installed repository.
 
-::
+.. code-block:: console
 
     $ jig plugin update
     Updating plugins
@@ -204,7 +234,7 @@ perform a ``git pull`` on each installed repository.
 Removing plugins
 ~~~~~~~~~~~~~~~~
 
-::
+.. code-block:: console
 
     $ jig plugin remove --help
     usage: jig plugin remove [-h] [-r] NAME [BUNDLE]
@@ -220,7 +250,7 @@ Removing plugins
 
 Once a plugin is added, it can be easily removed.
 
-::
+.. code-block:: console
 
     $ jig plugin remove myplugin
     Removed plugin myplugin
@@ -246,7 +276,7 @@ starting point to write whatever you wish.
           help in writing :ref:`new pre-commit templates
           <pluginapi-pre-commit-templates>`.
 
-::
+.. code-block:: console
 
     $ jig plugin create --help
     usage: jig plugin create [-h] [-l] [-d] NAME BUNDLE
@@ -267,7 +297,7 @@ groups multiple plugins together.
 
 Example of creating a plugin that checks widgets for the Acme Corporation.
 
-::
+.. code-block:: console
 
     $ jig plugin create widget-checker acme-corp
     Created plugin as ./widget-checker
@@ -297,7 +327,7 @@ all of your installed plugins without actually committing anything.
 
 For this use case, ``runnow`` exists.
 
-::
+.. code-block:: console
 
     $ jig runnow --help
     usage: jig runnow [-h] [PATH]
@@ -313,7 +343,7 @@ For this use case, ``runnow`` exists.
 When you call this command, Jig will perform the same motions that happen with
 ``git commit`` is ran.
 
-::
+.. code-block:: console
 
     $ jig runnow
     ▾  pep8-checker

@@ -156,6 +156,10 @@ class GitDiffIndex(object):
                 # Skip symlinks
                 continue
 
+            if blob.path.startswith('.jig'):
+                # This is a file that is part of .jig, ignore it
+                continue
+
             yield {
                 'filename': blob.abspath,
                 'name': blob.path,

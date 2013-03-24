@@ -4,11 +4,13 @@ from contextlib import nested
 
 from mock import patch
 
-from jig.tests.testcase import CommandTestCase, PluginTestCase
+from jig.tests.testcase import (
+    CommandTestCase, PluginTestCase, result_with_hint)
 from jig.plugins import set_jigconfig
 from jig.exc import ForcedExit
 from jig.output import ATTENTION, EXPLODE
 from jig.commands import runnow
+from jig.commands.hints import GIT_REPO_NOT_INITIALIZED
 
 
 class TestRunNowCommand(CommandTestCase, PluginTestCase):
@@ -76,5 +78,8 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
         with self.assertRaises(ForcedExit):
             self.run_command(mkdtemp())
 
-        self.assertIn(u'This repository has not been initialized. Run '
-            'jig init GITREPO to set it up.\n', self.error)
+        self.assertResults(
+            result_with_hint(
+                u'This repository has not been initialized.',
+                GIT_REPO_NOT_INITIALIZED),
+            self.error)

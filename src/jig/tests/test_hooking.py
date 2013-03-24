@@ -2,7 +2,8 @@ from os import rmdir
 from os.path import join, realpath
 from tempfile import mkdtemp
 
-from jig.tests.testcase import JigTestCase
+from jig.tests.testcase import JigTestCase, result_with_hint
+from jig.commands.hints import GIT_REPO_NOT_INITIALIZED
 from jig.exc import NotGitRepo, PreCommitExists
 from jig.gitutils import hook
 
@@ -59,5 +60,8 @@ class TestAddingHook(JigTestCase):
         retcode, output = self.runcmd(pc_filename)
 
         self.assertEqual(1, retcode)
-        self.assertEqual('This repository has not been initialized. Run '
-            'jig init GITREPO to set it up.\n', output)
+        self.assertResults(
+            result_with_hint(
+                u'This repository has not been initialized.',
+                GIT_REPO_NOT_INITIALIZED),
+            output)

@@ -128,7 +128,7 @@ Making the documentation
 ------------------------
 
 This documentation is made with Sphinx_. To build the docs make sure you've ran
-the :ref:`buildout <development-setup>` first.
+the ``pip install -r requirements.txt`` first.
 
 Build the HTML version:
 
@@ -138,6 +138,15 @@ Build the HTML version:
     $ make html
 
 The builds will be placed in :file:`build`.
+
+You can also auto-build the docs and serve them using a simple HTTP server.
+
+::
+
+    $ python script/docs
+
+Open http://localhost:8000 to view the docs. Any changes to the docs will cause
+them to be re-built automatically.
 
 .. _Sphinx: http://sphinx.pocoo.org/
 

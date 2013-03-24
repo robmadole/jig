@@ -1,30 +1,30 @@
 from shutil import rmtree
 from os.path import join
 from contextlib import nested
+from datetime import datetime, timedelta
 
 from mock import patch
 
-from jig.tests.testcase import RunnerTestCase, PluginTestCase
+from jig.tests.testcase import (
+    RunnerTestCase, PluginTestCase, result_with_hint)
+from jig.conf import PLUGIN_CHECK_FOR_UPDATES
+from jig.commands.hints import GIT_REPO_NOT_INITIALIZED
 from jig.tests.mocks import MockPlugin
 from jig.exc import ForcedExit
 from jig.plugins import set_jigconfig, Plugin
 from jig.runner import Runner
 
 
-class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
+class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
 
     """
     Runner hook is used by the command line script to run jig.
 
     """
     def setUp(self):
-        super(TestRunnerEntryPoints, self).setUp()
+        super(TestRunnerFromHook, self).setUp()
 
         repo, working_dir, diffs = self.repo_from_fixture('repo01')
-
-        self.testrepo = repo
-        self.testrepodir = working_dir
-        self.testdiffs = diffs
 
     def test_simple_integration(self):
         """
@@ -33,8 +33,8 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
         with patch.object(self.runner, 'results'):
             plugin = MockPlugin()
             # Empty results
-            self.runner.results.return_value = {plugin:
-                (0, '', '')}
+            self.runner.results.return_value = {
+                plugin: (0, '', '')}
 
             with self.assertRaises(SystemExit) as ec:
                 self.runner.fromhook(self.gitrepodir)  # pragma: no branch
@@ -121,6 +121,30 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
         # When they said cancel we exited with non-zero
         r_sys.exit.assert_called_once_with(0)
 
+    def test_will_continue_to_prompt_until_correctly_answered(self):
+        """
+        The user must answer 'c' or 's' and nothing else.
+        """
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
+
+        # Create staged changes
+        self.commit(self.gitrepodir, 'a.txt', 'a')
+        self.stage(self.gitrepodir, 'b.txt', 'b')
+
+        with nested(
+            patch('jig.runner.raw_input', create=True),
+            patch('jig.runner.sys')
+        ) as (ri, r_sys):
+            # Fake the raw_input call to return 'c' only after giving
+            # two incorrect options.
+            ri.side_effect = ['1', '2', 'c']
+
+            self.runner.fromhook(self.gitrepodir)
+
+        # raw_input was called 3 times until it received a proper response
+        self.assertEqual(3, ri.call_count)
+
     def test_will_abort_on_keyboard_interrupt(self):
         """
         The user can CTRL-C out of it and the commit is canceled.
@@ -147,6 +171,162 @@ class TestRunnerEntryPoints(RunnerTestCase, PluginTestCase):
         r_sys.exit.assert_called_once_with(1)
 
 
+class TestRunnerPluginUpdates(RunnerTestCase, PluginTestCase):
+
+    """
+    From the hook the plugins can be updated.
+
+    """
+    def setUp(self):
+        super(TestRunnerPluginUpdates, self).setUp()
+
+        repo, working_dir, diffs = self.repo_from_fixture('repo01')
+
+        targets = (
+            'jig.runner.sys',
+            'jig.runner.datetime',
+            'jig.runner.plugins_have_updates',
+            'jig.runner.set_jigconfig',
+            'jig.runner.set_checked_for_updates',
+            ('jig.runner.raw_input', {'create': True}),
+            'jig.runner.update_plugins')
+
+        self._patches = []
+        for target in targets:
+            if isinstance(target, tuple):
+                patched = patch(target[0], **target[1])
+                target = target[0]
+            else:
+                patched = patch(target)
+
+            self._patches.append(patched)
+
+            basename = target.split('.')[-1]
+            setattr(self, basename, patched.start())
+
+        # For all tests, make the current date in the future
+        self.datetime.utcnow.return_value = datetime.utcnow() + \
+            PLUGIN_CHECK_FOR_UPDATES + timedelta(days=1)
+
+    def tearDown(self):
+        for patched in self._patches:
+            patched.stop()
+
+    def test_non_interactive(self):
+        """
+        Doesn't check if interactive is False.
+        """
+        self.runner.fromhook(self.gitrepodir, interactive=False)
+
+    def test_never_been_checked(self):
+        """
+        For existing Jig installations, there will be no last checked value.
+        """
+        # There are no updates for the plugins
+        self.plugins_have_updates.return_value = False
+
+        with patch('jig.runner.last_checked_for_updates') as lcu:
+            # If there is no value for the last time a repository was checked
+            # it will return 0.
+            lcu.return_value = 0
+
+            self.runner.fromhook(self.gitrepodir)
+
+        # The check to see if the plugins have updates was called
+        self.assertTrue(self.plugins_have_updates.called)
+
+    def test_checks_for_updates(self):
+        """
+        Will check for updates if it has been a while.
+        """
+        # There are no updates for the plugins
+        self.plugins_have_updates.return_value = False
+
+        self.runner.fromhook(self.gitrepodir)
+
+        # The plugins were checked to see if there is an update
+        self.assertTrue(self.plugins_have_updates.called)
+
+        # Since they were checked, the date was also moved forward
+        self.assertTrue(self.set_checked_for_updates.called)
+
+        # Things exited normally
+        self.sys.exit.assert_called_with(0)
+
+    def test_prompts_user_to_update(self):
+        """
+        Will ask to install updates but the answer is no.
+        """
+        # This time there are updates to install
+        self.plugins_have_updates.return_value = True
+
+        # The answer will be "n"
+        self.raw_input.side_effect = ['n']
+
+        self.runner.fromhook(self.gitrepodir)
+
+        # They did give a valid answer, so the date was moved
+        self.assertTrue(self.set_checked_for_updates.called)
+
+        # The plugins were not updated though
+        self.assertFalse(self.update_plugins.called)
+
+    def test_prompts_until_they_answer_correctly(self):
+        """
+        Continues until a proper answer is given to the question.
+        """
+        self.plugins_have_updates.return_value = True
+
+        # Answer a couple of times with junk, and then say no
+        self.raw_input.side_effect = ['junk', 'foo', 'n']
+
+        self.runner.fromhook(self.gitrepodir)
+
+        # The question was asked until a proper response was given
+        self.assertEqual(3, self.raw_input.call_count)
+
+    def test_keyboard_interrupt(self):
+        """
+        While being asked a question CTRL-C is pressed.
+        """
+        self.plugins_have_updates.return_value = True
+
+        # Answer a couple of times with junk, and then say no
+        self.raw_input.side_effect = KeyboardInterrupt
+
+        self.runner.fromhook(self.gitrepodir)
+
+        # It exited just fine, no errors
+        self.sys.exit.assert_called_with(0)
+
+        # Since it was a CTRL-C, we shouldn't move the date forward
+        self.assertFalse(self.set_checked_for_updates.called)
+
+        # And the plugins were not updated
+        self.assertFalse(self.update_plugins.called)
+
+    def test_will_update_plugins(self):
+        """
+        If the answer is yes, the plugins are updated.
+        """
+        self.plugins_have_updates.return_value = True
+
+        # The answer to update the plugins is yes
+        self.raw_input.return_value = 'y'
+
+        self.runner.fromhook(self.gitrepodir)
+
+        # Exited normally
+        self.sys.exit.assert_called_with(0)
+
+        # We moved the next date the plugins should be checked forward
+        self.assertTrue(self.set_jigconfig.called)
+        self.assertTrue(self.set_checked_for_updates.called)
+
+        # And the plugins were updated
+        self.assertTrue(self.update_plugins.called)
+
+
 class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
     """
@@ -157,10 +337,6 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         super(TestRunnerResults, self).setUp()
 
         repo, working_dir, diffs = self.repo_from_fixture('repo01')
-
-        self.testrepo = repo
-        self.testrepodir = working_dir
-        self.testdiffs = diffs
 
     def test_uninitialized_repo(self):
         """
@@ -173,8 +349,10 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
             self.runner.results(self.gitrepodir)
 
         self.assertEqual('1', str(ec.exception))
-        self.assertEqual('This repository has not been initialized. Run '
-            'jig init GITREPO to set it up.\n',
+        self.assertResults(
+            result_with_hint(
+                u'This repository has not been initialized.',
+                GIT_REPO_NOT_INITIALIZED),
             self.error)
 
     def test_no_plugins(self):
@@ -183,7 +361,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         """
         self.runner.results(self.gitrepodir)
 
-        self.assertEqual('There are no plugins installed, use jig '
+        self.assertEqual(
+            'There are no plugins installed, use jig '
             'install to add some.\n',
             self.output)
 
@@ -196,7 +375,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
         self.runner.results(self.gitrepodir)
 
-        self.assertEqual('This repository is empty, jig needs at '
+        self.assertEqual(
+            'This repository is empty, jig needs at '
             'least 1 commit to continue.\n',
             self.output)
 
@@ -207,14 +387,15 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self._add_plugin(self.jigconfig, 'plugin01')
         set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
-        self.commit(self.gitrepodir,
+        self.commit(
+            self.gitrepodir,
             name='a.txt',
             content='a')
 
         self.runner.results(self.gitrepodir)
 
-        self.assertEqual('No staged changes in the repository, skipping '
-            'jig.\n',
+        self.assertEqual(
+            'No staged changes in the repository, skipping jig.\n',
             self.output)
 
     def test_unstaged_one_file(self):
@@ -225,19 +406,21 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         # Add the first commit because we have to have it
-        self.commit(self.gitrepodir,
+        self.commit(
+            self.gitrepodir,
             name='a.txt',
             content='a')
 
         # We've created this but not added it to the index
-        self.create_file(self.gitrepodir,
+        self.create_file(
+            self.gitrepodir,
             name='b.txt',
             content='b')
 
         self.runner.results(self.gitrepodir)
 
-        self.assertEqual('No staged changes in the repository, skipping '
-            'jig.\n',
+        self.assertEqual(
+            'No staged changes in the repository, skipping jig.\n',
             self.output)
 
     def test_staged_one_file(self):
@@ -248,12 +431,14 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         # Add the first commit because we have to have it
-        self.commit(self.gitrepodir,
+        self.commit(
+            self.gitrepodir,
             name='a.txt',
             content='a')
 
         # Create a new file an stage it to the index
-        self.stage(self.gitrepodir,
+        self.stage(
+            self.gitrepodir,
             name='b.txt',
             content='b')
 
@@ -282,12 +467,14 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
         # Add the first commit because we have to have it
-        self.commit(self.gitrepodir,
+        self.commit(
+            self.gitrepodir,
             name='a.txt',
             content='a')
 
         # We've created this but not added it to the index
-        self.stage(self.gitrepodir,
+        self.stage(
+            self.gitrepodir,
             name='a.txt',
             content='aaa')
 
@@ -295,8 +482,10 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
         _, stdout, _ = results.items()[0][1]
 
-        self.assertEqual({u'a.txt': [[1, u'warn', u'a is -'], [1, u'warn',
-            u'aaa is +']]}, stdout)
+        self.assertEqual(
+            {u'a.txt': [[1, u'warn', u'a is -'],
+                        [1, u'warn', u'aaa is +']]},
+            stdout)
 
     def test_deleted_one_file(self):
         """
@@ -305,7 +494,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self._add_plugin(self.jigconfig, 'plugin01')
         set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
-        self.commit(self.gitrepodir,
+        self.commit(
+            self.gitrepodir,
             name='a.txt',
             content='a')
 
@@ -330,11 +520,13 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
             self._add_plugin(self.jigconfig, 'plugin01')
             set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
-            self.commit(self.gitrepodir,
+            self.commit(
+                self.gitrepodir,
                 name='a.txt',
                 content='a')
 
-            self.stage(self.gitrepodir,
+            self.stage(
+                self.gitrepodir,
                 name='b.txt',
                 content='b')
 
@@ -343,8 +535,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
             _, stdout, _ = results.items()[0][1]
 
         # And we can still get the output even though it's not JSON
-        self.assertEqual('Test non-JSON output',
-            stdout)
+        self.assertEqual('Test non-JSON output', stdout)
 
     def test_handles_retcode_1_with_stderr(self):
         """
@@ -357,11 +548,13 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
             self._add_plugin(self.jigconfig, 'plugin01')
             set_jigconfig(self.gitrepodir, config=self.jigconfig)
 
-            self.commit(self.gitrepodir,
+            self.commit(
+                self.gitrepodir,
                 name='a.txt',
                 content='a')
 
-            self.stage(self.gitrepodir,
+            self.stage(
+                self.gitrepodir,
                 name='b.txt',
                 content='b')
 
@@ -370,5 +563,6 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
             retcode, _, stderr = results.items()[0][1]
 
         self.assertEqual(1, retcode)
-        self.assertEqual('Something went horribly wrong',
+        self.assertEqual(
+            'Something went horribly wrong',
             stderr)
