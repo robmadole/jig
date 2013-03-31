@@ -90,7 +90,7 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
             # Raise the error to halt execution like the real sys.exit would
             r_sys.exit.side_effect = SystemExit
 
-            self.run_command('--plugin plugin01 {}'.format(self.gitrepodir))
+            self.run_command('--plugin plugin01 {0}'.format(self.gitrepodir))
 
         self.assertResults(u"""
             ▾  plugin01
@@ -121,7 +121,7 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
             r_sys.exit.side_effect = SystemExit
 
             self.run_command(
-                '--plugin notinstalled {}'.format(self.gitrepodir))
+                '--plugin notinstalled {0}'.format(self.gitrepodir))
 
         # A plugin which is not installed was requested so not output
         self.assertEqual('', self.output)
