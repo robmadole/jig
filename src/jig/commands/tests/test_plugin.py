@@ -5,19 +5,22 @@ from tempfile import mkdtemp
 
 from mock import Mock, patch
 
-from jig.tests.testcase import (CommandTestCase, PluginTestCase,
+from jig.tests.testcase import (
+    CommandTestCase, PluginTestCase,
     cd_gitrepo, cwd_bounce, result_with_hint)
 from jig.tests.mocks import MockPlugin
 from jig.tools import NumberedDirectoriesToGit
 from jig.exc import ForcedExit
-from jig.plugins import (set_jigconfig, get_jigconfig, create_plugin,
+from jig.plugins import (
+    set_jigconfig, get_jigconfig, create_plugin,
     PluginManager)
-from jig.plugins.testrunner import (Expectation, SuccessResult,
+from jig.plugins.testrunner import (
+    Expectation, SuccessResult,
     FailureResult, REPORTER_HORIZONTAL_DIVIDER)
 from jig.gitutils import clone
 from jig.commands import plugin
 from jig.commands.hints import (
-    FORK_PROJECT_GITHUB, NO_PLUGINS_INSTALLED, USE_RUNNOW)
+    FORK_PROJECT_GITHUB, NO_PLUGINS_INSTALLED, USE_RUNNOW, INVALID_RANGE)
 
 
 class TestPluginCommand(CommandTestCase, PluginTestCase):
@@ -61,11 +64,14 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Lists plugins correctly if they are in different bundles.
         """
-        self._add_plugin(create_plugin(self.plugindir, template='python',
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
             bundle='test01', name='plugin01'))
-        self._add_plugin(create_plugin(self.plugindir, template='python',
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
             bundle='test02', name='plugin02'))
-        self._add_plugin(create_plugin(self.plugindir, template='python',
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
             bundle='test03', name='plugin03'))
 
         self.run_command('list -r {0}'.format(self.gitrepodir))
@@ -83,11 +89,14 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Lists plugins correctly if they are in the same bundle.
         """
-        self._add_plugin(create_plugin(self.plugindir, template='python',
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
             bundle='test', name='plugin01'))
-        self._add_plugin(create_plugin(self.plugindir, template='python',
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
             bundle='test', name='plugin02'))
-        self._add_plugin(create_plugin(self.plugindir, template='python',
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
             bundle='test', name='plugin03'))
 
         self.run_command('list -r {0}'.format(self.gitrepodir))
@@ -106,11 +115,14 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         Will list bundles and plugin names alphabetically.
         """
         # Add these in reverse order of alphabetical
-        self._add_plugin(create_plugin(self.plugindir, template='python',
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
             bundle='c', name='c'))
-        self._add_plugin(create_plugin(self.plugindir, template='python',
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
             bundle='b', name='b'))
-        self._add_plugin(create_plugin(self.plugindir, template='python',
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
             bundle='a', name='a'))
 
         self.run_command('list -r {0}'.format(self.gitrepodir))
@@ -135,7 +147,8 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         with self.assertRaises(ForcedExit):
             self.run_command('add {0}'.format(tmp_dir))
 
-        self.assertRegexpMatches(self.error,
+        self.assertRegexpMatches(
+            self.error,
             u'The plugin file (.+)config.cfg is missing')
 
     @cd_gitrepo
@@ -143,7 +156,8 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Adds a valid plugin.
         """
-        plugin_dir = create_plugin(self.plugindir, template='python',
+        plugin_dir = create_plugin(
+            self.plugindir, template='python',
             bundle='a', name='a')
 
         # We are going to test whether it defaults --gitrepo to cwd
@@ -171,7 +185,8 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Add a plugin when not inside the Git repository.
         """
-        plugin_dir = create_plugin(self.plugindir, template='python',
+        plugin_dir = create_plugin(
+            self.plugindir, template='python',
             bundle='a', name='a')
 
         self.run_command('add --gitrepo {0} {1}'.format(
@@ -196,19 +211,22 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         def clone_fake(plugin, to_dir, branch=None):
             makedirs(to_dir)
-            create_plugin(to_dir, template='python',
+            create_plugin(
+                to_dir, template='python',
                 bundle='a', name='a')
 
         with patch('jig.commands.plugin.clone') as c:
             c.side_effect = clone_fake
 
-            self.run_command('add --gitrepo {0} http://repo'.format(
+            self.run_command(
+                'add --gitrepo {0} http://repo'.format(
                 self.gitrepodir))
 
         # And clone was called with our URL and would have performed the
         # operation in our test directory.
         self.assertEqual('http://repo', c.call_args[0][0])
-        self.assertIn('{0}/.jig/plugins/'.format(self.gitrepodir),
+        self.assertIn(
+            '{0}/.jig/plugins/'.format(self.gitrepodir),
             c.call_args[0][1])
         self.assertEqual(None, c.call_args[0][2])
 
@@ -218,13 +236,15 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         def clone_fake(plugin, to_dir, branch=None):
             makedirs(to_dir)
-            create_plugin(to_dir, template='python',
+            create_plugin(
+                to_dir, template='python',
                 bundle='a', name='a')
 
         with patch('jig.commands.plugin.clone') as c:
             c.side_effect = clone_fake
 
-            self.run_command('add --gitrepo {0} http://url.com/repo@alternate'.format(
+            self.run_command(
+                'add --gitrepo {0} http://url.com/repo@alternate'.format(
                 self.gitrepodir))
 
         # And the branch name was passed to clone
@@ -240,9 +260,11 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         makedirs(root_commit_dir)
 
         # Create a plugin in the repo
-        create_plugin(root_commit_dir, template='python',
+        create_plugin(
+            root_commit_dir, template='python',
             bundle='a', name='a')
-        create_plugin(root_commit_dir, template='python',
+        create_plugin(
+            root_commit_dir, template='python',
             bundle='b', name='b')
 
         # This is the directory we will clone
@@ -261,13 +283,16 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         with patch('jig.commands.plugin.clone') as c:
             c.side_effect = clone_local
 
-            self.run_command('add --gitrepo {0} http://repo'.format(
+            self.run_command(
+                'add --gitrepo {0} http://repo'.format(
                 self.gitrepodir))
 
-        self.run_command('update --gitrepo {0}'.format(
+        self.run_command(
+            'update --gitrepo {0}'.format(
             self.gitrepodir))
 
-        self.assertResults("""
+        self.assertResults(
+            """
             Updating plugins
 
             Plugin a, b in bundle a, b
@@ -300,7 +325,8 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Removes an installed plugin.
         """
-        plugin_dir = create_plugin(self.plugindir, template='python',
+        plugin_dir = create_plugin(
+            self.plugindir, template='python',
             bundle='bundle', name='name')
 
         self.run_command('add -r {0} {1}'.format(self.gitrepodir, plugin_dir))
@@ -322,7 +348,8 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Removes an installed plugin.
         """
-        plugin_dir = create_plugin(self.plugindir, template='python',
+        plugin_dir = create_plugin(
+            self.plugindir, template='python',
             bundle='bundle', name='name')
 
         self.run_command('add -r {0} {1}'.format(self.gitrepodir, plugin_dir))
@@ -342,9 +369,11 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         name, we can't assume which plugin they wish to remove. Error out and
         suggest they use the list command.
         """
-        plugin_dir1 = create_plugin(mkdtemp(), template='python',
+        plugin_dir1 = create_plugin(
+            mkdtemp(), template='python',
             bundle='bundle1', name='name')
-        plugin_dir2 = create_plugin(mkdtemp(), template='python',
+        plugin_dir2 = create_plugin(
+            mkdtemp(), template='python',
             bundle='bundle2', name='name')
 
         self.run_command('add -r {0} {1}'.format(self.gitrepodir, plugin_dir1))
@@ -377,7 +406,8 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Cannot create a plugin if the destination already exists.
         """
-        save_dir = dirname(create_plugin(mkdtemp(), template='python',
+        save_dir = dirname(create_plugin(
+            mkdtemp(), template='python',
             bundle='bundle', name='name'))
 
         with self.assertRaises(ForcedExit):
@@ -424,7 +454,8 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Run tests for a plugin where no tests are found.
         """
-        plugin_dir = create_plugin(mkdtemp(), template='python',
+        plugin_dir = create_plugin(
+            mkdtemp(), template='python',
             bundle='bundle', name='name')
 
         with self.assertRaises(ForcedExit):
@@ -437,12 +468,14 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Will return test results.
         """
-        plugin_dir = create_plugin(mkdtemp(), template='python',
+        plugin_dir = create_plugin(
+            mkdtemp(), template='python',
             bundle='bundle', name='name')
 
         expectation = Expectation((1, 2), None, u'aaa')
         results = [
-            SuccessResult(actual=u'aaa', expectation=expectation,
+            SuccessResult(
+                actual=u'aaa', expectation=expectation,
                 plugin=MockPlugin())]
 
         with patch('jig.commands.plugin.PluginTestRunner') as ptr:
@@ -451,21 +484,58 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
             self.run_command('test {0}'.format(plugin_dir))
 
-        self.assertResults(u'''
+        self.assertResults(
+            u'''
             01 – 02 Pass
 
             Pass 1, Fail 0''', self.output)
+
+    def test_runs_specific_test(self):
+        """
+        Will run a specific test.
+        """
+        plugin_dir = create_plugin(
+            mkdtemp(), template='python',
+            bundle='bundle', name='name')
+
+        with patch('jig.commands.plugin.PluginTestRunner') as ptr:
+            ptr.return_value = Mock()
+            ptr.return_value.run = Mock(return_value=[])
+
+            self.run_command('test -r 4..5 {0}'.format(plugin_dir))
+
+        ptr.return_value.run.assert_called_with(test_range=[(4, 5)])
+
+    def test_handles_range_error(self):
+        """
+        If an improper range is given, provides a helpful error message.
+        """
+        plugin_dir = create_plugin(
+            mkdtemp(), template='python',
+            bundle='bundle', name='name')
+
+        with self.assertRaises(ForcedExit):
+            # Bad range "a.b"
+            self.run_command('test -r a.b {0}'.format(plugin_dir))
+
+        self.assertResults(
+            result_with_hint(
+                u'a.b is an invalid numbered test range',
+                INVALID_RANGE),
+            self.error)
 
     def test_plugin_test_failure(self):
         """
         Fails with exit code other than 0.
         """
-        plugin_dir = create_plugin(mkdtemp(), template='python',
+        plugin_dir = create_plugin(
+            mkdtemp(), template='python',
             bundle='bundle', name='name')
 
         expectation = Expectation((1, 2), None, u'bbb')
         results = [
-            FailureResult(actual=u'aaa', expectation=expectation,
+            FailureResult(
+                actual=u'aaa', expectation=expectation,
                 plugin=MockPlugin())]
 
         with patch('jig.commands.plugin.PluginTestRunner') as ptr:
@@ -475,7 +545,8 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             with self.assertRaises(ForcedExit):
                 self.run_command('test {0}'.format(plugin_dir))
 
-        self.assertResults(u'''
+        self.assertResults(
+            u'''
             01 – 02 Fail
 
             Actual
@@ -496,12 +567,14 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Running the plugins tests defaults to the current working directory.
         """
-        plugin_dir = create_plugin(mkdtemp(), template='python',
+        plugin_dir = create_plugin(
+            mkdtemp(), template='python',
             bundle='bundle', name='name')
 
         expectation = Expectation((1, 2), None, u'aaa')
         results = [
-            SuccessResult(actual=u'aaa', expectation=expectation,
+            SuccessResult(
+                actual=u'aaa', expectation=expectation,
                 plugin=MockPlugin())]
 
         with patch('jig.commands.plugin.PluginTestRunner') as ptr:
@@ -511,7 +584,8 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             with cwd_bounce(plugin_dir):
                 self.run_command('test')
 
-        self.assertResults(u'''
+        self.assertResults(
+            u'''
             01 – 02 Pass
 
             Pass 1, Fail 0''', self.output)
@@ -520,12 +594,14 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         """
         Will return test results with stdin and stdout.
         """
-        plugin_dir = create_plugin(mkdtemp(), template='python',
+        plugin_dir = create_plugin(
+            mkdtemp(), template='python',
             bundle='bundle', name='name')
 
         expectation = Expectation((1, 2), None, u'aaa')
         results = [
-            SuccessResult(actual=u'aaa', expectation=expectation,
+            SuccessResult(
+                actual=u'aaa', expectation=expectation,
                 plugin=MockPlugin(), stdin='a\n', stdout='b\n')]
 
         with patch('jig.commands.plugin.PluginTestRunner') as ptr:
@@ -534,7 +610,8 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
             self.run_command('test -v {0}'.format(plugin_dir))
 
-        self.assertResults(u'''
+        self.assertResults(
+            u'''
             01 – 02 Pass
 
             stdin (sent to the plugin)

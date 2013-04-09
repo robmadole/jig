@@ -11,10 +11,11 @@ from ConfigParser import SafeConfigParser
 from docutils import nodes, core, io
 from docutils.parsers.rst import Directive, directives
 
-from jig.exc import (ExpectationNoTests, ExpectationFileNotFound,
-    ExpectationParsingError)
-from jig.conf import (CODEC, PLUGIN_EXPECTATIONS_FILENAME,
-    PLUGIN_TESTS_DIRECTORY)
+from jig.exc import (
+    ExpectationNoTests, ExpectationFileNotFound, ExpectationParsingError,
+    RangeError)
+from jig.conf import (
+    CODEC, PLUGIN_EXPECTATIONS_FILENAME, PLUGIN_TESTS_DIRECTORY)
 from jig.tools import NumberedDirectoriesToGit, cwd_bounce, indent
 from jig.diffconvert import describe_diff
 from jig.output import ConsoleView, strip_paint, green_bold, red_bold
@@ -28,8 +29,8 @@ except ImportError:   # pragma: no cover
     from ordereddict import OrderedDict
 
 # What docutil nodes signify a structural or sectional break
-DOCUTILS_DIFFERENT_SECTION_NODES = (nodes.Root, nodes.Structural,
-    nodes.Titular)
+DOCUTILS_DIFFERENT_SECTION_NODES = (
+    nodes.Root, nodes.Structural, nodes.Titular)
 
 # How wide do we want the columns to be when we report test output
 REPORTER_COLUMN_WIDTH = 80
@@ -40,6 +41,10 @@ RESULTS_SUMMARY_SIGNATURE_RE = re.compile(
     r'^.*Jig\ ran.*$', re.MULTILINE)
 RESULTS_SUMMARY_COUNT_RE = re.compile(
     r'^.*Info\ \d*\ Warn\ \d*\ Stop\ \d*$', re.MULTILINE)
+
+# Valid test ranges will match this
+RANGE_RE = re.compile(
+    r'^(\d+)\.\.(\d+)$')
 
 
 def get_expectations(input_string):
@@ -124,8 +129,43 @@ def get_expectations(input_string):
                     # different section so we will stop.
                     break
 
-            yield Expectation(range=expectation.range, settings=settings,
-                    output=expectation.rawsource)
+            yield Expectation(
+                range=expectation.range, settings=settings,
+                output=expectation.rawsource)
+
+
+def parse_range(range_string):
+    """
+    Takes a range specified as a string and converts it to a list of tuples.
+
+    Example:
+
+        >>> parse_range('2..6')
+        [(2, 3), (3, 4), (4, 5), (5, 6)]
+
+    :param str range_string: like ``3..4`` or ``1..5``
+    :rtype list:
+    """
+    match = RANGE_RE.match(range_string)
+
+    if not match:
+        raise RangeError(
+            '{} is an invalid numbered test range'.format(
+                range_string))
+
+    start, end = match.groups()
+
+    if not start < end:
+        raise RangeError(
+            '{} must be less than {} to be valid'.format(
+                start, end))
+
+    parsed_range = []
+
+    for i in range(int(start), int(end)):
+        parsed_range.append((i, i + 1))
+
+    return parsed_range
 
 
 class Result(tuple):
@@ -170,7 +210,8 @@ class Result(tuple):
         """
         Return a new object replacing specified fields with new values.
         """
-        result = _self._make(map(kwds.pop,
+        result = _self._make(map(
+            kwds.pop,
             ('expectation', 'actual', 'plugin', 'stdin', 'stdout'), _self))
         if kwds:
             raise ValueError('Got unexpected field names: %r' % kwds.keys())
@@ -196,7 +237,8 @@ class SuccessResult(Result):
 
     """
     def __repr__(self):   # pragma: no cover
-        return '<SuccessResult from={0} to={1}>'.format(*self.expectation.range)
+        return '<SuccessResult from={0} to={1}>'.format(
+            *self.expectation.range)
 
 
 class FailureResult(Result):
@@ -206,7 +248,8 @@ class FailureResult(Result):
 
     """
     def __repr__(self):   # pragma: no cover
-        return '<FailureResult from={0} to={1}>'.format(*self.expectation.range)
+        return '<FailureResult from={0} to={1}>'.format(
+            *self.expectation.range)
 
 
 class InstrumentedGitDiffIndex(GitDiffIndex):
@@ -248,11 +291,13 @@ class PluginTestRunner(object):
             test_directory = join(plugin_dir, PLUGIN_TESTS_DIRECTORY)
             self.timeline = NumberedDirectoriesToGit(test_directory)
         except ValueError:
-            raise ExpectationNoTests('Could not find any tests: {0}.'.format(
+            raise ExpectationNoTests(
+                'Could not find any tests: {0}.'.format(
                 test_directory))
 
         try:
-            expect_filename = join(plugin_dir, PLUGIN_TESTS_DIRECTORY,
+            expect_filename = join(
+                plugin_dir, PLUGIN_TESTS_DIRECTORY,
                 PLUGIN_EXPECTATIONS_FILENAME)
 
             with open(expect_filename, 'r', CODEC) as fh:
@@ -263,12 +308,15 @@ class PluginTestRunner(object):
             raise ExpectationFileNotFound(
                 'Missing expectation file: {0}.'.format(expect_filename))
 
-    def run(self):
+    def run(self, test_range=None):
         """
         Run the tests for this plugin.
 
         Returns a list of :py:class:`Result` objects which represent the
         results from the test run.
+
+        :param list test_range: None or the parsed range from
+            :function:`parse_range`
         """
         # Use an empty config, we are not going to save this to disk
         pm = PluginManager(SafeConfigParser())
@@ -288,6 +336,11 @@ class PluginTestRunner(object):
             # Make sure that the range is off by 1
             assert exp.range[1] == exp.range[0] + 1
 
+            # Is this expectation in the specified test range?
+            if test_range and (exp.range not in test_range):
+                # Skip this one, it's not one of the tests we should be running
+                continue
+
             # Update the plugin config (settings) if available
             if exp.settings:
                 plugin.config = exp.settings
@@ -298,11 +351,13 @@ class PluginTestRunner(object):
             view = ConsoleView(collect_output=True, exit_on_exception=False)
 
             # Get a GitDiffIndex object from
-            gdi = InstrumentedGitDiffIndex(self.timeline.repo.working_dir,
+            gdi = InstrumentedGitDiffIndex(
+                self.timeline.repo.working_dir,
                 self.timeline.diffs()[exp.range[0] - 1])
 
             # What is the numbered test directory reprsenting our commit?
-            wd = abspath(join(self.plugin_dir, PLUGIN_TESTS_DIRECTORY,
+            wd = abspath(join(
+                self.plugin_dir, PLUGIN_TESTS_DIRECTORY,
                 '{0:02d}'.format(exp.range[1])))
 
             with cwd_bounce(wd):
@@ -311,8 +366,10 @@ class PluginTestRunner(object):
                 gdi.replace_path = (self.timeline.repo.working_dir, wd)
 
                 # Gather up the input to the plugin for logging
-                stdin = json.dumps({'config': plugin.config,
-                    'files': gdi}, indent=2, cls=PluginDataJSONEncoder)
+                stdin = json.dumps({
+                    'config': plugin.config,
+                    'files': gdi},
+                    indent=2, cls=PluginDataJSONEncoder)
 
                 # Now run the actual pre_commit hook for this plugin
                 res = plugin.pre_commit(gdi)
@@ -331,7 +388,8 @@ class PluginTestRunner(object):
                 # console.
                 view.print_results({plugin: (retcode, data, stderr)})
             else:
-                results.append(FailureResult(exp,
+                results.append(FailureResult(
+                    exp,
                     'Exit code: {0}\n\nStd out:\n{1}\n\nStd err:\n{2}'.format(
                         retcode, stdout or '(none)', stderr or '(none)'),
                     plugin))
@@ -339,7 +397,8 @@ class PluginTestRunner(object):
 
             # Now remove the color character sequences to make things a little
             # easier to read, copy, and paste.
-            actual = strip_paint(view._collect['stdout'].getvalue() or
+            actual = strip_paint(
+                view._collect['stdout'].getvalue() or
                 view._collect['stderr'].getvalue())
 
             # Also remove the summary and count at the end, these are not
@@ -537,12 +596,14 @@ class ExpectationDirective(Directive):
         node = expectations_node(code, code)
 
         # The from and to are required
-        node.range = (self.options.get('from', None),
+        node.range = (
+            self.options.get('from', None),
             self.options.get('to', None))
 
         if not node.range[0] or not node.range[1]:
             # The range is incomplete
-            self.state_machine.reporter.error('expectation directive requires '
+            self.state_machine.reporter.error(
+                'expectation directive requires '
                 '`to` and `from` arguments')
 
         return [node]

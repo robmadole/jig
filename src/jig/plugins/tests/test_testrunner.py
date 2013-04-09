@@ -9,17 +9,16 @@ from copy import copy
 
 from mock import patch
 
-from jig.exc import (ExpectationNoTests, ExpectationFileNotFound,
-    ExpectationParsingError)
+from jig.exc import (
+    ExpectationNoTests, ExpectationFileNotFound, ExpectationParsingError)
 from jig.tests.mocks import MockPlugin
 from jig.conf import CODEC
 from jig.tools import NumberedDirectoriesToGit
 from jig.plugins import create_plugin, Plugin
 from jig.tests.testcase import JigTestCase, PluginTestCase
-from jig.output import ATTENTION, EXPLODE
-from jig.plugins.testrunner import (PluginTestRunner,
-    InstrumentedGitDiffIndex, PluginTestReporter, get_expectations,
-    Expectation, Result, SuccessResult, FailureResult,
+from jig.plugins.testrunner import (
+    PluginTestRunner, InstrumentedGitDiffIndex, PluginTestReporter,
+    get_expectations, Expectation, Result, SuccessResult, FailureResult,
     REPORTER_HORIZONTAL_DIVIDER)
 
 try:
@@ -49,7 +48,7 @@ class TestResult(PluginTestCase):
 
         self.assertEqual(
             'Result(expectation=None, actual=None, plugin=None, '
-                'stdin=None, stdout=None)',
+            'stdin=None, stdout=None)',
             repr(result))
 
     def test_convert_to_dict(self):
@@ -76,7 +75,7 @@ class TestResult(PluginTestCase):
 
         self.assertEqual(
             'Result(expectation=1, actual=1, plugin=None, '
-                'stdin=None, stdout=None)',
+            'stdin=None, stdout=None)',
             repr(result2))
 
     def test_replace_checks_fields(self):
@@ -124,7 +123,8 @@ class TestPluginTestRunner(PluginTestCase):
                 ('b.txt', 'contents of b')])
         """
         for filename, content in files:
-            path = join(plugin_dir, 'tests',
+            path = join(
+                plugin_dir, 'tests',
                 '{0:02d}'.format(self.timeline_iter + 1), filename)
             try:
                 makedirs(dirname(path))
@@ -223,9 +223,43 @@ class TestPluginTestRunner(PluginTestCase):
 
         self.assertEqual(1, len(results))
         self.assertIsInstance(results[0], SuccessResult)
-        self.assertEqual(results[0].actual.strip(),
+        self.assertEqual(
+            results[0].actual.strip(),
             results[0].expectation.output.strip())
         self.assertEqual((1, 2), results[0].expectation.range)
+
+    def test_specific_range(self):
+        """
+        Will run only a specific range of tests.
+        """
+        plugin_dir = create_plugin(self.plugindir, 'bundle', 'plugin')
+
+        self.add_timeline(plugin_dir, [('a.txt', 'a\n')])
+        self.add_timeline(plugin_dir, [('a.txt', 'aa\n')])
+        self.add_expectation(plugin_dir, u'''
+            .. expectation::
+                :from: 01
+                :to: 02
+
+                ▾  plugin
+
+                ✓  line 1: a.txt
+                    a is -
+
+                ✓  line 1: a.txt
+                    aa is +''')
+
+        ptr = PluginTestRunner(plugin_dir)
+
+        # An expectation exists for the following range
+        self.assertEqual(
+            1,
+            len(ptr.run(test_range=[(1, 2)])))
+
+        # An expectation does not exist for this one
+        self.assertEqual(
+            0,
+            len(ptr.run(test_range=[(2, 3)])))
 
     def test_failure_result(self):
         """
@@ -255,7 +289,8 @@ class TestPluginTestRunner(PluginTestCase):
         """
         Altering the settings will be used correctly.
         """
-        plugin_dir = create_plugin(self.plugindir, 'bundle', 'plugin',
+        plugin_dir = create_plugin(
+            self.plugindir, 'bundle', 'plugin',
             settings={'verbose': 'yes'})
 
         self.add_timeline(plugin_dir, [('a.txt', 'a\n')])
@@ -345,20 +380,23 @@ class TestPluginTestRunner(PluginTestCase):
         """
         Multiple tests can be ran.
         """
-        plugin_dir = create_plugin(self.plugindir, 'bundle', 'plugin',
+        plugin_dir = create_plugin(
+            self.plugindir, 'bundle', 'plugin',
             settings={'verbose': 'no'})
 
-        self.add_timeline(plugin_dir, [
-            ('src/a.txt', 'a\n')])
-        self.add_timeline(plugin_dir, [
-            ('src/a.txt', 'aa\n')])
-        self.add_timeline(plugin_dir, [
-            ('src/a.txt', 'aaa\n')])
-        self.add_timeline(plugin_dir, [
-            ('src/a.txt', 'aaa\n'),
-            ('src/b.txt', 'bbb\n')])
+        self.add_timeline(
+            plugin_dir, [('src/a.txt', 'a\n')])
+        self.add_timeline(
+            plugin_dir, [('src/a.txt', 'aa\n')])
+        self.add_timeline(
+            plugin_dir, [('src/a.txt', 'aaa\n')])
+        self.add_timeline(
+            plugin_dir, [
+                ('src/a.txt', 'aaa\n'),
+                ('src/b.txt', 'bbb\n')])
 
-        self.add_expectation(plugin_dir, u'''
+        self.add_expectation(
+            plugin_dir, u'''
             .. expectation::
                 :from: 01
                 :to: 02
@@ -417,12 +455,14 @@ class TestPluginTestReporter(PluginTestCase):
         """
         expectation = Expectation((1, 2), None, u'aaa')
         results = [
-            FailureResult(actual=u'bbb', expectation=expectation,
+            FailureResult(
+                actual=u'bbb', expectation=expectation,
                 plugin=MockPlugin())]
 
         ptr = PluginTestReporter(results)
 
-        self.assertResults(u'''
+        self.assertResults(
+            u'''
             01 – 02 Fail
 
             Actual
@@ -445,7 +485,8 @@ class TestPluginTestReporter(PluginTestCase):
         """
         expectation = Expectation((1, 2), None, u'aaa')
         results = [
-            SuccessResult(actual=u'aaa', expectation=expectation,
+            SuccessResult(
+                actual=u'aaa', expectation=expectation,
                 plugin=MockPlugin())]
 
         ptr = PluginTestReporter(results)
@@ -463,16 +504,20 @@ class TestPluginTestReporter(PluginTestCase):
         expectation2 = Expectation((2, 3), None, u'b\nb\nb\n')
         expectation3 = Expectation((3, 4), None, u'ccc')
         results = [
-            SuccessResult(actual=u'aaa', expectation=expectation1,
+            SuccessResult(
+                actual=u'aaa', expectation=expectation1,
                 plugin=MockPlugin()),
-            FailureResult(actual=u'b\nB\nb\n', expectation=expectation2,
+            FailureResult(
+                actual=u'b\nB\nb\n', expectation=expectation2,
                 plugin=MockPlugin()),
-            SuccessResult(actual=u'ccc', expectation=expectation3,
+            SuccessResult(
+                actual=u'ccc', expectation=expectation3,
                 plugin=MockPlugin())]
 
         ptr = PluginTestReporter(results)
 
-        self.assertResults(u'''
+        self.assertResults(
+            u'''
             01 – 02 Pass
 
             02 – 03 Fail
@@ -506,12 +551,14 @@ class TestPluginTestReporter(PluginTestCase):
 
         expectation = Expectation((1, 2), None, u'aaa')
         results = [
-            SuccessResult(actual=u'aaa', expectation=expectation,
+            SuccessResult(
+                actual=u'aaa', expectation=expectation,
                 plugin=MockPlugin(), stdin=stdin, stdout=stdout)]
 
         ptr = PluginTestReporter(results)
 
-        self.assertResults(u'''
+        self.assertResults(
+            u'''
             01 – 02 Pass
 
             stdin (sent to the plugin)
@@ -543,12 +590,14 @@ class TestPluginTestReporter(PluginTestCase):
 
         expectation = Expectation((1, 2), None, u'aaa')
         results = [
-            SuccessResult(actual=u'aaa', expectation=expectation,
+            SuccessResult(
+                actual=u'aaa', expectation=expectation,
                 plugin=MockPlugin(), stdin=stdin, stdout=stdout)]
 
         ptr = PluginTestReporter(results)
 
-        self.assertResults(u'''
+        self.assertResults(
+            u'''
             01 – 02 Pass
 
             stdin (sent to the plugin)
@@ -602,10 +651,12 @@ class TestGetExpectations(PluginTestCase):
                     Line 1
                 ''')))
 
-        self.assertIn('Error in "expectation" directive',
+        self.assertIn(
+            'Error in "expectation" directive',
             str(ec.exception))
         # And it's warning us about not being able to convert to an integer
-        self.assertIn('invalid literal for int()',
+        self.assertIn(
+            'invalid literal for int()',
             str(ec.exception))
 
     def test_expectation_no_settings(self):

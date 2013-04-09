@@ -17,7 +17,7 @@ from jig.plugins import (
 from jig.plugins.tools import update_plugins
 from jig.plugins.testrunner import (
     PluginTestRunner, PluginTestReporter,
-    FailureResult)
+    FailureResult, parse_range)
 
 _parser = argparse.ArgumentParser(
     description='Manage this repository\'s Jig plugins',
@@ -94,6 +94,11 @@ _testparser.add_argument(
     '--verbose', '-v',
     default=False, action='store_true',
     help='Print the input and output (stdin and stdout)')
+_testparser.add_argument(
+    '--range', '-r',
+    dest='range',
+    help='Run a subset of the tests, specified like [s]..[e]. Example -r '
+    '3..5 to run tests that have expectations for those changes.')
 _testparser.set_defaults(subcommand='test')
 
 
@@ -326,13 +331,17 @@ class Command(BaseCommand):
         Run the tests for a plugin.
         """
         plugin = argv.plugin
+        test_range = argv.range
         verbose = argv.verbose
 
         with self.out() as out:
+            if test_range:
+                test_range = parse_range(test_range)
+
             try:
                 ptr = PluginTestRunner(plugin)
 
-                results = ptr.run()
+                results = ptr.run(test_range=test_range)
 
                 reporter = PluginTestReporter(results)
 

@@ -93,6 +93,15 @@ class CommandError(JigException):
     pass
 
 
+class RangeError(JigException):
+
+    """
+    Raise when a given numbered test range is invalid.
+
+    """
+    hint = 'INVALID_RANGE'
+
+
 class ExpectationError(JigException):
 
     """

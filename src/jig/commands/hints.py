@@ -87,3 +87,14 @@ FORK_PROJECT_GITHUB = _hint(
 
     http://github.com/robmadole/jig
     """)
+
+INVALID_RANGE = _hint(
+    u"""
+    Ranges are formatted as a number followed by two dots and another number.
+    The first number specifies the start of the range. The second number
+    specifies the end.
+
+    To specify a range between 1 and 2 you would use "1..2".
+
+    You can also specify larger ranges like "3..7"
+    """)
