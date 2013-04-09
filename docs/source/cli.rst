@@ -179,7 +179,6 @@ it will attempt to clone it.
 
     $ jig plugin add http://github.com/robmadole/jig-plugins
 
-
 Or from local filesystem.
 
 .. code-block:: console
@@ -367,3 +366,22 @@ When you call this command, Jig will perform the same motions that happen with
 
     Ran 3 plugins
         Info 0 Warn 4 Stop 0
+
+If you only want to run a specific plugin, use the ``--plugin`` option.
+
+.. code-block:: console
+
+    $ jig runnow --plugin pyflakes
+    ▾  pyflakes
+
+    ⚠  line 1: a.py
+        'foo' imported but unused
+
+    ⚠  line 1: a.py
+        'bar' imported but unused
+
+    ⚠  line 1: a.py
+        'daz' imported but unused
+
+    Ran 1 plugins
+        Info 0 Warn 3 Stop 0
