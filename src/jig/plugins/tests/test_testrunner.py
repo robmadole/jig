@@ -227,6 +227,39 @@ class TestPluginTestRunner(PluginTestCase):
             results[0].expectation.output.strip())
         self.assertEqual((1, 2), results[0].expectation.range)
 
+    def test_specific_range(self):
+        """
+        Will run only a specific range of tests.
+        """
+        plugin_dir = create_plugin(self.plugindir, 'bundle', 'plugin')
+
+        self.add_timeline(plugin_dir, [('a.txt', 'a\n')])
+        self.add_timeline(plugin_dir, [('a.txt', 'aa\n')])
+        self.add_expectation(plugin_dir, u'''
+            .. expectation::
+                :from: 01
+                :to: 02
+
+                ▾  plugin
+
+                ✓  line 1: a.txt
+                    a is -
+
+                ✓  line 1: a.txt
+                    aa is +''')
+
+        ptr = PluginTestRunner(plugin_dir)
+
+        # An expectation exists for the following range
+        self.assertEqual(
+            1,
+            len(ptr.run(test_range=[(1, 2)])))
+
+        # An expectation does not exist for this one
+        self.assertEqual(
+            0,
+            len(ptr.run(test_range=[(2, 3)])))
+
     def test_failure_result(self):
         """
         Will run the tests and detect a failure result.

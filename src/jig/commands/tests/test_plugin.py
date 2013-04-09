@@ -2,6 +2,7 @@
 from os.path import dirname, isdir, isfile, join
 from os import makedirs
 from tempfile import mkdtemp
+from contextlib import nested
 
 from mock import Mock, patch
 
@@ -17,7 +18,7 @@ from jig.plugins.testrunner import (Expectation, SuccessResult,
 from jig.gitutils import clone
 from jig.commands import plugin
 from jig.commands.hints import (
-    FORK_PROJECT_GITHUB, NO_PLUGINS_INSTALLED, USE_RUNNOW)
+    FORK_PROJECT_GITHUB, NO_PLUGINS_INSTALLED, USE_RUNNOW, INVALID_RANGE)
 
 
 class TestPluginCommand(CommandTestCase, PluginTestCase):
@@ -455,6 +456,38 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             01 – 02 Pass
 
             Pass 1, Fail 0''', self.output)
+
+    def test_runs_specific_test(self):
+        """
+        Will run a specific test.
+        """
+        plugin_dir = create_plugin(mkdtemp(), template='python',
+            bundle='bundle', name='name')
+
+        with patch('jig.commands.plugin.PluginTestRunner') as ptr:
+            ptr.return_value = Mock()
+            ptr.return_value.run = Mock(return_value=[])
+
+            self.run_command('test -r 4..5 {0}'.format(plugin_dir))
+
+        ptr.return_value.run.assert_called_with(test_range=[(4, 5)])
+
+    def test_handles_range_error(self):
+        """
+        If an improper range is given, provides a helpful error message.
+        """
+        plugin_dir = create_plugin(mkdtemp(), template='python',
+            bundle='bundle', name='name')
+
+        with self.assertRaises(ForcedExit):
+            # Bad range "a.b"
+            self.run_command('test -r a.b {0}'.format(plugin_dir))
+
+        self.assertResults(
+            result_with_hint(
+                u'a.b is an invalid numbered test range',
+                INVALID_RANGE),
+            self.error)
 
     def test_plugin_test_failure(self):
         """

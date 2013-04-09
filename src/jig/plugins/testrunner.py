@@ -12,7 +12,7 @@ from docutils import nodes, core, io
 from docutils.parsers.rst import Directive, directives
 
 from jig.exc import (ExpectationNoTests, ExpectationFileNotFound,
-    ExpectationParsingError)
+    ExpectationParsingError, RangeError)
 from jig.conf import (CODEC, PLUGIN_EXPECTATIONS_FILENAME,
     PLUGIN_TESTS_DIRECTORY)
 from jig.tools import NumberedDirectoriesToGit, cwd_bounce, indent
@@ -40,6 +40,10 @@ RESULTS_SUMMARY_SIGNATURE_RE = re.compile(
     r'^.*Jig\ ran.*$', re.MULTILINE)
 RESULTS_SUMMARY_COUNT_RE = re.compile(
     r'^.*Info\ \d*\ Warn\ \d*\ Stop\ \d*$', re.MULTILINE)
+
+# Valid test ranges will match this
+RANGE_RE = re.compile(
+    r'^(\d+)\.\.(\d+)$')
 
 
 def get_expectations(input_string):
@@ -126,6 +130,40 @@ def get_expectations(input_string):
 
             yield Expectation(range=expectation.range, settings=settings,
                     output=expectation.rawsource)
+
+
+def parse_range(range_string):
+    """
+    Takes a range specified as a string and converts it to a list of tuples.
+
+    Example:
+
+        >>> parse_range('2..6')
+        [(2, 3), (3, 4), (4, 5), (5, 6)]
+
+    :param str range_string: like ``3..4`` or ``1..5``
+    :rtype list:
+    """
+    match = RANGE_RE.match(range_string)
+
+    if not match:
+        raise RangeError(
+            '{} is an invalid numbered test range'.format(
+                range_string))
+
+    start, end = match.groups()
+
+    if not start < end:
+        raise RangeError(
+            '{} must be less than {} to be valid'.format(
+                start, end))
+
+    parsed_range = []
+
+    for i in range(int(start), int(end)):
+        parsed_range.append((i, i + 1))
+
+    return parsed_range
 
 
 class Result(tuple):
@@ -263,12 +301,14 @@ class PluginTestRunner(object):
             raise ExpectationFileNotFound(
                 'Missing expectation file: {0}.'.format(expect_filename))
 
-    def run(self):
+    def run(self, test_range=None):
         """
         Run the tests for this plugin.
 
         Returns a list of :py:class:`Result` objects which represent the
         results from the test run.
+
+        :param list test_range: None or the parsed range from :function:`parse_range`
         """
         # Use an empty config, we are not going to save this to disk
         pm = PluginManager(SafeConfigParser())
@@ -287,6 +327,11 @@ class PluginTestRunner(object):
         for exp in self.expectations:
             # Make sure that the range is off by 1
             assert exp.range[1] == exp.range[0] + 1
+
+            # Is this expectation in the specified test range?
+            if test_range and (exp.range not in test_range):
+                # Skip this one, it's not one of the tests we should be running
+                continue
 
             # Update the plugin config (settings) if available
             if exp.settings:
