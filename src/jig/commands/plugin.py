@@ -86,7 +86,7 @@ _createparser.set_defaults(subcommand='create')
 
 _testparser = _subparsers.add_parser(
     'test', help='run a suite of plugin tests',
-    usage='jig plugin test [-h] PLUGIN')
+    usage='jig plugin test [-h] [-r RANGE] PLUGIN')
 _testparser.add_argument(
     'plugin', nargs='?', default='.',
     help='Path to the plugin directory')

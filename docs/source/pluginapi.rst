@@ -92,14 +92,18 @@ Tests are ran using Jig's command line tool.
 .. code-block:: console
 
     $ jig plugin test -h
-    usage: jig plugin test [-h] PLUGIN
+    usage: jig plugin test [-h] [-r RANGE] PLUGIN
 
     positional arguments:
-      plugin         Path to the plugin directory
+      plugin                Path to the plugin directory
 
     optional arguments:
-      -h, --help     show this help message and exit
-      --verbose, -v  Print the input and output (stdin and stdout)
+      -h, --help            show this help message and exit
+      --verbose, -v         Print the input and output (stdin and stdout)
+      --range RANGE, -r RANGE
+                            Run a subset of the tests, specified like [s]..[e].
+                            Example -r 3..5 to run tests that have expectations
+                            for those changes.
 
 Create a plugin
 ~~~~~~~~~~~~~~~
@@ -201,7 +205,7 @@ Now that we have a test fixture as a Git repository, run the tests.
 
 .. code-block:: console
 
-    $ jig plugin tests bright-side
+    $ jig plugin test bright-side
     Missing expectation file: bright-side/tests/expect.rst.
 
 Still doesn't work. But we're getting closer.
