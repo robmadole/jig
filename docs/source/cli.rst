@@ -279,7 +279,7 @@ starting point to write whatever you wish.
 .. code-block:: console
 
     $ jig plugin create --help
-    usage: jig plugin create [-h] [-l] [-d] NAME BUNDLE
+    usage: jig plugin create [-h] [-l TEMPLATE] [-d DIR] NAME BUNDLE
 
     positional arguments:
       name                  Plugin name
@@ -330,15 +330,17 @@ For this use case, ``runnow`` exists.
 .. code-block:: console
 
     $ jig runnow --help
-    usage: jig runnow [-h] [PATH]
+    usage: jig runnow [-h] [-p PLUGIN] [PATH]
 
     Run all plugins and show the results
 
     positional arguments:
-      path        Path to the Git repository
+      path                  Path to the Git repository
 
     optional arguments:
-      -h, --help  show this help message and exit
+      -h, --help            show this help message and exit
+      --plugin PLUGIN, -p PLUGIN
+                            Only run this specific named plugin
 
 When you call this command, Jig will perform the same motions that happen with
 ``git commit`` is ran.

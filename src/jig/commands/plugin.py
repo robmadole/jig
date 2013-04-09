@@ -11,74 +11,87 @@ from jig.conf import JIG_DIR_NAME, JIG_PLUGIN_DIR
 from jig.exc import CommandError, ExpectationError
 from jig.gitutils import clone
 from jig.tools import indent
-from jig.plugins import (get_jigconfig, set_jigconfig, PluginManager,
+from jig.plugins import (
+    get_jigconfig, set_jigconfig, PluginManager,
     create_plugin, available_templates)
 from jig.plugins.tools import update_plugins
-from jig.plugins.testrunner import (PluginTestRunner, PluginTestReporter,
+from jig.plugins.testrunner import (
+    PluginTestRunner, PluginTestReporter,
     FailureResult)
 
 _parser = argparse.ArgumentParser(
     description='Manage this repository\'s Jig plugins',
     usage='jig plugin [-h] ACTION')
 
-_subparsers = _parser.add_subparsers(title='actions',
+_subparsers = _parser.add_subparsers(
+    title='actions',
     description='available commands to manage plugins')
 
-_listparser = _subparsers.add_parser('list',
-    help='list installed plugins',
+_listparser = _subparsers.add_parser(
+    'list', help='list installed plugins',
     usage='jig plugin list [-h] [-r GITREPO] [PATH]')
-_listparser.add_argument('--gitrepo', '-r', default='.', dest='path',
+_listparser.add_argument(
+    '--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _listparser.set_defaults(subcommand='list')
 
-_addparser = _subparsers.add_parser('add',
-    help='add a plugin',
+_addparser = _subparsers.add_parser(
+    'add', help='add a plugin',
     usage='jig plugin add [-h] [-r GITREPO] URL|URL@BRANCH|PATH')
-_addparser.add_argument('plugin',
+_addparser.add_argument(
+    'plugin',
     help='URL or path to the plugin directory, if URL you can '
     'specify @BRANCHNAME to clone other than the default')
-_addparser.add_argument('--gitrepo', '-r', default='.', dest='path',
+_addparser.add_argument(
+    '--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _addparser.set_defaults(subcommand='add')
 
-_updateparser = _subparsers.add_parser('update',
-    help='update all installed plugins',
+_updateparser = _subparsers.add_parser(
+    'update', help='update all installed plugins',
     usage='jig plugin update [-h] [-r GITREPO]')
-_updateparser.add_argument('--gitrepo', '-r', default='.', dest='path',
+_updateparser.add_argument(
+    '--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _updateparser.set_defaults(subcommand='update')
 
-_removeparser = _subparsers.add_parser('remove',
-    help='remove an installed plugin',
+_removeparser = _subparsers.add_parser(
+    'remove', help='remove an installed plugin',
     usage='jig plugin remove [-h] [-r GITREPO] NAME [BUNDLE]')
-_removeparser.add_argument('name',
-    help='Plugin name')
-_removeparser.add_argument('bundle', nargs='?', default=None,
+_removeparser.add_argument(
+    'name', help='Plugin name')
+_removeparser.add_argument(
+    'bundle', nargs='?', default=None,
     help='Bundle name')
-_removeparser.add_argument('--gitrepo', '-r', default='.', dest='path',
+_removeparser.add_argument(
+    '--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _removeparser.set_defaults(subcommand='remove')
 
-_createparser = _subparsers.add_parser('create',
-    help='create a new plugin',
-    usage='jig plugin create [-h] [-l] [-d] NAME BUNDLE')
-_createparser.add_argument('name',
-    help='Plugin name')
-_createparser.add_argument('bundle',
-    help='Bundle name')
-_createparser.add_argument('--language', '-l', dest='template',
+_createparser = _subparsers.add_parser(
+    'create', help='create a new plugin',
+    usage='jig plugin create [-h] [-l TEMPLATE] [-d DIR] NAME BUNDLE')
+_createparser.add_argument(
+    'name', help='Plugin name')
+_createparser.add_argument(
+    'bundle', help='Bundle name')
+_createparser.add_argument(
+    '--language', '-l', dest='template',
     default='python', help='Scripting language: {0}'.format(
         ', '.join(available_templates())))
-_createparser.add_argument('--dir', '-d', default='.',
+_createparser.add_argument(
+    '--dir', '-d', default='.',
     help='Create in this directory')
 _createparser.set_defaults(subcommand='create')
 
-_testparser = _subparsers.add_parser('test',
-    help='run a suite of plugin tests',
+_testparser = _subparsers.add_parser(
+    'test', help='run a suite of plugin tests',
     usage='jig plugin test [-h] PLUGIN')
-_testparser.add_argument('plugin', nargs='?', default='.',
+_testparser.add_argument(
+    'plugin', nargs='?', default='.',
     help='Path to the plugin directory')
-_testparser.add_argument('--verbose', '-v',
+_testparser.add_argument(
+    '--verbose', '-v',
     default=False, action='store_true',
     help='Print the input and output (stdin and stdout)')
 _testparser.set_defaults(subcommand='test')
@@ -176,7 +189,8 @@ class Command(BaseCommand):
             set_jigconfig(path, pm.config)
 
             for p in added:
-                out.append('Added plugin {0} in bundle {1} to the '
+                out.append(
+                    'Added plugin {0} in bundle {1} to the '
                     'repository.'.format(p.name, p.bundle))
 
             out.extend(USE_RUNNOW)
@@ -264,7 +278,8 @@ class Command(BaseCommand):
             if name in plugins and not bundle:
                 if len(plugins[name]) > 1:
                     # There are more than one plugin by this name
-                    raise CommandError('More than one plugin has the name of '
+                    raise CommandError(
+                        'More than one plugin has the name of '
                         '{0}. Use the list command to see installed '
                         'plugins.'.format(name))
 
@@ -292,14 +307,16 @@ class Command(BaseCommand):
                     hint=FORK_PROJECT_GITHUB)
 
             try:
-                plugin_dir = create_plugin(save_dir, bundle, name,
+                plugin_dir = create_plugin(
+                    save_dir, bundle, name,
                     template=template)
 
                 out.append('Created plugin as {0}'.format(plugin_dir))
             except OSError as ose:
                 if ose.errno == errno.EEXIST:
                     # File exists
-                    raise CommandError('A plugin with this name already '
+                    raise CommandError(
+                        'A plugin with this name already '
                         'exists in this directory: {0}.'.format(save_dir))
                 # Something else, raise it again
                 raise ose   # pragma: no cover

@@ -5,9 +5,13 @@ from jig.runner import Runner
 
 _parser = argparse.ArgumentParser(
     description='Run all plugins and show the results',
-    usage='jig runnow [-h] [PATH]')
+    usage='jig runnow [-h] [-p PLUGIN] [PATH]')
 
-_parser.add_argument('path', nargs='?', default='.',
+_parser.add_argument(
+    '--plugin', '-p',
+    help='Only run this specific named plugin')
+_parser.add_argument(
+    'path', nargs='?', default='.',
     help='Path to the Git repository')
 
 
@@ -20,4 +24,4 @@ class Command(BaseCommand):
         # Make the runner use our view
         runner = Runner(view=self.view)
 
-        runner.fromhook(path, interactive=False)
+        runner.fromhook(path, plugin=argv.plugin, interactive=False)
