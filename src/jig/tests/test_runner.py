@@ -509,6 +509,33 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         # We should see it being removed
         self.assertEqual({u'a.txt': [[1, u'warn', u'a is -']]}, stdout)
 
+    def test_specific_plugin(self):
+        """
+        Filter to results to a specific file.
+        """
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
+
+        self.commit(
+            self.gitrepodir,
+            name='a.txt',
+            content='a')
+
+        self.stage(
+            self.gitrepodir,
+            name='b.txt',
+            content='b')
+
+        # We can filter to the one that is already installed
+        self.assertEqual(
+            1,
+            len(self.runner.results(self.gitrepodir, plugin='plugin01')))
+
+        # If we try to filter on a non-existent plugin we get no results
+        self.assertEqual(
+            0,
+            len(self.runner.results(self.gitrepodir, plugin='notinstalled')))
+
     def test_handles_non_json_stdout(self):
         """
         Supports non-JSON output from the plugin.

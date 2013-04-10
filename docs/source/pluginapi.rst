@@ -22,7 +22,7 @@ will do this for you. Read on.)
 
 The :file:`pre-commit` is your script and :file:`config.cfg` contains info about your plugin.
 
-It will recieve JSON data through the ``stdin`` stream. It's expected to write
+It will receive JSON data through the ``stdin`` stream. It's expected to write
 to ``stdout`` if it has anything to say (or ``stderr`` if it runs into
 problems). Although a plugin doesn't have to write anything.
 
@@ -92,14 +92,18 @@ Tests are ran using Jig's command line tool.
 .. code-block:: console
 
     $ jig plugin test -h
-    usage: jig plugin test [-h] PLUGIN
+    usage: jig plugin test [-h] [-r RANGE] PLUGIN
 
     positional arguments:
-      plugin         Path to the plugin directory
+      plugin                Path to the plugin directory
 
     optional arguments:
-      -h, --help     show this help message and exit
-      --verbose, -v  Print the input and output (stdin and stdout)
+      -h, --help            show this help message and exit
+      --verbose, -v         Print the input and output (stdin and stdout)
+      --range RANGE, -r RANGE
+                            Run a subset of the tests, specified like [s]..[e].
+                            Example -r 3..5 to run tests that have expectations
+                            for those changes.
 
 Create a plugin
 ~~~~~~~~~~~~~~~
@@ -109,7 +113,7 @@ By using :ref:`templates <pluginapi-pre-commit-templates>`, Jig can get you goin
 Let's rewrite that Monty Python lyric plugin in...well Python.
 
 We'll call the plugin ``bright-side`` and tell Jig the bundle name is
-``pythonlyrics``. (Afterall we'll probably be creating more of these, might as
+``pythonlyrics``. (After all we'll probably be creating more of these, might as
 well bundle them together.)
 
 .. code-block:: console
@@ -201,7 +205,7 @@ Now that we have a test fixture as a Git repository, run the tests.
 
 .. code-block:: console
 
-    $ jig plugin tests bright-side
+    $ jig plugin test bright-side
     Missing expectation file: bright-side/tests/expect.rst.
 
 Still doesn't work. But we're getting closer.
@@ -225,7 +229,7 @@ Create :file:`bright-side/tests/expect.rst` and edit it to read:
         :from: 01
         :to: 02
 
-reStructuredText is a plaintext markup language. It's similar to Markdown or a
+reStructuredText is a plain text markup language. It's similar to Markdown or a
 Wiki markup language.
 
 Let's run this test and we can see how this document serves as the description
@@ -890,7 +894,7 @@ generated warnings or stop messages.
 Exiting with 1
 ..............
 
-If your plugin fails to function as expected, it should exit witth **1**. This
+If your plugin fails to function as expected, it should exit with **1**. This
 indicates to Jig that a problem exists and the output, if any, from the plugin
 is not a normal collection of messages that Jig will understand.
 

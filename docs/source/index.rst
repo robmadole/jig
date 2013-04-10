@@ -39,6 +39,14 @@ Change directories into your Git repository and initialize it to use Jig.
     $ jig init .
     Git repository has been initialized for use with Jig.
 
+    You should tell Git to ignore the new .jig directory. Run this:
+
+        $ echo ".jig" >> .gitignore
+
+    Next install some plugins. Jig has a standard set you may like:
+
+        $ jig plugin add http://github.com/robmadole/jig-plugins
+
 Install some Jig plugins.
 
 .. code-block:: console
@@ -50,7 +58,15 @@ Install some Jig plugins.
     Added plugin whitespace in bundle jig-plugins to the repository.
     Added plugin woops in bundle jig-plugins to the repository.
 
-Stage some changes and then commit.
+    Run the plugins in the current repository with this command:
+
+        $ jig runnow
+
+    Jig works off of your staged files in the Git repository index.
+    You place things in the index with `git add`. You will need to stage
+    some files before you can run Jig.
+
+    Stage some changes and then commit.
 
 .. code-block:: console
 
