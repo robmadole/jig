@@ -150,14 +150,14 @@ def parse_range(range_string):
 
     if not match:
         raise RangeError(
-            '{} is an invalid numbered test range'.format(
+            '{0} is an invalid numbered test range'.format(
                 range_string))
 
     start, end = match.groups()
 
     if not start < end:
         raise RangeError(
-            '{} must be less than {} to be valid'.format(
+            '{0} must be less than {1} to be valid'.format(
                 start, end))
 
     parsed_range = []

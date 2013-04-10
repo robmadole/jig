@@ -1,10 +1,9 @@
-from unittest import TestCase
-
 from jig.exc import RangeError
+from jig.tests.testcase import JigTestCase
 from jig.plugins.testrunner import parse_range
 
 
-class TestParseRange(TestCase):
+class TestParseRange(JigTestCase):
 
     """
     Parses a string range into a list.
