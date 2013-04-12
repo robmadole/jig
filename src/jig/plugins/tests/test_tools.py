@@ -1,7 +1,6 @@
 from stat import S_IXUSR
 from os import rmdir, stat, makedirs
 from os.path import isfile, join
-from textwrap import dedent
 from tempfile import mkdtemp
 from calendar import timegm
 from ConfigParser import ConfigParser
@@ -10,7 +9,7 @@ from datetime import datetime, timedelta
 from git import Git
 from mock import patch
 
-from jig.tests.testcase import JigTestCase, PluginTestCase
+from jig.tests.testcase import JigTestCase, PluginTestCase, cd_gitrepo
 from jig.exc import (
     NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized)
@@ -19,7 +18,7 @@ from jig.plugins import (
     PluginManager, create_plugin, available_templates)
 from jig.plugins.tools import (
     update_plugins, last_checked_for_updates, set_checked_for_updates,
-    plugins_have_updates)
+    plugins_have_updates, read_plugin_list)
 
 
 class TestPluginConfig(JigTestCase):
@@ -350,3 +349,53 @@ class TestCheckedForUpdates(PluginTestCase):
         date2 = last_checked_for_updates(self.gitrepodir)
 
         self.assertEqual(date1, date2)
+
+
+class TestReadPluginList(PluginTestCase):
+
+    """
+    Can read a file that will contain a list of plugin locations.
+
+    """
+    @cd_gitrepo
+    def test_file_does_not_exist(self):
+        """
+        Specified file does not exist.
+        """
+        with self.assertRaises(IOError) as ec:
+            read_plugin_list('not_a_file.txt')
+
+        self.assertEqual(
+            'No such file or directory',
+            ec.exception.strerror)
+
+    @cd_gitrepo
+    def test_is_directory(self):
+        """
+        If the path is actually a directory.
+        """
+        self.commit(
+            self.gitrepodir, 'a/b.txt',
+            'foo\nbar\nbaz\n')
+
+        with self.assertRaises(IOError) as ec:
+            read_plugin_list('a')
+
+        self.assertEqual(
+            'Is a directory',
+            ec.exception.strerror)
+
+    @cd_gitrepo
+    def test_reads_file(self):
+        """
+        Can read the file and return its contents.
+        """
+        self.commit(
+            self.gitrepodir, 'a/b.txt',
+            'foo\nbar\nbaz\n')
+
+        plugin_list = read_plugin_list('a/b.txt')
+
+        self.assertEqual(
+            [u'foo', u'bar', u'baz'],
+            plugin_list)
