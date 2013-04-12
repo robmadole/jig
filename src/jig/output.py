@@ -105,7 +105,7 @@ def utf8_writer(filelike):
 
     :param file filelike: the file-like object to wrap
     """
-    return codecs.getwriter('utf-8')(filelike)
+    return codecs.getwriter('utf_8')(filelike)
 
 
 class Message(object):
@@ -130,7 +130,8 @@ class Message(object):
 
     def __repr__(self):
         reprstr = '<{cls} type="{t}", body={b}, file={f}, line={l}>'
-        return reprstr.format(cls=self.__class__.__name__,
+        return reprstr.format(
+            cls=self.__class__.__name__,
             t=self.type, b=repr(self.body), f=repr(self.file), l=self.line)
 
     def __eq__(self, other):
@@ -177,7 +178,7 @@ class ConsoleView(object):
 
     """
     def __init__(self, collect_output=False, exit_on_exception=True,
-            stdout=None, stderr=None):
+                 stdout=None, stderr=None):
         # Do we collect output? False means we print it out
         self.collect_output = collect_output
         self.exit_on_exception = exit_on_exception
@@ -235,7 +236,9 @@ class ConsoleView(object):
             # Nothing to report
             with self.out() as out:
                 form = u'plugin' if len(plugins) == 1 else u'plugins'
-                out.append(u'{ok_sign}  Jig ran {plen} {form}, nothing to report'.format(
+                out.append(
+                    u'{ok_sign}  Jig ran {plen} {form}, '
+                    u'nothing to report'.format(
                     ok_sign=OK_SIGN, plen=len(plugins), form=form))
                 return
 
@@ -341,11 +344,14 @@ class ResultsCollater(object):
     """
     def __init__(self, results):
         # Decorate our message methods
-        setattr(self, '_commit_specific_message',
+        setattr(
+            self, '_commit_specific_message',
             self.iterresults(self._commit_specific_message))
-        setattr(self, '_file_specific_message',
+        setattr(
+            self, '_file_specific_message',
             self.iterresults(self._file_specific_message))
-        setattr(self, '_line_specific_message',
+        setattr(
+            self, '_line_specific_message',
             self.iterresults(self._line_specific_message))
 
         self._results = results
@@ -546,7 +552,8 @@ class ResultsCollater(object):
                     if not msg[1]:
                         continue
                     # In the format of [TYPE, BODY]
-                    yield Message(plugin, body=msg[1], type=msg[0],
+                    yield Message(
+                        plugin, body=msg[1], type=msg[0],
                         file=filename)
                     continue
                 if len(msg) == 3:
@@ -556,7 +563,8 @@ class ResultsCollater(object):
                     if msg[0] is not None:
                         # This is line specific, skip this
                         continue
-                    yield Message(plugin, body=msg[2], type=msg[1],
+                    yield Message(
+                        plugin, body=msg[2], type=msg[1],
                         file=filename)
                     continue
 
@@ -600,6 +608,7 @@ class ResultsCollater(object):
                     # The body is empty
                     continue
                 # In the format of [LINE, TYPE, BODY]
-                yield Message(plugin, body=msg[2], type=msg[1],
+                yield Message(
+                    plugin, body=msg[2], type=msg[1],
                     file=filename, line=msg[0])
                 continue

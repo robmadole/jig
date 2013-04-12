@@ -1,15 +1,10 @@
 import argparse
 import errno
-from os.path import join
-from urlparse import urlparse
-from uuid import uuid4 as uuid
 
-from jig.commands.base import BaseCommand
+from jig.commands.base import BaseCommand, add_plugin
 from jig.commands.hints import (
     NO_PLUGINS_INSTALLED, USE_RUNNOW, FORK_PROJECT_GITHUB)
-from jig.conf import JIG_DIR_NAME, JIG_PLUGIN_DIR
 from jig.exc import CommandError, ExpectationError
-from jig.gitutils import clone
 from jig.tools import indent
 from jig.plugins import (
     get_jigconfig, set_jigconfig, PluginManager,
@@ -189,7 +184,7 @@ class Command(BaseCommand):
 
             pm = PluginManager(config)
 
-            added = self._add_path_or_url(pm, plugin, path)
+            added = add_plugin(pm, plugin, path)
 
             set_jigconfig(path, pm.config)
 
@@ -199,35 +194,6 @@ class Command(BaseCommand):
                     'repository.'.format(p.name, p.bundle))
 
             out.extend(USE_RUNNOW)
-
-    def _add_path_or_url(self, pm, plugin, gitdir):
-        """
-        Adds a plugin by filename or URL.
-
-        Where ``pm`` is an instance of :py:class:`PluginManager` and ``plugin``
-        is either the URL to a Git Jig plugin repository or the file name of a
-        Jig plugin. The ``gitdir`` is the path to the Git repository which will
-        be used to find the :file:`.jig/plugins` directory.
-        """
-        # If this looks like a URL we will clone it first
-        url = urlparse(plugin)
-
-        if url.scheme:
-            # This is a URL, let's clone it first into .jig/plugins
-            # directory.
-            plugin_parts = plugin.rsplit('@', 1)
-
-            branch = None
-            try:
-                branch = plugin_parts[1]
-            except IndexError:
-                pass
-
-            to_dir = join(gitdir, JIG_DIR_NAME, JIG_PLUGIN_DIR, uuid().hex)
-            clone(plugin_parts[0], to_dir, branch)
-            plugin = to_dir
-
-        return pm.add(plugin)
 
     def update(self, argv):
         """
