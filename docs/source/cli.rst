@@ -17,7 +17,8 @@ Jig's help menu is available by running ``jig`` or ``jig --help``.
 
     jig commands:
       init        Initialize a Git repository for use with Jig
-      plugin      Manage jig plugins
+      install     Install a list of Jig plugins from a file
+      plugin      Manage this repository's Jig plugins
       runnow      Run all plugins and show the results
 
     See `jig COMMAND --help` for more information
@@ -53,17 +54,19 @@ The initialization process is quick and painless.
 
     $ mkdir gitrepo; cd $_
     $ git init .; jig init .
+    Initialized empty Git repository in /Users/robmadole/gitrepo/.git/
     Git repository has been initialized for use with Jig.
 
     You should tell Git to ignore the new .jig directory. Run this:
 
         $ echo ".jig" >> .gitignore
 
-    Next install some plugins. Jig has a standard set you may like:
+    Next install some plugins. Jig has a common set you may like:
 
-        $ jig plugin add http://github.com/robmadole/jig-plugins
+        $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+        $ jig install .jigplugins.txt
 
-    If there is a pre-existing hook, Jig will not overwrite it.
+If there is a pre-existing hook, Jig will not overwrite it.
 
 .. code-block:: console
 
@@ -80,14 +83,84 @@ The initialization process is quick and painless.
 
 .. _cli-plugin:
 
-Manage your plugins
--------------------
+Install a list of plugins from a file
+-------------------------------------
 
 Jig is useless without plugins to perform some work. Plugins can do anything
 the author chooses.
 
-More than one plugin can be installed. They can be added or removed. You can
-even use Jig to run :ref:`automated tests <pluginapi-testing>` on your plugins.
+Plugins can be installed one at a time or from a file that lists each of many
+plugins. They can be added or removed. You can even use Jig to run
+:ref:`automated tests <pluginapi-testing>` on your plugins.
+
+To install from a file you use the ``jig install`` command.
+
+.. hint:: To find some handy examples of plugins that are useful based on the
+          type of project you have, checkout https://github.com/robmadole/jig-plugins/tree/lists
+
+.. _cli-install:
+
+.. code-block:: console
+
+    $ jig install -h
+    usage: jig install [-h] [-r GITREPO] [PLUGINSFILE]
+
+    Install a list of Jig plugins from a file
+
+    positional arguments:
+      pluginsfile           Path to a file containing the location of plugins to
+                            install, each line of the file should contain
+                            URL|URL@BRANCH|PATH
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --gitrepo PATH, -r PATH
+                            Path to the Git repository, default current directory
+
+For this example we can start with an example Python project list.
+
+.. code-block:: console
+
+    $ curl https://raw.github.com/robmadole/jig-plugins/lists/python.txt > .jigplugins.txt
+
+After this is downloaded you can see that each line simply points to a specific
+plugin.
+
+.. code-block:: console
+
+    $ cat .jigplugins.txt
+    http://github.com/robmadole/jig-plugins@pep8-checker
+    http://github.com/robmadole/jig-plugins@pyflakes
+    http://github.com/robmadole/jig-plugins@woops
+    http://github.com/robmadole/jig-plugins@whitespace
+
+Install the plugins:
+
+.. code-block:: console
+
+    $ jig install .jigplugins.txt
+    From http://github.com/robmadole/jig-plugins@pep8-checker:
+     - Added plugin pep8-checker in bundle jig-plugins
+    From http://github.com/robmadole/jig-plugins@pyflakes:
+     - Added plugin pyflakes in bundle jig-plugins
+    From http://github.com/robmadole/jig-plugins@woops:
+     - Added plugin woops in bundle jig-plugins
+    From http://github.com/robmadole/jig-plugins@whitespace:
+     - Added plugin whitespace in bundle jig-plugins
+
+    Run the plugins in the current repository with this command:
+
+        $ jig runnow
+
+    Jig works off of your staged files in the Git repository index.
+    You place things in the index with `git add`. You will need to stage
+    some files before you can run Jig.
+
+Manage your plugins
+-------------------
+
+To install just one plugin or otherwise work with existing plugins, your the
+``jig plugin`` command.
 
 .. code-block:: console
 

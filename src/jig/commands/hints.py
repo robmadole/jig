@@ -10,9 +10,10 @@ AFTER_INIT = _hint(
 
         $ echo ".jig" >> .gitignore
 
-    Next install some plugins. Jig has a standard set you may like:
+    Next install some plugins. Jig has a common set you may like:
 
-        $ jig plugin add http://github.com/robmadole/jig-plugins
+        $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+        $ jig install .jigplugins.txt
     """)
 
 PRE_COMMIT_EXISTS = _hint(
@@ -61,13 +62,16 @@ ALREADY_INITIALIZED = _hint(
 
 NO_PLUGINS_INSTALLED = _hint(
     u"""
-    You can install plugins by running:
+    You can add plugins one at a time by running:
 
         $ jig plugin add URL|URL@BRANCH|PATH
 
-    There is a standard set available you can try:
+    You can also install a list of plugins from a file:
 
-        $ jig plugin add http://github.com/robmadole/jig-plugins
+        $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+        $ jig install .jigplugins.txt
+
+    It's a good idea to add .jigplugins.txt to your Git repository after you are done.
     """)
 
 USE_RUNNOW = _hint(

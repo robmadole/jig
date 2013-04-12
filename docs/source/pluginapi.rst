@@ -629,6 +629,8 @@ Now that we are familiar with the input format, it's time to improve our
 :file:`pre-commit` script and give it a little more whizbang by specifying
 output.
 
+.. _pluginapi-types:
+
 Info, warnings, and stops
 .........................
 

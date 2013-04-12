@@ -9,13 +9,13 @@ from jig.commands.hints import USE_RUNNOW
 
 _parser = argparse.ArgumentParser(
     description='Install a list of Jig plugins from a file',
-    usage='jig install [-h] [-r GITREPO] [PLUGINS]')
+    usage='jig install [-h] [-r GITREPO] [PLUGINSFILE]')
 
 _parser.add_argument(
     '--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
 _parser.add_argument(
-    'plugins',
+    'pluginsfile',
     help='Path to a file containing the location of plugins to install, '
     'each line of the file should contain URL|URL@BRANCH|PATH')
 
@@ -25,11 +25,11 @@ class Command(BaseCommand):
 
     def process(self, argv):
         path = argv.path
-        plugins = argv.plugins
+        plugins_file = argv.pluginsfile
 
         with self.out() as out:
             try:
-                plugin_list = read_plugin_list(plugins)
+                plugin_list = read_plugin_list(plugins_file)
             except IOError as e:
                 # Grab the human-readable part of the IOError and raise that
                 raise PluginError(e[1])

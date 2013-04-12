@@ -47,9 +47,10 @@ If you haven't, :ref:`install Jig now <install>`.
 
         $ echo ".jig" >> .gitignore
 
-    Next install some plugins. Jig has a standard set you may like:
+    Next install some plugins. Jig has a common set you may like:
 
-        $ jig plugin add http://github.com/robmadole/jig-plugins
+        $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+        $ jig install .jigplugins.txt
 
 If you're curious, you can :ref:`see what this thing has done
 <development-plumbing>` to your repository.
@@ -71,12 +72,8 @@ Jig uses "plugins" to do the real work. Your Jig config file (in
 
 .. code-block:: console
 
-    $ jig plugin add http://github.com/robmadole/jig-plugins
-    Added plugin jshint in bundle jig-plugins to the repository.
+    $ jig plugin add http://github.com/robmadole/jig-plugins@pep8-checker
     Added plugin pep8-checker in bundle jig-plugins to the repository.
-    Added plugin pyflakes in bundle jig-plugins to the repository.
-    Added plugin whitespace in bundle jig-plugins to the repository.
-    Added plugin woops in bundle jig-plugins to the repository.
 
     Run the plugins in the current repository with this command:
 
@@ -116,19 +113,8 @@ With our staged file, we're ready to commit.
         import this; import that; import other
          - E702 multiple statements on one line (semicolon)
 
-    ▾  pyflakes
-
-    ⚠  line 1: myapp.py
-        'this' imported but unused
-
-    ⚠  line 1: myapp.py
-        'other' imported but unused
-
-    ⚠  line 1: myapp.py
-        'that' imported but unused
-
-       Jig ran 5 plugins
-        Info 0 Warn 4 Stop 0
+       Jig ran 1 plugins
+        Info 0 Warn 1 Stop 0
 
     Commit anyway (hit "c"), or stop (hit "s"):
 
@@ -148,15 +134,7 @@ Plugins will sometimes have settings that you can configure. Edit the
     path = ../jig-plugins/pep8-checker
     default_type = warn
 
-    [plugin:jig-plugins:pyflakes]
-    path = ../jig-plugins/pyflakes
-
-    [plugin:jig-plugins:whitespace]
-    path = ../jig-plugins/whitespace
-
-    [plugin:jig-plugins:woops]
-    path = ../jig-plugins/woops
-    check_windows_newlines = yes
+See information about the :ref:`types of messages <pluginapi-types>` that jig supports.
 
 Write your own plugins
 ----------------------
