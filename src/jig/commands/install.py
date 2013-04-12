@@ -32,7 +32,7 @@ class Command(BaseCommand):
                 plugin_list = read_plugin_list(plugins)
             except IOError as e:
                 # Grab the human-readable part of the IOError and raise that
-                raise PluginError(e.strerror)
+                raise PluginError(e[1])
 
             for plugin in plugin_list:
                 config = get_jigconfig(path)
@@ -48,7 +48,7 @@ class Command(BaseCommand):
 
                 set_jigconfig(path, pm.config)
 
-                out.append('From {}:'.format(plugin))
+                out.append('From {0}:'.format(plugin))
                 for p in added:
                     out.append(
                         ' - Added plugin {0} in bundle {1}'.format(

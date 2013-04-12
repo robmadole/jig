@@ -136,12 +136,12 @@ class TestAddPlugin(JigTestCase):
         # Since this was a URL clone was called with the full URL
         self.clone.assert_called_with(
             'http://a.b/c',
-            '{}/.jig/plugins/{}'.format(self.gitrepodir, MockUUID.hex),
+            '{0}/.jig/plugins/{1}'.format(self.gitrepodir, MockUUID.hex),
             None)
 
         # The plugin manager was given the newly cloned location
         self.pm.add.assert_called_with(
-            '{}/.jig/plugins/{}'.format(self.gitrepodir, MockUUID.hex))
+            '{0}/.jig/plugins/{1}'.format(self.gitrepodir, MockUUID.hex))
 
         # Since things went well, the cleanup function was not ran
         self.assertFalse(self.rmtree.called)
@@ -155,7 +155,7 @@ class TestAddPlugin(JigTestCase):
         # Since this was a URL clone was called with the full URL
         self.clone.assert_called_with(
             'http://a.b/c',
-            '{}/.jig/plugins/{}'.format(self.gitrepodir, MockUUID.hex),
+            '{0}/.jig/plugins/{1}'.format(self.gitrepodir, MockUUID.hex),
             'branch')
 
     def test_cleanup_on_error_with_url(self):
@@ -169,4 +169,4 @@ class TestAddPlugin(JigTestCase):
             add_plugin(self.pm, 'http://a.b/c', self.gitrepodir)
 
         self.rmtree.assert_called_with(
-            '{}/.jig/plugins/{}'.format(self.gitrepodir, MockUUID.hex))
+            '{0}/.jig/plugins/{1}'.format(self.gitrepodir, MockUUID.hex))

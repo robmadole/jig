@@ -367,7 +367,7 @@ class TestReadPluginList(PluginTestCase):
 
         self.assertEqual(
             'No such file or directory',
-            ec.exception.strerror)
+            ec.exception[1])
 
     @cd_gitrepo
     def test_is_directory(self):
@@ -383,7 +383,7 @@ class TestReadPluginList(PluginTestCase):
 
         self.assertEqual(
             'Is a directory',
-            ec.exception.strerror)
+            ec.exception[1])
 
     @cd_gitrepo
     def test_reads_file(self):
