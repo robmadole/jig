@@ -1,6 +1,8 @@
 import argparse
 from os.path import join
 from ConfigParser import SafeConfigParser
+from collections import namedtuple
+from textwrap import TextWrapper
 
 from jig.conf import PLUGIN_CONFIG_FILENAME
 from jig.exc import CommandError, ConfigKeyInvalid
@@ -25,6 +27,14 @@ _listparser.add_argument(
     help='Path to the Git repository, default current directory')
 _listparser.set_defaults(subcommand='list')
 
+_aboutparser = _subparsers.add_parser(
+    'about', help='learn about a plugin\'s settings',
+    usage='jig config about [-h] [-r GITREPO]')
+_aboutparser.add_argument(
+    '--gitrepo', '-r', default='.', dest='path',
+    help='Path to the Git repository, default current directory')
+_aboutparser.set_defaults(subcommand='about')
+
 _setparser = _subparsers.add_parser(
     'set', help='set a single setting for an installed plugin',
     usage='jig config set [-h] [-r GITREPO] KEY VALUE')
@@ -40,18 +50,21 @@ _setparser.add_argument(
     help='Value for the specified settings')
 _setparser.set_defaults(subcommand='set')
 
+
 try:
     from collections import OrderedDict
 except ImportError:   # pragma: no cover
     from ordereddict import OrderedDict
 
 
-def _default_plugin_config(plugin_dir):
+def _get_plugin_config_section(plugin_dir, section):
     """
-    Get the default config for a given plugin.
+    Get a section of a plugin's config.
 
-    :param string plugin_dir: directory path to the plugin, this should contain
-        a config.cfg
+    :param string plugin_dir: the directory where the plugin's config can be found
+    :param string section: name of the section to fetch
+    :rtype: OrderedDict
+    :returns: section of a config
     """
     config_filename = join(plugin_dir, PLUGIN_CONFIG_FILENAME)
 
@@ -59,9 +72,12 @@ def _default_plugin_config(plugin_dir):
         config = SafeConfigParser()
         config.readfp(fh)
 
-        if not config.has_section('settings'):
+        if not config.has_section(section):
             return OrderedDict()
-        return OrderedDict(config.items('settings'))
+        return OrderedDict(config.items(section))
+
+
+SettingsMeta = namedtuple('SettingsMeta', 'plugin key value default about')
 
 
 class Command(BaseCommand):
@@ -89,7 +105,10 @@ class Command(BaseCommand):
 
     def _settings(self, pm):
         """
-        Sorted iteratable of plugin, setting key, and setting value.
+        Sorted iteratable of meta information for a plugin setting
+
+        :returns: named tuple of (plugin, setting key, and setting value,
+            default value, and about/help message).
         """
         bundles = plugins_by_bundle(pm)
 
@@ -106,7 +125,12 @@ class Command(BaseCommand):
 
                 # Get the plugin defaults in case they've changed or vanished
                 # from plugins.cfg
-                default_config = _default_plugin_config(plugin.path)
+                default_config = _get_plugin_config_section(
+                    plugin.path, 'settings')
+
+                # About/help messages for the settings
+                settings_about = _get_plugin_config_section(
+                    plugin.path, 'help')
 
                 # Merge the settings together letting the local settings
                 # override the default
@@ -117,7 +141,10 @@ class Command(BaseCommand):
                 sort_config = sorted(merged_config.items(), key=lambda s: s[0])
 
                 for key, value in sort_config:
-                    yield (plugin, key, value)
+                    yield SettingsMeta(
+                        plugin, key, value,
+                        default_config.get(key, None),
+                        settings_about.get(key, None))
 
     def list(self, argv):
         """
@@ -135,15 +162,53 @@ class Command(BaseCommand):
                 out.extend(NO_PLUGINS_INSTALLED)
                 return
 
-            for plugin, key, value in self._settings(pm):
+            for meta in self._settings(pm):
                 out.append(u'{bundle}.{plugin}.{config_key}={config_value}'.format(
-                    bundle=plugin.bundle, plugin=plugin.name, config_key=key,
-                    config_value=value))
+                    bundle=meta.plugin.bundle, plugin=meta.plugin.name,
+                    config_key=meta.key, config_value=meta.value))
 
             if not out:
                 out.append(u'Installed plugins have no settings.')
 
             out.extend(CHANGE_PLUGIN_SETTINGS)
+
+    def about(self, argv):
+        """
+        Provide about/help on each plugin setting.
+        """
+        path = argv.path
+
+        def wrap(payload):
+            indent = '   '
+            tw = TextWrapper(
+                width=70,
+                initial_indent=indent,
+                subsequent_indent=indent)
+            return u'\n'.join(tw.wrap(payload))
+
+        with self.out() as out:
+            config = get_jigconfig(path)
+
+            pm = PluginManager(config)
+
+            if not pm.plugins:
+                out.append(u'No plugins installed.')
+                out.extend(NO_PLUGINS_INSTALLED)
+                return
+
+            for meta in self._settings(pm):
+                out.append(u'{bundle}.{plugin}.{config_key}'.format(
+                    bundle=meta.plugin.bundle, plugin=meta.plugin.name,
+                    config_key=meta.key))
+                out.append(u'(default: {0})'.format(meta.default))
+
+                if meta.about:
+                    out.append(wrap(meta.about.strip()))
+
+                out.append(u'')
+
+            if not out:
+                out.append(u'Installed plugins have no settings.')
 
     def set(self, argv):
         """

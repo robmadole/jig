@@ -145,7 +145,7 @@ class TestCreatePlugin(PluginTestCase):
         config = ConfigParser()
         config.read(join(plugin_dir, 'config.cfg'))
 
-        self.assertEqual(set(('settings', 'plugin')), set(config.sections()))
+        self.assertEqual(set(('settings', 'help', 'plugin')), set(config.sections()))
         self.assertEqual('test', config.get('plugin', 'bundle'))
         self.assertEqual('plugin', config.get('plugin', 'name'))
         self.assertEqual([], config.items('settings'))

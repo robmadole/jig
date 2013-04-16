@@ -67,6 +67,22 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
         set_jigconfig(self.gitrepodir, pm.config)
 
+    def _plugin_about(self, plugin_dir, settings_about):
+        """
+        Create about/help messages for specific plugin settings.
+        """
+        config_filename = join(plugin_dir, 'config.cfg')
+        config = SafeConfigParser()
+
+        with open(config_filename) as fh:
+            config.readfp(fh)
+
+        for key, value in settings_about.items():
+            config.set('help', key, value)
+
+        with open(config_filename, 'w') as fh:
+            config.write(fh)
+
     @cd_gitrepo
     def test_list_no_plugins(self):
         """
@@ -249,3 +265,86 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
         config = get_jigconfig(self.gitrepodir)
 
         self.assertEqual('111', config.get('plugin:test01:plugin01', 'a'))
+
+    def test_config_no_plugins_installed(self):
+        """
+        If no plugins installed, about output mentions installing plugins.
+        """
+        self.run_command(
+            'about -r {0}'.format(self.gitrepodir))
+
+        self.assertResults(
+            result_with_hint(
+                u'No plugins installed.',
+                NO_PLUGINS_INSTALLED),
+            self.output)
+
+    def test_config_no_help(self):
+        """
+        If the plugin has no settings, no about messages.
+        """
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
+            bundle='test01', name='plugin01'))
+
+        self.run_command(
+            'about -r {0}'.format(self.gitrepodir))
+
+        self.assertResults(
+            u'Installed plugins have no settings.',
+            self.output)
+
+    def test_config_no_help_but_defaults(self):
+        """
+        If the plugin has no help only the default is available.
+        """
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
+            bundle='test01', name='plugin01', settings={
+                'a': '1', 'b': '2', 'c': '3'}))
+
+        self.run_command(
+            'about -r {0}'.format(self.gitrepodir))
+
+        self.assertResults(
+            u'''
+            test01.plugin01.a
+            (default: 1)
+
+            test01.plugin01.b
+            (default: 2)
+
+            test01.plugin01.c
+            (default: 3)
+            ''',
+            self.output)
+
+    def test_config_help(self):
+        """
+        Help is available for each installed plugin setting that supports it.
+        """
+        self._add_plugin(create_plugin(
+            self.plugindir, template='python',
+            bundle='test01', name='plugin01', settings={
+                'a': '1', 'b': '2', 'c': '3'}))
+
+        # Make a about message for the ``a`` setting
+        self._plugin_about(join(self.plugindir, 'plugin01'),
+            {'a': 'turn a on'})
+
+        self.run_command(
+            'about -r {0}'.format(self.gitrepodir))
+
+        self.assertResults(
+            u'''
+            test01.plugin01.a
+            (default: 1)
+               turn a on
+
+            test01.plugin01.b
+            (default: 2)
+
+            test01.plugin01.c
+            (default: 3)
+            ''',
+            self.output)
