@@ -16,6 +16,7 @@ Jig's help menu is available by running ``jig`` or ``jig --help``.
       -h, --help  show this help message and exit
 
     jig commands:
+      config      Manage settings for installed Jig plugins
       init        Initialize a Git repository for use with Jig
       install     Install a list of Jig plugins from a file
       plugin      Manage this repository's Jig plugins
@@ -193,7 +194,7 @@ will be ran when the ``pre-commit`` hook or ``jig runnow`` is ran.
 .. code-block:: console
 
     $ jig plugin list --help
-    usage: jig plugin list [-h] [-r] [PATH]
+    usage: jig plugin list [-h] [-r]
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -386,18 +387,125 @@ Jig will run automated tests for a plugin if they exist.
 
 For information on ``jig plugin test`` see :ref:`Testing Plugins <pluginapi-testing>`.
 
+.. _cli-config:
+
+Plugin settings
+---------------
+
+Each plugin can have settings that change the way they behave. For example, the
+pep8-checker plugin allows you to turn off the E501 reporting which tells you
+that a line is longer than 80 characters (a very common thing for Python
+developers to ignore).
+
+.. code-block:: console
+
+    $ jig config --help
+    usage: jig config [-h] ACTION
+
+    Manage settings for installed Jig plugins
+
+    optional arguments:
+      -h, --help  show this help message and exit
+
+    actions:
+      available commands to manage settings
+
+      {list,set}
+        list      list all settings
+        set       set a single setting for an installed plugin
+
+.. _cli-config-list:
+
+List the current settings
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To list the current settings, use the ``jig config list`` command.
+
+The command only works if you've already :ref:`installed some plugins
+<cli-plugin-add>`.
+
+.. code-block:: console
+
+    # jig config list --help
+    usage: jig config list [-h] [-r GITREPO]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --gitrepo PATH, -r PATH
+                            Path to the Git repository, default current directory
+
+If the pep8-checker plugin was installed, the settings may look something like
+this:
+
+.. code-block:: console
+   :emphasize-lines: 1,2
+
+    jig-plugins.pep8-checker.default_type=warn
+    jig-plugins.pep8-checker.report_e501=yes
+
+    Plugin settings can be changed with the following command:
+
+        $ jig config set BUNDLE.PLUGIN.KEY VALUE
+
+    BUNDLE is the bundle name of an installed plugin
+    PLUGIN is the name of an installed plugin.
+    KEY is the name/key of the setting.
+    VALUE is the desired value for the KEY.
+
+.. _cli-config-set:
+
+Change a setting
+~~~~~~~~~~~~~~~~
+
+Settings are changed one at a time.
+
+.. code-block:: console
+
+    $ jig config set --help
+    usage: jig config set [-h] [-r GITREPO] KEY VALUE
+
+    positional arguments:
+      key                   Setting key which is a dot-separated string of the
+                            bundle name, plugin name, and setting name
+      value                 Value for the specified settings
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --gitrepo PATH, -r PATH
+                            Path to the Git repository, default current directory
+
+The ``KEY`` is a dot-separated string consisting of:
+
+#. Bundle name
+#. followed by plugin name
+#. followed by setting key
+
+If we take the pep8-checker example, to turn off E501 reporting we would run
+this command:
+
+.. code-block:: console
+
+    $ jig config set jig-plugins.pep8-checker.report_e501 no
+
 .. _cli-runnow:
+
+Settings help
+~~~~~~~~~~~~~
+
+Sometimes it's not immediately apparent what a setting's purpose is from it's
+key. Plugin developers are encouraged to write help messages.
+
+.. todo:: help command
 
 Run Jig manually
 ----------------
 
-Jig is normally ran before you commit. The primary purpose is to catch things
-that you ordinarily wouldn't add.
+Jig is normally ran before you commit using Git's pre-commit hook.
 
 But, there are occasions where you want to check your progress and run Jig and
 all of your installed plugins without actually committing anything.
 
-For this use case, ``runnow`` exists.
+For this case, the ``runnow`` command exists.
 
 .. code-block:: console
 

@@ -93,6 +93,14 @@ class CommandError(JigException):
     pass
 
 
+class ConfigKeyInvalid(JigException):
+
+    """
+    Raise whenever the dot-separated config key is not valid.
+    """
+    hint = 'INVALID_CONFIG_KEY'
+
+
 class RangeError(JigException):
 
     """

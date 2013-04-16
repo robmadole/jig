@@ -1,7 +1,8 @@
 import argparse
 import errno
 
-from jig.commands.base import BaseCommand, add_plugin
+from jig.commands.base import (
+    BaseCommand, add_plugin, plugins_by_bundle, plugins_by_name)
 from jig.commands.hints import (
     NO_PLUGINS_INSTALLED, USE_RUNNOW, FORK_PROJECT_GITHUB)
 from jig.exc import CommandError, ExpectationError
@@ -24,7 +25,7 @@ _subparsers = _parser.add_subparsers(
 
 _listparser = _subparsers.add_parser(
     'list', help='list installed plugins',
-    usage='jig plugin list [-h] [-r GITREPO] [PATH]')
+    usage='jig plugin list [-h] [-r GITREPO]')
 _listparser.add_argument(
     '--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
@@ -106,38 +107,6 @@ class Command(BaseCommand):
         # Handle the actions
         getattr(self, subcommand)(argv)
 
-    def _bundles(self, pm):
-        """
-        Organize plugins by bundle name.
-
-        Returns a dict where the key is the bundle name and the value is a list
-        of all plugins that are part of that bundle.
-        """
-        bundles = {}
-
-        for plugin in pm.plugins:
-            if plugin.bundle not in bundles:
-                bundles[plugin.bundle] = []
-            bundles[plugin.bundle].append(plugin)
-
-        return bundles
-
-    def _plugins(self, pm):
-        """
-        Organize plugins by plugin name.
-
-        Returns a dict where the key is the plugin name and the value is a list
-        of all plugins that have that name.
-        """
-        plugins = {}
-
-        for plugin in pm.plugins:
-            if plugin.name not in plugins:
-                plugins[plugin.name] = []
-            plugins[plugin.name].append(plugin)
-
-        return plugins
-
     def list(self, argv):
         """
         List the installed plugins.
@@ -149,7 +118,7 @@ class Command(BaseCommand):
 
             pm = PluginManager(config)
 
-            bundles = self._bundles(pm)
+            bundles = plugins_by_bundle(pm)
 
             if not bundles:
                 out.append(u'No plugins installed.')
@@ -243,7 +212,7 @@ class Command(BaseCommand):
 
             pm = PluginManager(config)
 
-            plugins = self._plugins(pm)
+            plugins = plugins_by_name(pm)
 
             # Find the bundle if it's not specified
             if name in plugins and not bundle:

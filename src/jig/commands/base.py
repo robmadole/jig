@@ -93,6 +93,40 @@ def add_plugin(pm, plugin, gitdir):
         raise
 
 
+def plugins_by_bundle(pm):
+    """
+    Organize plugins by bundle name.
+
+    Returns a dict where the key is the bundle name and the value is a list
+    of all plugins that are part of that bundle.
+    """
+    bundles = {}
+
+    for plugin in pm.plugins:
+        if plugin.bundle not in bundles:
+            bundles[plugin.bundle] = []
+        bundles[plugin.bundle].append(plugin)
+
+    return bundles
+
+
+def plugins_by_name(pm):
+    """
+    Organize plugins by plugin name.
+
+    Returns a dict where the key is the plugin name and the value is a list
+    of all plugins that have that name.
+    """
+    plugins = {}
+
+    for plugin in pm.plugins:
+        if plugin.name not in plugins:
+            plugins[plugin.name] = []
+        plugins[plugin.name].append(plugin)
+
+    return plugins
+
+
 class BaseCommand(object):
 
     """
