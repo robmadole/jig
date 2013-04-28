@@ -487,7 +487,7 @@ this command:
 
     $ jig config set jig-plugins.pep8-checker.report_e501 no
 
-.. _cli-runnow:
+.. _cli-config-about:
 
 Settings help
 ~~~~~~~~~~~~~
@@ -495,7 +495,21 @@ Settings help
 Sometimes it's not immediately apparent what a setting's purpose is from it's
 key. Plugin developers are encouraged to write help messages.
 
-.. todo:: help command
+List the help messages, if available:
+
+.. code-block:: console
+
+    $ jig config about
+    jig-plugins.pep8-checker.default_type
+    (default: warn)
+       When an error is found, use this type of Jig message to communicate
+       it. One of: info, warn, stop.
+
+    jig-plugins.pep8-checker.report_e501
+    (default: yes)
+       Report lines with greater than 80 characters? Either yes or no.
+
+.. _cli-runnow:
 
 Run Jig manually
 ----------------

@@ -124,17 +124,62 @@ giving you a chance to make changes.
 Change plugin settings
 ----------------------
 
-Plugins will sometimes have settings that you can configure. Edit the
-:file:`.jig/plugins.cfg` and feel free to change how the plugins behave.
+Plugins will sometimes have settings that you can configure. The pep8-checker
+has one that controls whether the E501 message is reported. E501 checks whether
+the line lengths are longer than 80 characters.
+
+List the settings first:
+
+.. code-block:: console
+
+    $ jig config list
+    jig-plugins.pep8-checker.default_type=warn
+    jig-plugins.pep8-checker.report_e501=yes
+
+    Plugin settings can be changed with the following command:
+
+        $ jig config set BUNDLE.PLUGIN.KEY VALUE
+
+    BUNDLE is the bundle name of an installed plugin
+    PLUGIN is the name of an installed plugin.
+    KEY is the name/key of the setting.
+    VALUE is the desired value for the KEY.
+
+We can see that pep8-checker has two settings: ``default_type`` and
+``report_e501``.
+
+Plugins will most likely have some short documentation that tells you what each
+setting does and what the plugin uses as a default.
+
+.. code-block:: console
+
+    $ jig config about
+    jig-plugins.pep8-checker.default_type
+    (default: warn)
+       When an error is found, use this type of Jig message to communicate
+       it. One of: info, warn, stop.
+
+    jig-plugins.pep8-checker.report_e501
+    (default: yes)
+       Report lines with greater than 80 characters? Either yes or no.
+
+To disable E501 reporting:
+
+.. code-block:: console
+
+    $ jig config set jig-plugins.pep8-checker.report_e501 no
+
+You can also edit the :file:`.jig/plugins.cfg` file directly.
 
 .. code-block:: ini
-   :emphasize-lines: 3, 13
+   :emphasize-lines: 3, 4
 
     [plugin:jig-plugins:pep8-checker]
     path = ../jig-plugins/pep8-checker
     default_type = warn
+    report_e501 = no
 
-See information about the :ref:`types of messages <pluginapi-types>` that jig supports.
+See information about the :ref:`types of messages <pluginapi-types>` that Jig supports.
 
 Write your own plugins
 ----------------------
