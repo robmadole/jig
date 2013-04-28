@@ -226,6 +226,7 @@ def create_plugin(in_dir, bundle, name, template='python', settings={}):
     config = SafeConfigParser()
     config.add_section('plugin')
     config.add_section('settings')
+    config.add_section('help')
     config.set('plugin', 'bundle', bundle)
     config.set('plugin', 'name', name)
 

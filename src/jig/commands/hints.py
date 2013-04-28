@@ -85,6 +85,18 @@ USE_RUNNOW = _hint(
     some files before you can run Jig.
     """)
 
+CHANGE_PLUGIN_SETTINGS = _hint(
+    u"""
+    Plugin settings can be changed with the following command:
+
+        $ jig config set BUNDLE.PLUGIN.KEY VALUE
+
+    BUNDLE is the bundle name of an installed plugin
+    PLUGIN is the name of an installed plugin.
+    KEY is the name/key of the setting.
+    VALUE is the desired value for the KEY.
+    """)
+
 FORK_PROJECT_GITHUB = _hint(
     u"""
     You can fork this project on GitHub.
@@ -101,4 +113,20 @@ INVALID_RANGE = _hint(
     To specify a range between 1 and 2 you would use "1..2".
 
     You can also specify larger ranges like "3..7"
+    """)
+
+INVALID_CONFIG_KEY = _hint(
+    u"""
+    Config keys must be in the following format:
+
+    BUNDLE.PLUGIN.SETTING
+
+    For example, if a plugin named "doublecheck" was installed from a bundle named
+    "acme" the config key would be something like:
+
+    acme.doublecheck.ignore_widgets
+
+    For a full list of settings:
+
+        $ jig config list
     """)

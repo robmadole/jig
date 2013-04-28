@@ -218,7 +218,7 @@ class Plugin(object):
     A single unit that performs some helpful operation for the user.
 
     """
-    def __init__(self, bundle, name, path, config={}):
+    def __init__(self, bundle, name, path, config={}, help={}):
         # What bundle is this plugin a part of
         self.bundle = bundle
         # What is the name of this plugin?
@@ -227,6 +227,8 @@ class Plugin(object):
         self.path = realpath(path)
         # Plugin-specific configuration
         self.config = config
+        # Helpful descriptions of the configurations
+        self.help = help
 
     def pre_commit(self, git_diff_index):
         """
