@@ -1,0 +1,4 @@
+http://github.com/robmadole/jig-plugins@pep8-checker
+http://github.com/robmadole/jig-plugins@pyflakes
+http://github.com/robmadole/jig-plugins@woops
+http://github.com/robmadole/jig-plugins@whitespace

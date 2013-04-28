@@ -7,6 +7,8 @@ The following documentation outlines what it takes to build plugins.
 
 One of the primary reasons Jig exists is to enable you to write your own.
 
+.. contents::
+
 .. _pluginapi-anatomy:
 
 The anatomy of a plugin
@@ -53,6 +55,10 @@ If you want to add settings to your plugin which can be read by your ``pre-commi
     [settings]
     verbose = no
     foo = bar
+
+    [help]
+    verbose =
+      Shoe more stuff
 
 Here's a very simple ``pre-commit`` script written with `Node.js`_. You can use
 any scripting language that you wish as long as it's installed on the system
@@ -622,12 +628,43 @@ With that change it should bring our tests back to a passing state.
     continue to apply until a section change. Sections in our example are
     separated by ``~~~~~~~~~~~~~~~``.
 
+Add help messages about your settings
+.....................................
+
+Settings are useful to control behavior but they need to communicate their
+intent well to the user. Documentation is good, right?
+
+You can provide help messages about your plugin to compensate for this.
+
+Edit :file:`bright-side/config.cfg`:
+
+.. code-block:: ini
+    :emphasize-lines: 10, 11, 12, 13
+
+    [plugin]
+    bundle = pythonlyrics
+    name = bright-side
+
+    [settings]
+    sing_also = no
+    second_chorus_line = no
+
+    [help]
+    sing_also =
+      Sing the chorus to me, either yes or no
+    second_chorus_line =
+      Also display or sing the second chorus line with the first, either yes or no
+
+Now these messages will be displayed if the user runs ``jig config about``.
+
 Output
 ~~~~~~
 
 Now that we are familiar with the input format, it's time to improve our
 :file:`pre-commit` script and give it a little more whizbang by specifying
 output.
+
+.. _pluginapi-types:
 
 Info, warnings, and stops
 .........................

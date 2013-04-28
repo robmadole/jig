@@ -1,6 +1,11 @@
 News
 ====
 
+*Release 0.1.6 - April 28th, 2013*
+
+* ``jig config`` command added, allowing plugin configuration settings to be
+  managed.
+
 *Release 0.1.5 - April 10th, 2013*
 
 * ``jig runnow`` supports a ``--plugin`` option so that only a specific plugin

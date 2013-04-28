@@ -1,3 +1,4 @@
+import codecs
 from os import mkdir, stat, chmod, listdir
 from os.path import join, isdir
 from stat import S_IXUSR, S_IXGRP, S_IXOTH
@@ -14,7 +15,7 @@ from jig.exc import (
 from jig.conf import (
     JIG_DIR_NAME, JIG_PLUGIN_CONFIG_FILENAME,
     JIG_PLUGIN_DIR, PLUGIN_CONFIG_FILENAME, PLUGIN_PRE_COMMIT_SCRIPT,
-    PLUGIN_PRE_COMMIT_TEMPLATE_DIR)
+    PLUGIN_PRE_COMMIT_TEMPLATE_DIR, CODEC)
 from jig.gitutils import is_git_repo, repo_jiginitialized, remote_has_updates
 from jig.tools import slugify
 from jig.plugins.manager import PluginManager
@@ -225,6 +226,7 @@ def create_plugin(in_dir, bundle, name, template='python', settings={}):
     config = SafeConfigParser()
     config.add_section('plugin')
     config.add_section('settings')
+    config.add_section('help')
     config.set('plugin', 'bundle', bundle)
     config.set('plugin', 'name', name)
 
@@ -265,3 +267,16 @@ def available_templates():
     :py:arg:`template` argument.
     """
     return listdir(PLUGIN_PRE_COMMIT_TEMPLATE_DIR)
+
+
+def read_plugin_list(filename):
+    """
+    Reads a plugin list file and returns its contents.
+
+    :param string filename: path to the filename
+    :rtype list:
+    """
+    with codecs.open(filename, 'r', CODEC) as fh:
+        plugin_list = fh.read()
+
+    return plugin_list.splitlines()

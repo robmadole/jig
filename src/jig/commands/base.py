@@ -1,7 +1,13 @@
+from urlparse import urlparse
 from os import listdir
 from os.path import join, dirname, isdir
+from shutil import rmtree
+from uuid import uuid4 as uuid
 
+from jig.exc import PluginError
+from jig.conf import JIG_DIR_NAME, JIG_PLUGIN_DIR
 from jig.output import ConsoleView
+from jig.gitutils import clone
 
 _commands_dir = dirname(__file__)
 
@@ -32,7 +38,8 @@ def get_command(name):
         >>> get_command('init')
         <jig.commands.init.Command object at 0x10048fed0>
     """
-    mod = __import__('jig.commands.{0}'.format(name.lower()),
+    mod = __import__(
+        'jig.commands.{0}'.format(name.lower()),
         globals(), locals(), ['Command'], 0)
     return mod.Command
 
@@ -47,6 +54,77 @@ def create_view():
     terminal.
     """
     return ConsoleView()
+
+
+def add_plugin(pm, plugin, gitdir):
+    """
+    Adds a plugin by filename or URL.
+
+    Where ``pm`` is an instance of :py:class:`PluginManager` and ``plugin``
+    is either the URL to a Git Jig plugin repository or the file name of a
+    Jig plugin. The ``gitdir`` is the path to the Git repository which will
+    be used to find the :file:`.jig/plugins` directory.
+    """
+    # If this looks like a URL we will clone it first
+    url = urlparse(plugin)
+
+    if url.scheme:
+        # This is a URL, let's clone it first into .jig/plugins
+        # directory.
+        plugin_parts = plugin.rsplit('@', 1)
+
+        branch = None
+        try:
+            branch = plugin_parts[1]
+        except IndexError:
+            pass
+
+        to_dir = join(gitdir, JIG_DIR_NAME, JIG_PLUGIN_DIR, uuid().hex)
+        clone(plugin_parts[0], to_dir, branch)
+        plugin = to_dir
+
+    try:
+        return pm.add(plugin)
+    except PluginError:
+        # Clean-up the cloned directory becuase this wasn't installed correctly
+        if url.scheme:
+            rmtree(plugin)
+
+        raise
+
+
+def plugins_by_bundle(pm):
+    """
+    Organize plugins by bundle name.
+
+    Returns a dict where the key is the bundle name and the value is a list
+    of all plugins that are part of that bundle.
+    """
+    bundles = {}
+
+    for plugin in pm.plugins:
+        if plugin.bundle not in bundles:
+            bundles[plugin.bundle] = []
+        bundles[plugin.bundle].append(plugin)
+
+    return bundles
+
+
+def plugins_by_name(pm):
+    """
+    Organize plugins by plugin name.
+
+    Returns a dict where the key is the plugin name and the value is a list
+    of all plugins that have that name.
+    """
+    plugins = {}
+
+    for plugin in pm.plugins:
+        if plugin.name not in plugins:
+            plugins[plugin.name] = []
+        plugins[plugin.name].append(plugin)
+
+    return plugins
 
 
 class BaseCommand(object):

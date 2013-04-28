@@ -1,15 +1,11 @@
 import argparse
 import errno
-from os.path import join
-from urlparse import urlparse
-from uuid import uuid4 as uuid
 
-from jig.commands.base import BaseCommand
+from jig.commands.base import (
+    BaseCommand, add_plugin, plugins_by_bundle, plugins_by_name)
 from jig.commands.hints import (
     NO_PLUGINS_INSTALLED, USE_RUNNOW, FORK_PROJECT_GITHUB)
-from jig.conf import JIG_DIR_NAME, JIG_PLUGIN_DIR
 from jig.exc import CommandError, ExpectationError
-from jig.gitutils import clone
 from jig.tools import indent
 from jig.plugins import (
     get_jigconfig, set_jigconfig, PluginManager,
@@ -29,7 +25,7 @@ _subparsers = _parser.add_subparsers(
 
 _listparser = _subparsers.add_parser(
     'list', help='list installed plugins',
-    usage='jig plugin list [-h] [-r GITREPO] [PATH]')
+    usage='jig plugin list [-h] [-r GITREPO]')
 _listparser.add_argument(
     '--gitrepo', '-r', default='.', dest='path',
     help='Path to the Git repository, default current directory')
@@ -111,38 +107,6 @@ class Command(BaseCommand):
         # Handle the actions
         getattr(self, subcommand)(argv)
 
-    def _bundles(self, pm):
-        """
-        Organize plugins by bundle name.
-
-        Returns a dict where the key is the bundle name and the value is a list
-        of all plugins that are part of that bundle.
-        """
-        bundles = {}
-
-        for plugin in pm.plugins:
-            if plugin.bundle not in bundles:
-                bundles[plugin.bundle] = []
-            bundles[plugin.bundle].append(plugin)
-
-        return bundles
-
-    def _plugins(self, pm):
-        """
-        Organize plugins by plugin name.
-
-        Returns a dict where the key is the plugin name and the value is a list
-        of all plugins that have that name.
-        """
-        plugins = {}
-
-        for plugin in pm.plugins:
-            if plugin.name not in plugins:
-                plugins[plugin.name] = []
-            plugins[plugin.name].append(plugin)
-
-        return plugins
-
     def list(self, argv):
         """
         List the installed plugins.
@@ -154,7 +118,7 @@ class Command(BaseCommand):
 
             pm = PluginManager(config)
 
-            bundles = self._bundles(pm)
+            bundles = plugins_by_bundle(pm)
 
             if not bundles:
                 out.append(u'No plugins installed.')
@@ -189,7 +153,7 @@ class Command(BaseCommand):
 
             pm = PluginManager(config)
 
-            added = self._add_path_or_url(pm, plugin, path)
+            added = add_plugin(pm, plugin, path)
 
             set_jigconfig(path, pm.config)
 
@@ -199,35 +163,6 @@ class Command(BaseCommand):
                     'repository.'.format(p.name, p.bundle))
 
             out.extend(USE_RUNNOW)
-
-    def _add_path_or_url(self, pm, plugin, gitdir):
-        """
-        Adds a plugin by filename or URL.
-
-        Where ``pm`` is an instance of :py:class:`PluginManager` and ``plugin``
-        is either the URL to a Git Jig plugin repository or the file name of a
-        Jig plugin. The ``gitdir`` is the path to the Git repository which will
-        be used to find the :file:`.jig/plugins` directory.
-        """
-        # If this looks like a URL we will clone it first
-        url = urlparse(plugin)
-
-        if url.scheme:
-            # This is a URL, let's clone it first into .jig/plugins
-            # directory.
-            plugin_parts = plugin.rsplit('@', 1)
-
-            branch = None
-            try:
-                branch = plugin_parts[1]
-            except IndexError:
-                pass
-
-            to_dir = join(gitdir, JIG_DIR_NAME, JIG_PLUGIN_DIR, uuid().hex)
-            clone(plugin_parts[0], to_dir, branch)
-            plugin = to_dir
-
-        return pm.add(plugin)
 
     def update(self, argv):
         """
@@ -277,7 +212,7 @@ class Command(BaseCommand):
 
             pm = PluginManager(config)
 
-            plugins = self._plugins(pm)
+            plugins = plugins_by_name(pm)
 
             # Find the bundle if it's not specified
             if name in plugins and not bundle:

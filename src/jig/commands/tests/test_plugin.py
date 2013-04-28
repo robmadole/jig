@@ -215,7 +215,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
                 to_dir, template='python',
                 bundle='a', name='a')
 
-        with patch('jig.commands.plugin.clone') as c:
+        with patch('jig.commands.base.clone') as c:
             c.side_effect = clone_fake
 
             self.run_command(
@@ -240,7 +240,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
                 to_dir, template='python',
                 bundle='a', name='a')
 
-        with patch('jig.commands.plugin.clone') as c:
+        with patch('jig.commands.base.clone') as c:
             c.side_effect = clone_fake
 
             self.run_command(
@@ -280,7 +280,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
             clone(dir_to_clone, to_dir)
 
         # First thing is to install the the plugin
-        with patch('jig.commands.plugin.clone') as c:
+        with patch('jig.commands.base.clone') as c:
             c.side_effect = clone_local
 
             self.run_command(

@@ -4,7 +4,7 @@ from datetime import timedelta
 ## General settings
 
 # What codec to use when dealing with unicode conversion
-CODEC = 'utf8'
+CODEC = 'utf_8'
 
 
 ## jig settings

@@ -43,20 +43,29 @@ Change directories into your Git repository and initialize it to use Jig.
 
         $ echo ".jig" >> .gitignore
 
-    Next install some plugins. Jig has a standard set you may like:
+    Next install some plugins. Jig has a common set you may like:
 
-        $ jig plugin add http://github.com/robmadole/jig-plugins
+        $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+        $ jig install .jigplugins.txt
 
-Install some Jig plugins.
+Create a file that lists the plugins you'd like to install.
 
 .. code-block:: console
 
-    $ jig plugin add http://github.com/robmadole/jig-plugins
-    Added plugin jshint in bundle jig-plugins to the repository.
-    Added plugin pep8-checker in bundle jig-plugins to the repository.
-    Added plugin pyflakes in bundle jig-plugins to the repository.
-    Added plugin whitespace in bundle jig-plugins to the repository.
-    Added plugin woops in bundle jig-plugins to the repository.
+    $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                     Dload  Upload   Total   Spent    Left  Speed
+    100    97  100    97    0     0    144      0 --:--:-- --:--:-- --:--:--   425
+
+Install the Jig plugins.
+
+.. code-block:: console
+
+    $ jig install .jigplugins.txt
+    From http://github.com/robmadole/jig-plugins@whitespace:
+     - Added plugin whitespace in bundle jig-plugins
+    From http://github.com/robmadole/jig-plugins@woops:
+     - Added plugin woops in bundle jig-plugins
 
     Run the plugins in the current repository with this command:
 
@@ -66,7 +75,7 @@ Install some Jig plugins.
     You place things in the index with `git add`. You will need to stage
     some files before you can run Jig.
 
-    Stage some changes and then commit.
+Stage some changes and then commit.
 
 .. code-block:: console
 
@@ -104,6 +113,12 @@ In-depth docs
 
    cli
    devapi
+
+Change log
+----------
+
+.. include:: ../../NEWS.rst
+   :start-line: 3
 
 License
 -------

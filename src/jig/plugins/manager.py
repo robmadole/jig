@@ -61,7 +61,8 @@ class PluginManager(object):
                 except ConfigParserError as cpe:
                     # Something happened when parsing the config
                     line = cpe.errors.pop()[0]
-                    raise PluginError('Could not parse config file for '
+                    raise PluginError(
+                        'Could not parse config file for '
                         '{0} in {1}, line {2}.'.format(name, path, line))
 
             # Get rid of the path, we don't need to send this as part of the
@@ -97,7 +98,8 @@ class PluginManager(object):
 
         Returns a list of plugins that were added to this manager.
         """
-        exc_collection = []
+        root_exc_collection = []
+        sub_exc_collection = []
         added = []
 
         try:
@@ -106,20 +108,22 @@ class PluginManager(object):
 
             return added
         except PluginError as pe:
-            exc_collection.append(pe)
+            root_exc_collection.append(pe)
 
         # Walk the directory, try to add each sub-directory as a plugin
         for dirname in listdir(plugindir):
             subdir = join(plugindir, dirname)
-            if not isdir(subdir):
+            if not isdir(subdir) or dirname == '.git':
                 continue
             try:
                 added.append(self._add_plugin(subdir))
             except PluginError as pe:
-                exc_collection.append(pe)
+                sub_exc_collection.append(pe)
 
         if added:
             return added
+
+        exc_collection = sub_exc_collection or root_exc_collection
 
         # If we haven't added any plugins and we have an exception raise it
         raise exc_collection[0]
@@ -135,7 +139,6 @@ class PluginManager(object):
         config_filename = join(plugindir, PLUGIN_CONFIG_FILENAME)
 
         if not isfile(config_filename):
-
             raise PluginError('The plugin file {0} is missing.'.format(
                 config_filename))
 
@@ -155,14 +158,16 @@ class PluginManager(object):
         try:
             plugin_info = OrderedDict(config.items('plugin'))
         except NoSectionError:
-            raise PluginError('The plugin config does not contain a '
+            raise PluginError(
+                'The plugin config does not contain a '
                 '[plugin] section.')
 
         try:
             bundle = plugin_info['bundle']
             name = plugin_info['name']
         except KeyError:
-            raise PluginError('Could not find the bundle or name of '
+            raise PluginError(
+                'Could not find the bundle or name of '
                 'the plugin.')
 
         new_section = 'plugin:{bundle}:{name}'.format(
@@ -213,7 +218,7 @@ class Plugin(object):
     A single unit that performs some helpful operation for the user.
 
     """
-    def __init__(self, bundle, name, path, config={}):
+    def __init__(self, bundle, name, path, config={}, help={}):
         # What bundle is this plugin a part of
         self.bundle = bundle
         # What is the name of this plugin?
@@ -222,6 +227,8 @@ class Plugin(object):
         self.path = realpath(path)
         # Plugin-specific configuration
         self.config = config
+        # Helpful descriptions of the configurations
+        self.help = help
 
     def pre_commit(self, git_diff_index):
         """

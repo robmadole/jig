@@ -47,9 +47,10 @@ If you haven't, :ref:`install Jig now <install>`.
 
         $ echo ".jig" >> .gitignore
 
-    Next install some plugins. Jig has a standard set you may like:
+    Next install some plugins. Jig has a common set you may like:
 
-        $ jig plugin add http://github.com/robmadole/jig-plugins
+        $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+        $ jig install .jigplugins.txt
 
 If you're curious, you can :ref:`see what this thing has done
 <development-plumbing>` to your repository.
@@ -71,12 +72,8 @@ Jig uses "plugins" to do the real work. Your Jig config file (in
 
 .. code-block:: console
 
-    $ jig plugin add http://github.com/robmadole/jig-plugins
-    Added plugin jshint in bundle jig-plugins to the repository.
+    $ jig plugin add http://github.com/robmadole/jig-plugins@pep8-checker
     Added plugin pep8-checker in bundle jig-plugins to the repository.
-    Added plugin pyflakes in bundle jig-plugins to the repository.
-    Added plugin whitespace in bundle jig-plugins to the repository.
-    Added plugin woops in bundle jig-plugins to the repository.
 
     Run the plugins in the current repository with this command:
 
@@ -116,19 +113,8 @@ With our staged file, we're ready to commit.
         import this; import that; import other
          - E702 multiple statements on one line (semicolon)
 
-    ▾  pyflakes
-
-    ⚠  line 1: myapp.py
-        'this' imported but unused
-
-    ⚠  line 1: myapp.py
-        'other' imported but unused
-
-    ⚠  line 1: myapp.py
-        'that' imported but unused
-
-       Jig ran 5 plugins
-        Info 0 Warn 4 Stop 0
+       Jig ran 1 plugins
+        Info 0 Warn 1 Stop 0
 
     Commit anyway (hit "c"), or stop (hit "s"):
 
@@ -138,25 +124,62 @@ giving you a chance to make changes.
 Change plugin settings
 ----------------------
 
-Plugins will sometimes have settings that you can configure. Edit the
-:file:`.jig/plugins.cfg` and feel free to change how the plugins behave.
+Plugins will sometimes have settings that you can configure. The pep8-checker
+has one that controls whether the E501 message is reported. E501 checks whether
+the line lengths are longer than 80 characters.
+
+List the settings first:
+
+.. code-block:: console
+
+    $ jig config list
+    jig-plugins.pep8-checker.default_type=warn
+    jig-plugins.pep8-checker.report_e501=yes
+
+    Plugin settings can be changed with the following command:
+
+        $ jig config set BUNDLE.PLUGIN.KEY VALUE
+
+    BUNDLE is the bundle name of an installed plugin
+    PLUGIN is the name of an installed plugin.
+    KEY is the name/key of the setting.
+    VALUE is the desired value for the KEY.
+
+We can see that pep8-checker has two settings: ``default_type`` and
+``report_e501``.
+
+Plugins will most likely have some short documentation that tells you what each
+setting does and what the plugin uses as a default.
+
+.. code-block:: console
+
+    $ jig config about
+    jig-plugins.pep8-checker.default_type
+    (default: warn)
+       When an error is found, use this type of Jig message to communicate
+       it. One of: info, warn, stop.
+
+    jig-plugins.pep8-checker.report_e501
+    (default: yes)
+       Report lines with greater than 80 characters? Either yes or no.
+
+To disable E501 reporting:
+
+.. code-block:: console
+
+    $ jig config set jig-plugins.pep8-checker.report_e501 no
+
+You can also edit the :file:`.jig/plugins.cfg` file directly.
 
 .. code-block:: ini
-   :emphasize-lines: 3, 13
+   :emphasize-lines: 3, 4
 
     [plugin:jig-plugins:pep8-checker]
     path = ../jig-plugins/pep8-checker
     default_type = warn
+    report_e501 = no
 
-    [plugin:jig-plugins:pyflakes]
-    path = ../jig-plugins/pyflakes
-
-    [plugin:jig-plugins:whitespace]
-    path = ../jig-plugins/whitespace
-
-    [plugin:jig-plugins:woops]
-    path = ../jig-plugins/woops
-    check_windows_newlines = yes
+See information about the :ref:`types of messages <pluginapi-types>` that Jig supports.
 
 Write your own plugins
 ----------------------
