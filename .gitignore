@@ -2,15 +2,8 @@
 
 .installed.cfg
 bin
-develop-eggs
 
 *.egg-info
-
-tmp
-build
-dist
-eggs
-parts
 
 .coverage
 cover
@@ -18,3 +11,5 @@ cover
 .noseids
 .vimdir
 *.DS_Store
+.vagrant
+docs/build

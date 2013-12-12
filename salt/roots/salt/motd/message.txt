@@ -1,0 +1,11 @@
+Welcome to the Jig operations environment.
+
+For information about developing/hacking on Jig:
+
+    $ man jigops
+
+The Sphinx documentation is port-forwarded through Vagrant so open this
+on the host machine (probably your Mac, right?):
+
+    http://localhost:5001
+
