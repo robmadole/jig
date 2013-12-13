@@ -47,17 +47,16 @@ def describe_diff(a, b):
     b = b.splitlines()
 
     for tag, i1, i2, j1, j2 in SequenceMatcher(None, a, b).get_opcodes():
-        unicode_line = unicode(line)
         if tag == 'equal':
             for idx, line in enumerate(b[j1:j2]):
-                yield (idx + j1 + 1, ' ', unicode_line)
+                yield (idx + j1 + 1, ' ', unicode(line))
             continue
         if tag == 'replace' or tag == 'delete':
             for idx, line in enumerate(a[i1:i2]):
-                yield (idx + i1 + 1, '-', unicode_line)
+                yield (idx + i1 + 1, '-', unicode(line))
         if tag == 'replace' or tag == 'insert':
             for idx, line in enumerate(b[j1:j2]):
-                yield (idx + j1 + 1, '+', unicode_line)
+                yield (idx + j1 + 1, '+', unicode(line))
 
 
 class DiffType(object):
