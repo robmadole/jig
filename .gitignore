@@ -1,15 +1,13 @@
 *.pyc
-
-.installed.cfg
-bin
-
+*.DS_Store
 *.egg-info
 
-.coverage
+bin
 cover
+docs/build
+
+.coverage
 .jig
 .noseids
 .vimdir
-*.DS_Store
 .vagrant
-docs/build

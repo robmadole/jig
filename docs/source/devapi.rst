@@ -90,8 +90,10 @@ all done through the Jig development environment.
 The environment is managed by Vagrant_ and uses VMware as the virtualization
 layer.
 
-Install Vagrant, VWmare Fusion/Workstation, and the Vagrant `VMware plugin`_ that
-allows Vagrant to support VMware and then proceed.
+Install Vagrant, VirtualBox or VWmare Fusion/Workstation.
+
+If you decide to use VMware (it's not free) you'll need  the Vagrant `VMware
+plugin`_ that allows Vagrant to support VMware.
 
 Clone the Jig repository:
 
@@ -104,6 +106,17 @@ Bring up the environment:
 ::
 
     $ cd jig
+
+For VirtualBox:
+
+::
+
+    $ vagrant up
+
+With VMware:
+
+::
+
     $ vagrant up --provider vmware_fusion
 
 After the environment is up, login:

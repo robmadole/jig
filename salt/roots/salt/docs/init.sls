@@ -3,7 +3,7 @@
     - user: vagrant
     - group: vagrant
     - system_site_packages: False
-    - requirements: /vagrant/requirements.txt
+    - requirements: salt://jig/requirements.txt
     - python: /usr/bin/python
 
 jig-develop-egg:

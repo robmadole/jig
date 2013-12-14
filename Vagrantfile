@@ -10,6 +10,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.synced_folder "salt/roots/", "/srv"
 
+  # Using VirtualBox?
+  config.vm.provider "virtualbox" do |vb, override|
+    override.vm.box     = "raring-virtualbox"
+    override.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/raring/current/raring-server-cloudimg-amd64-vagrant-disk1.box"
+  end
+
   # Documentation
   config.vm.network "forwarded_port", guest: 5001, host: 5001
 
