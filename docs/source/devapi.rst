@@ -79,93 +79,51 @@ and displayed in the terminal.
 
 .. image:: images/integration.png
 
-Tests and coverage
-------------------
-
-Jig uses `Nose`_ to run tests and `coverage.py`_ to perform code coverage
-analysis.
-
-You need to have a cloned copy of Jig to run either one. You can start with a
-read-only copy:
-
-::
-
-    $ git clone git://github.com/robmadole/jig.git
-
-Or `fork the repository`_ on GitHub to make your own changes. The
-:doc:`Jig License <license>` is friendly.
-
-.. _development-setup:
-
-Jig uses virtualenv_, Pip and a requirements file to setup a development environment.
-
-We also suggest using virtualenvwrapper_ which is used in the following example.
-
-::
-
-    $ mkvirtualenv -p python2.7 jig-python27
-    $ pip install -r requirements.txt
-
-To run the tests:
-
-::
-
-    $ python script/test
-
-To run test coverage:
-
-::
-
-    $ python script/coverage
-
-.. _Nose: http://readthedocs.org/docs/nose/en/latest/
-.. _coverage.py: http://nedbatchelder.com/code/coverage/
-.. _fork the repository: https://github.com/robmadole/jig/fork_select
-.. _virtualenv: http://pypi.python.org/pypi/virtualenv
-.. _virtualenvwrapper: http://pypi.python.org/pypi/virtualenvwrapper
-
-Making the documentation
-------------------------
-
-This documentation is made with Sphinx_. To build the docs make sure you've ran
-the ``pip install -r requirements.txt`` first.
-
-Build the HTML version:
-
-::
-
-    $ cd docs
-    $ make html
-
-The builds will be placed in :file:`build`.
-
-You can also auto-build the docs and serve them using a simple HTTP server.
-
-::
-
-    $ python script/docs
-
-Open http://localhost:8000 to view the docs. Any changes to the docs will cause
-them to be re-built automatically.
-
-.. _Sphinx: http://sphinx.pocoo.org/
-
 .. _JSON: http://www.json.org/
 
-Cutting a release
------------------
+Developing Jig
+--------------
 
-Releases are cut from the develop branch, start there.
+Running the tests, building the documentation, and cutting releases to PyPi are
+all done through the Jig development environment.
 
-#. Create the release branch (see gitflow_, Jig uses this branching model)
-#. Edit :file:`NEWS.rst`
-#. Edit :file:`src/jig/__init__.py`
-#. Edit :file:`docs/source/conf.py` version number
-#. Commit, checkout ``master`` and ``git merge --no-ff`` the release branch
-#. Tag the release ``git tag``
-#. ``git push --tags origin master``
-#. Release to PyPi ``python setup.py sdist register upload``
-#. Checkout ``develop`` and merge ``master``
-#. Zip the docs up and upload
+Install Vagrant_ and either VirtualBox or VWmare Fusion/Workstation.
 
-.. _gitflow: http://nvie.com/posts/a-successful-git-branching-model/
+If you decide to use VMware (it's not free) you'll need  the Vagrant `VMware
+plugin`_ that allows Vagrant to support VMware.
+
+Clone the Jig repository:
+
+::
+
+    $ git clone https://github.com/robmadole/jig.git
+
+Bring up the environment:
+
+::
+
+    $ cd jig
+
+For VirtualBox:
+
+::
+
+    $ vagrant up
+
+With VMware:
+
+::
+
+    $ vagrant up --provider vmware_fusion
+
+After the environment is up, login:
+
+::
+
+    $ vagrant ssh
+
+You should see some instructions on where to proceed as part of the Linux
+message-of-the-day.
+
+.. _Vagrant: http://vagrantup.com
+.. _VMware plugin: http://www.vagrantup.com/vmware

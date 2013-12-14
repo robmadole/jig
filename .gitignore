@@ -1,20 +1,13 @@
 *.pyc
-
-.installed.cfg
-bin
-develop-eggs
-
+*.DS_Store
 *.egg-info
 
-tmp
-build
-dist
-eggs
-parts
+bin
+cover
+docs/build
 
 .coverage
-cover
 .jig
 .noseids
 .vimdir
-*.DS_Store
+.vagrant
