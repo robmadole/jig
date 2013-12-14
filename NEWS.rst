@@ -1,6 +1,11 @@
 News
 ====
 
+*Release 0.1.7 - December 13th, 2013*
+
+* Fix a missing string to unicode conversion that could cause errors if unicode
+  characters were present in the input sent to plugins.
+
 *Release 0.1.6 - April 28th, 2013*
 
 * ``jig config`` command added, allowing plugin configuration settings to be
