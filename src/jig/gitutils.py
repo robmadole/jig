@@ -17,7 +17,7 @@ from jig.exc import NotGitRepo, PreCommitExists, GitCloneError
 from jig.conf import JIG_DIR_NAME
 
 # Dependencies to make jig run
-BE_CAREFUL_DIR = realpath(join(dirname(__file__), '..'))
+JIG_DIR = realpath(join(dirname(__file__), '..'))
 GIT_PYTHON_DIR = realpath(join(dirname(git.__file__), '..'))
 GITDB_DIR = realpath(join(dirname(gitdb.__file__), '..'))
 ASYNC_DIR = realpath(join(dirname(async.__file__), '..'))
@@ -30,7 +30,7 @@ PRE_COMMIT_HOOK_SCRIPT = \
     from os.path import dirname, join
 
     # Make sure that we can find the directory that jig is installed
-    path.append('{be_careful_dir}')
+    path.append('{jig_dir}')
     path.append('{git_python_dir}')
     path.append('{gitdb_dir}')
     path.append('{async_dir}')
@@ -83,7 +83,7 @@ def hook(gitdir):
 
     script_kwargs = {
         'python_executable': sys.executable,
-        'be_careful_dir': BE_CAREFUL_DIR,
+        'jig_dir': JIG_DIR,
         'git_python_dir': GIT_PYTHON_DIR,
         'gitdb_dir': GITDB_DIR,
         'async_dir': ASYNC_DIR,
