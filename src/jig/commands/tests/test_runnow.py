@@ -74,7 +74,7 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
 
     def test_specific_plugin_installed(self):
         """
-        A specific plugin can be ran but it's not installed.
+        A specific plugin can be ran if it's installed.
         """
         self._add_plugin(self.jigconfig, 'plugin01')
         set_jigconfig(self.gitrepodir, config=self.jigconfig)

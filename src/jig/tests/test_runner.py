@@ -15,14 +15,14 @@ from jig.plugins import set_jigconfig, Plugin
 from jig.runner import Runner
 
 
-class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
+class TestRunner(RunnerTestCase, PluginTestCase):
 
     """
-    Runner hook is used by the command line script to run jig.
+    Runner is used by the command line script to run jig.
 
     """
     def setUp(self):
-        super(TestRunnerFromHook, self).setUp()
+        super(TestRunner, self).setUp()
 
         repo, working_dir, diffs = self.repo_from_fixture('repo01')
 
@@ -59,7 +59,7 @@ class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
                 self.assertRaises(SystemExit)
             ) as (ri, r_sys, ec):
                 r_sys.exit.side_effect = SystemExit
-                self.runner.fromhook(self.gitrepodir)
+                self.runner.main(self.gitrepodir)
 
         # Make sure that the call to raw_input never happened
         self.assertFalse(ri.called)
@@ -87,7 +87,7 @@ class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
             r_sys.exit.side_effect = SystemExit
             ri.return_value = 's'
 
-            self.runner.fromhook(self.gitrepodir)
+            self.runner.main(self.gitrepodir)
 
         # The user was prompted about committing or canceling
         ri.assert_called_once_with(
@@ -113,7 +113,7 @@ class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
             # Fake the raw_input call to return 'c'
             ri.return_value = 'c'
 
-            self.runner.fromhook(self.gitrepodir)
+            self.runner.main(self.gitrepodir)
 
         # The user was prompted about committing or canceling
         ri.assert_called_once_with(
@@ -140,7 +140,7 @@ class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
             # two incorrect options.
             ri.side_effect = ['1', '2', 'c']
 
-            self.runner.fromhook(self.gitrepodir)
+            self.runner.main(self.gitrepodir)
 
         # raw_input was called 3 times until it received a proper response
         self.assertEqual(3, ri.call_count)
@@ -165,7 +165,7 @@ class TestRunnerFromHook(RunnerTestCase, PluginTestCase):
             ri.side_effect = KeyboardInterrupt
             r_sys.exit.side_effect = SystemExit
 
-            self.runner.fromhook(self.gitrepodir)
+            self.runner.main(self.gitrepodir)
 
         # We exited with 1 to indicate the commit should abort
         r_sys.exit.assert_called_once_with(1)
@@ -216,7 +216,7 @@ class TestRunnerPluginUpdates(RunnerTestCase, PluginTestCase):
         """
         Doesn't check if interactive is False.
         """
-        self.runner.fromhook(self.gitrepodir, interactive=False)
+        self.runner.main(self.gitrepodir, interactive=False)
 
     def test_never_been_checked(self):
         """
@@ -230,7 +230,7 @@ class TestRunnerPluginUpdates(RunnerTestCase, PluginTestCase):
             # it will return 0.
             lcu.return_value = 0
 
-            self.runner.fromhook(self.gitrepodir)
+            self.runner.main(self.gitrepodir)
 
         # The check to see if the plugins have updates was called
         self.assertTrue(self.plugins_have_updates.called)
@@ -242,7 +242,7 @@ class TestRunnerPluginUpdates(RunnerTestCase, PluginTestCase):
         # There are no updates for the plugins
         self.plugins_have_updates.return_value = False
 
-        self.runner.fromhook(self.gitrepodir)
+        self.runner.main(self.gitrepodir)
 
         # The plugins were checked to see if there is an update
         self.assertTrue(self.plugins_have_updates.called)
@@ -263,7 +263,7 @@ class TestRunnerPluginUpdates(RunnerTestCase, PluginTestCase):
         # The answer will be "n"
         self.raw_input.side_effect = ['n']
 
-        self.runner.fromhook(self.gitrepodir)
+        self.runner.main(self.gitrepodir)
 
         # They did give a valid answer, so the date was moved
         self.assertTrue(self.set_checked_for_updates.called)
@@ -280,7 +280,7 @@ class TestRunnerPluginUpdates(RunnerTestCase, PluginTestCase):
         # Answer a couple of times with junk, and then say no
         self.raw_input.side_effect = ['junk', 'foo', 'n']
 
-        self.runner.fromhook(self.gitrepodir)
+        self.runner.main(self.gitrepodir)
 
         # The question was asked until a proper response was given
         self.assertEqual(3, self.raw_input.call_count)
@@ -294,7 +294,7 @@ class TestRunnerPluginUpdates(RunnerTestCase, PluginTestCase):
         # Answer a couple of times with junk, and then say no
         self.raw_input.side_effect = KeyboardInterrupt
 
-        self.runner.fromhook(self.gitrepodir)
+        self.runner.main(self.gitrepodir)
 
         # It exited just fine, no errors
         self.sys.exit.assert_called_with(0)
@@ -314,7 +314,7 @@ class TestRunnerPluginUpdates(RunnerTestCase, PluginTestCase):
         # The answer to update the plugins is yes
         self.raw_input.return_value = 'y'
 
-        self.runner.fromhook(self.gitrepodir)
+        self.runner.main(self.gitrepodir)
 
         # Exited normally
         self.sys.exit.assert_called_with(0)
@@ -593,3 +593,71 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.assertEqual(
             'Something went horribly wrong',
             stderr)
+
+
+class TestRunnerRevRange(RunnerTestCase, PluginTestCase):
+
+    """
+    Runner will take an options revision range instead of using staged files.
+
+    """
+    def setUp(self):
+        super(TestRunnerRevRange, self).setUp()
+
+        repo, working_dir, diffs = self.repo_from_fixture('repo01')
+
+        self._add_plugin(self.jigconfig, 'plugin01')
+        set_jigconfig(self.gitrepodir, config=self.jigconfig)
+
+        for letter in ['a', 'b', 'c']:
+            self.commit(
+                self.gitrepodir,
+                name='{0}.txt'.format(letter),
+                content=letter)
+
+    def file_changes(self, results):
+        """
+        Get the file changes for the given results.
+        """
+        return results.items()[0][1][1]
+
+    def test_bad_rev_range_format(self):
+        """
+        If a range is not formatted correctly.
+        """
+        with self.assertRaises(ForcedExit) as ec:
+            results = self.runner.results(self.gitrepodir, rev_range="BAR:BAZ")
+
+        self.assertEqual(
+            'BAR:BAZ\n\nThe revision range is not in a valid format.\n\n'
+            'Use "REV_A..REV_B" to specify the revisions that Jig should operate '
+            'against.\n',
+            self.error)
+
+    def test_non_existent_rev_range(self):
+        """
+        If a range is given that does not exist.
+        """
+        with self.assertRaises(ForcedExit) as ec:
+            results = self.runner.results(self.gitrepodir, rev_range="FOO..BAR")
+
+        self.assertEqual(
+            'FOO..BAR\n\nThe revision specified is formatted correctly but one '
+            'of both of the revisions\ncould not be found.\n',
+            self.error)
+
+    def test_existing_rev_range(self):
+        """
+        Valid revision range returns results.
+        """
+        results = self.runner.results(self.gitrepodir, rev_range="HEAD^1..HEAD")
+
+        self.assertEqual(1, len(self.file_changes(results)))
+
+    def test_multiple_rev_range(self):
+        """
+        Valid revision that includes two changes returns both.
+        """
+        results = self.runner.results(self.gitrepodir, rev_range="HEAD~2..HEAD")
+
+        self.assertEqual(2, len(self.file_changes(results)))

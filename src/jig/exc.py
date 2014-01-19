@@ -66,6 +66,24 @@ class GitCloneError(JigException):
     pass
 
 
+class GitRevListFormatError(JigException):
+
+    """
+    The given Git revision list is not in a valid format.
+
+    """
+    hint = 'GIT_REV_LIST_FORMAT_ERROR'
+
+
+class GitRevListMissing(JigException):
+
+    """
+    The revision lists could not be found for a given Git repository.
+
+    """
+    hint = 'GIT_REV_LIST_MISSING'
+
+
 class AlreadyInitialized(JigException):
 
     """

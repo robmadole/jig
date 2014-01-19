@@ -5,6 +5,7 @@
 bin
 cover
 docs/build
+dist
 
 .coverage
 .jig

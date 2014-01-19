@@ -50,6 +50,19 @@ GIT_REPO_NOT_INITIALIZED = _hint(
         $ jig init [directory]
     """)
 
+GIT_REV_LIST_FORMAT_ERROR = _hint(
+    u"""
+    The revision range is not in a valid format.
+
+    Use "REV_A..REV_B" to specify the revisions that Jig should operate against.
+    """)
+
+GIT_REV_LIST_MISSING = _hint(
+    u"""
+    The revision specified is formatted correctly but one of both of the revisions
+    could not be found.
+    """)
+
 ALREADY_INITIALIZED = _hint(
     u"""
     You are initializing a Git repository for use with Jig but it
