@@ -580,3 +580,60 @@ If you only want to run a specific plugin, use the ``--plugin`` option.
 
     Ran 1 plugins
         Info 0 Warn 3 Stop 0
+
+.. _cli-report:
+
+Run Jig on a given revision range
+---------------------------------
+
+Jig can also be ran on a list of previous commits instead of just on the changes
+that are staged in Git's index.
+
+Use the ``report`` command.
+
+.. code-block:: console
+
+    $ jig report --help
+    usage: jig report [-h] [-p PLUGIN] [--rev-range REVISION_RANGE] [PATH]
+
+    Run plugins on a revision range
+
+    positional arguments:
+      path                  Path to the Git repository
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --plugin PLUGIN, -p PLUGIN
+                            Only run this specific named plugin
+      --rev-range REV_RANGE
+                            Git revision range to run the plugins against
+
+The range is assumed to be the most recent commit but you can change that with
+the ``--rev-range`` option.  This needs to be formatted as ``REV_A..REV_B``
+with the double dots (``..``) to separate the first and second commit in the
+range.
+
+.. code-block:: console
+
+    $ jig report --rev-range origin/master..report-command
+    ▾  pep8-checker
+
+    ⚠  line 1: a.py
+        import foo; import bar; import daz;
+         - E702 multiple statements on one line (semicolon)
+
+    ▾  pyflakes
+
+    ⚠  line 1: a.py
+        'foo' imported but unused
+
+    ⚠  line 1: a.py
+        'bar' imported but unused
+
+    ⚠  line 1: a.py
+        'daz' imported but unused
+
+    Ran 3 plugins
+        Info 0 Warn 4 Stop 0
+
+This command also supports the ``--plugin`` option and works the same way as :ref:`runnow <cli-runnow>`

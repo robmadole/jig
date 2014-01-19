@@ -5,7 +5,7 @@ from jig.runner import Runner
 
 _parser = argparse.ArgumentParser(
     description='Run plugins on a revision range',
-    usage='jig check [-h] [-p PLUGIN] [--revrange REVISION_RANGE] [PATH]')
+    usage='jig report [-h] [-p PLUGIN] [--rev-range REVISION_RANGE] [PATH]')
 
 _parser.add_argument(
     '--plugin', '-p',
