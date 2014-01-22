@@ -1,6 +1,4 @@
 # coding=utf-8
-from unittest import SkipTest
-
 from jig.exc import ForcedExit
 from jig.tests.testcase import (
     CommandTestCase, PluginTestCase, result_with_hint)
