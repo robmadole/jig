@@ -31,7 +31,7 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         Given a range that is invalid it notifies the user.
         """
         with self.assertRaises(ForcedExit) as ec:
-            self.run_command('--rev-range FOO..BAR {}'.format(self.gitrepodir))
+            self.run_command('--rev-range FOO..BAR {0}'.format(self.gitrepodir))
 
         self.assertEqual(1, ec.exception.message)
 
@@ -42,7 +42,7 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         With a range indicating one commit it reports on that one.
         """
         with self.assertRaises(SystemExit) as ec:
-            self.run_command('--rev-range HEAD^1..HEAD {}'.format(self.gitrepodir))
+            self.run_command('--rev-range HEAD^1..HEAD {0}'.format(self.gitrepodir))
 
         self.assertEqual(0, ec.exception.message)
 
@@ -61,7 +61,7 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         Without a revision range it uses HEAD^1..HEAD.
         """
         with self.assertRaises(SystemExit) as ec:
-            self.run_command('{}'.format(self.gitrepodir))
+            self.run_command('{0}'.format(self.gitrepodir))
 
         self.assertResults(u"""
             ▾  plugin01
@@ -78,7 +78,7 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         With a range indicating two commits it reports on both.
         """
         with self.assertRaises(SystemExit) as ec:
-            self.run_command('--rev-range HEAD~2..HEAD {}'.format(self.gitrepodir))
+            self.run_command('--rev-range HEAD~2..HEAD {0}'.format(self.gitrepodir))
 
         self.assertEqual(0, ec.exception.message)
 
@@ -100,7 +100,7 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         If a plugin is given it will only report on that plugin.
         """
         with self.assertRaises(SystemExit) as ec:
-            self.run_command('--plugin plugin01 --rev-range HEAD^1..HEAD {}'.format(self.gitrepodir))
+            self.run_command('--plugin plugin01 --rev-range HEAD^1..HEAD {0}'.format(self.gitrepodir))
 
         self.assertEqual(0, ec.exception.message)
 
