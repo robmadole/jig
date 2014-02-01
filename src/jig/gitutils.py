@@ -8,16 +8,18 @@ from os.path import isdir, isfile, join, realpath, dirname
 from textwrap import dedent
 
 import git
-from git.exc import GitCommandError
+from git.exc import GitCommandError, BadObject
 import gitdb
 import async
 import smmap
 
-from jig.exc import NotGitRepo, PreCommitExists, GitCloneError
+from jig.exc import (
+    NotGitRepo, PreCommitExists, GitCloneError, GitRevListFormatError,
+    GitRevListMissing)
 from jig.conf import JIG_DIR_NAME
 
 # Dependencies to make jig run
-BE_CAREFUL_DIR = realpath(join(dirname(__file__), '..'))
+JIG_DIR = realpath(join(dirname(__file__), '..'))
 GIT_PYTHON_DIR = realpath(join(dirname(git.__file__), '..'))
 GITDB_DIR = realpath(join(dirname(gitdb.__file__), '..'))
 ASYNC_DIR = realpath(join(dirname(async.__file__), '..'))
@@ -30,7 +32,7 @@ PRE_COMMIT_HOOK_SCRIPT = \
     from os.path import dirname, join
 
     # Make sure that we can find the directory that jig is installed
-    path.append('{be_careful_dir}')
+    path.append('{jig_dir}')
     path.append('{git_python_dir}')
     path.append('{gitdb_dir}')
     path.append('{async_dir}')
@@ -83,7 +85,7 @@ def hook(gitdir):
 
     script_kwargs = {
         'python_executable': sys.executable,
-        'be_careful_dir': BE_CAREFUL_DIR,
+        'jig_dir': JIG_DIR,
         'git_python_dir': GIT_PYTHON_DIR,
         'gitdb_dir': GITDB_DIR,
         'async_dir': ASYNC_DIR,
@@ -159,3 +161,30 @@ def remote_has_updates(repository):
         is_tracking_newer = True
 
     return is_different and is_tracking_newer
+
+
+def parse_rev_range(repository, rev_range):
+    """
+    Convert revision range to two :class:`git.objects.commit.Commit` objects.
+
+    :param string repository: path to the Git repository
+    :param string rev_range: Double dot-separated revision range, like "FOO..BAR"
+    :returns: the two commits representing the range
+    :rtype: tuple
+    """
+    rev_pair = rev_range.split('..')
+
+    if len(rev_pair) != 2 or not all(rev_pair):
+        raise GitRevListFormatError(rev_range)
+
+    rev_a, rev_b = rev_pair
+
+    try:
+        repo = git.Repo(repository)
+
+        commit_a = repo.commit(rev_a)
+        commit_b = repo.commit(rev_b)
+
+        return commit_a, commit_b
+    except (BadObject, GitCommandError):
+        raise GitRevListMissing(rev_range)

@@ -27,7 +27,8 @@ class ForcedExit(JigException):
     not ``sys.exit()`` on exception so this object can be used in its place.
 
     """
-    pass
+    def __eq__(self, other):
+        return str(self) == str(other)
 
 
 class NotGitRepo(JigException):
@@ -64,6 +65,24 @@ class GitCloneError(JigException):
 
     """
     pass
+
+
+class GitRevListFormatError(JigException):
+
+    """
+    The given Git revision list is not in a valid format.
+
+    """
+    hint = 'GIT_REV_LIST_FORMAT_ERROR'
+
+
+class GitRevListMissing(JigException):
+
+    """
+    The revision lists could not be found for a given Git repository.
+
+    """
+    hint = 'GIT_REV_LIST_MISSING'
 
 
 class AlreadyInitialized(JigException):

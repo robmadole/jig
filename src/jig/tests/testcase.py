@@ -9,6 +9,7 @@ from textwrap import dedent
 from mock import patch
 from git import Repo
 
+from jig.exc import ForcedExit
 from jig.runner import Runner
 from jig.plugins import initializer
 from jig.diffconvert import GitDiffIndex
@@ -111,6 +112,8 @@ class JigTestCase(unittest.TestCase):
         """
         if hasattr(exception, 'code'):
             self.assertEqual(exception.code, code)
+        elif isinstance(exception, ForcedExit):
+            self.assertEqual(exception, ForcedExit(code))
         else:
             self.assertEqual(exception, code)
 

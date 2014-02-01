@@ -1,6 +1,11 @@
 News
 ====
 
+*Release 0.1.8 - February 1st, 2014*
+
+* Adds a ``jig report`` command allowing Jig to be ran on any Git revision range.
+* Adds a ``jig version`` to show the currently installed version of Jig.
+
 *Release 0.1.7 - December 13th, 2013*
 
 * Fix a missing string to unicode conversion that could cause errors if unicode
