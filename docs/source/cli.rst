@@ -20,7 +20,9 @@ Jig's help menu is available by running ``jig`` or ``jig --help``.
       init        Initialize a Git repository for use with Jig
       install     Install a list of Jig plugins from a file
       plugin      Manage this repository's Jig plugins
+      report      Run plugins on a revision range
       runnow      Run all plugins and show the results
+      version     Show Jig's version number
 
     See `jig COMMAND --help` for more information
 
