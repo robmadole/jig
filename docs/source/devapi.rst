@@ -87,10 +87,7 @@ Developing Jig
 Running the tests, building the documentation, and cutting releases to PyPi are
 all done through the Jig development environment.
 
-The environment is managed by Vagrant_ and uses VMware as the virtualization
-layer.
-
-Install Vagrant, VirtualBox or VWmare Fusion/Workstation.
+Install Vagrant_ and either VirtualBox or VWmare Fusion/Workstation.
 
 If you decide to use VMware (it's not free) you'll need  the Vagrant `VMware
 plugin`_ that allows Vagrant to support VMware.
