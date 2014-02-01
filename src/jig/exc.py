@@ -27,7 +27,8 @@ class ForcedExit(JigException):
     not ``sys.exit()`` on exception so this object can be used in its place.
 
     """
-    pass
+    def __eq__(self, other):
+        return str(self) == str(other)
 
 
 class NotGitRepo(JigException):

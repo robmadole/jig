@@ -33,7 +33,7 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         with self.assertRaises(ForcedExit) as ec:
             self.run_command('--rev-range FOO..BAR {0}'.format(self.gitrepodir))
 
-        self.assertEqual(1, ec.exception.message)
+        self.assertSystemExitCode(ec.exception, 1)
 
         self.assertTrue(self.error)
 
@@ -44,7 +44,7 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         with self.assertRaises(SystemExit) as ec:
             self.run_command('--rev-range HEAD^1..HEAD {0}'.format(self.gitrepodir))
 
-        self.assertEqual(0, ec.exception.message)
+        self.assertSystemExitCode(ec.exception, 0)
 
         self.assertResults(u"""
             ▾  plugin01
@@ -80,7 +80,7 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         with self.assertRaises(SystemExit) as ec:
             self.run_command('--rev-range HEAD~2..HEAD {0}'.format(self.gitrepodir))
 
-        self.assertEqual(0, ec.exception.message)
+        self.assertSystemExitCode(ec.exception, 0)
 
         self.assertResults(u"""
             ▾  plugin01
@@ -102,7 +102,7 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         with self.assertRaises(SystemExit) as ec:
             self.run_command('--plugin plugin01 --rev-range HEAD^1..HEAD {0}'.format(self.gitrepodir))
 
-        self.assertEqual(0, ec.exception.message)
+        self.assertSystemExitCode(ec.exception, 0)
 
         self.assertResults(u"""
             ▾  plugin01
