@@ -79,3 +79,6 @@ class TestCreateAutoInitTemplates(JigTestCase):
         super(TestCreateAutoInitTemplates, self).setUp()
 
         self.user_home_directory = mkdtemp()
+
+    def test_raises_exception_if_no_templates(self):
+        pass

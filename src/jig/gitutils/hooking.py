@@ -9,7 +9,7 @@ import async
 import smmap
 
 from jig.exc import NotGitRepo, PreCommitExists
-from jig.gitscripts import PRE_COMMIT_HOOK_SCRIPT, AUTO_JIG_INIT_SCRIPT
+from jig.gitutils.scripts import PRE_COMMIT_HOOK_SCRIPT, AUTO_JIG_INIT_SCRIPT
 from jig.gitutils.checks import is_git_repo
 
 # Dependencies to make jig run
