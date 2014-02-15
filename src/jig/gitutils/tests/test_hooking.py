@@ -15,9 +15,12 @@ class TestHook(JigTestCase):
 
     """
     def setUp(self):
+        super(TestHook, self).setUp()
+
         # Where will our pre-commit file be?
-        self.pc_filename = realpath(join(self.gitrepodir, '.git', 'hooks',
-            'pre-commit'))
+        self.pc_filename = realpath(
+            join(self.gitrepodir, '.git', 'hooks', 'pre-commit')
+        )
 
     def test_not_git_directory(self):
         """
@@ -48,8 +51,7 @@ class TestHook(JigTestCase):
         """
         pc_filename = hook(self.gitrepodir)
 
-        self.assertEqual(self.pc_filename,
-            pc_filename)
+        self.assertEqual(self.pc_filename, pc_filename)
 
     def test_hook_runs(self):
         """
@@ -65,3 +67,15 @@ class TestHook(JigTestCase):
                 u'This repository has not been initialized.',
                 GIT_REPO_NOT_INITIALIZED),
             output)
+
+
+class TestCreateAutoInitTemplates(JigTestCase):
+
+    """
+    An auto-init templates directory can be created.
+
+    """
+    def setUp(self):
+        super(TestCreateAutoInitTemplates, self).setUp()
+
+        self.user_home_directory = mkdtemp()

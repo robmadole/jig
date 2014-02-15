@@ -51,7 +51,7 @@ AUTO_JIG_INIT_SCRIPT = \
             u'\nAfter you\'ve installed some plugins run git commit again\n'
         )
 
-    # Exit with non-zero so the commit can be checked with the real Jig the next
-    # time a commit is attempted.
+    # Exit with non-zero so the commit can be checked with the real Jig
+    # the next time a commit is attempted.
     exit(1)
     """).strip()

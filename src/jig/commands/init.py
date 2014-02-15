@@ -12,7 +12,8 @@ _parser = argparse.ArgumentParser(
     description='Initialize a Git repository for use with Jig',
     usage='jig init [-h] [PATH]')
 
-_parser.add_argument('path', default='.', nargs='?',
+_parser.add_argument(
+    'path', default='.', nargs='?',
     help='Path to the Git repository')
 
 
@@ -26,6 +27,7 @@ class Command(BaseCommand):
             hook(path)
             initializer(path)
 
-            out.append('Git repository has been initialized for use '
-                'with Jig.')
+            out.append(
+                'Git repository has been initialized for use with Jig.'
+            )
             out.extend(AFTER_INIT)

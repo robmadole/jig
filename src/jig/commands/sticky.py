@@ -1,4 +1,3 @@
-from jig.exc import PluginError
 from jig.commands.base import BaseCommand
 
 try:

@@ -1,19 +1,14 @@
 import sys
 from stat import S_IXUSR, S_IXGRP, S_IXOTH
 from os import stat, chmod
-from os.path import isdir, isfile, join, realpath, dirname
-from textwrap import dedent
+from os.path import isfile, join, realpath, dirname
 
 import git
-from git.exc import GitCommandError, BadObject
 import gitdb
 import async
 import smmap
 
-from jig.exc import (
-    NotGitRepo, PreCommitExists, GitCloneError, GitRevListFormatError,
-    GitRevListMissing)
-from jig.conf import JIG_DIR_NAME
+from jig.exc import NotGitRepo, PreCommitExists
 from jig.gitscripts import PRE_COMMIT_HOOK_SCRIPT, AUTO_JIG_INIT_SCRIPT
 from jig.gitutils.checks import is_git_repo
 
@@ -77,7 +72,7 @@ def hook(gitdir):
 
 def create_auto_init_templates(user_home_directory):
     """
-    Creates a Git templates directory with a Jig auto-init pre-commit hook 
+    Creates a Git templates directory with a Jig auto-init pre-commit hook.
 
     The templates directory will be created in the user's home directory inside
     a ~/.jig main directory.

@@ -36,8 +36,9 @@ class TestClone(JigTestCase):
 
             gitobj = clone('http://github.com/user/repo', to_dir)
 
-            Git.execute.assert_called_with(['git', 'clone',
-                'http://github.com/user/repo', to_dir])
+            Git.execute.assert_called_with([
+                'git', 'clone', 'http://github.com/user/repo', to_dir
+            ])
 
         self.assertIsInstance(gitobj, Git)
 
@@ -48,14 +49,17 @@ class TestClone(JigTestCase):
         with patch.object(Git, 'execute'):
             to_dir = join(self.workingdir, 'a')
 
-            Git.execute.side_effect = GitCommandError(['command'], 128,
-                stderr='bad command')
+            Git.execute.side_effect = GitCommandError(
+                ['command'], 128, stderr='bad command'
+            )
 
             with self.assertRaises(GitCloneError) as gce:
                 clone('http://github.com/user/repo', to_dir)
 
-            self.assertIn("'command' returned exit status 128: bad command",
-                gce.exception)
+            self.assertIn(
+                "'command' returned exit status 128: bad command",
+                gce.exception
+            )
 
     def test_local_directory_clone(self):
         """
@@ -76,14 +80,16 @@ class TestClone(JigTestCase):
 
             Git.execute.return_value = 'Cloning into X'
 
-            gitobj = clone(
+            clone(
                 'http://github.com/user/repo',
                 to_dir,
-                branch='alternate')
+                branch='alternate'
+            )
 
-            Git.execute.assert_called_with(
-                ['git', 'clone', '--branch', 'alternate',
-                'http://github.com/user/repo', to_dir])
+            Git.execute.assert_called_with([
+                'git', 'clone', '--branch', 'alternate',
+                'http://github.com/user/repo', to_dir
+            ])
 
 
 class TestRemoteHasUpdates(JigTestCase):

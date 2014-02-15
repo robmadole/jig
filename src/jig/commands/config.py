@@ -65,7 +65,7 @@ def _get_plugin_config_section(plugin_dir, section):
     """
     Get a section of a plugin's config.
 
-    :param string plugin_dir: the directory where the plugin's config can be found
+    :param string plugin_dir: the directory where the plugin's is found
     :param string section: name of the section to fetch
     :rtype: OrderedDict
     :returns: section of a config
@@ -167,9 +167,12 @@ class Command(BaseCommand):
                 return
 
             for meta in self._settings(pm):
-                out.append(u'{bundle}.{plugin}.{config_key}={config_value}'.format(
-                    bundle=meta.plugin.bundle, plugin=meta.plugin.name,
-                    config_key=meta.key, config_value=meta.value))
+                out.append(
+                    u'{bundle}.{plugin}.{config_key}={config_value}'.format(
+                        bundle=meta.plugin.bundle, plugin=meta.plugin.name,
+                        config_key=meta.key, config_value=meta.value
+                    )
+                )
 
             if not out:
                 out.append(u'Installed plugins have no settings.')
@@ -229,7 +232,6 @@ class Command(BaseCommand):
                 raise ConfigKeyInvalid(
                     '{0} is an invalid config key.'.format(key))
 
-            # Unpack our dot-separated string into the components identifying a setting
             bundle, plugin, config_key = key_parts
 
             config = get_jigconfig(path)

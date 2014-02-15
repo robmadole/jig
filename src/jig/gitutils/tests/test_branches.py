@@ -58,7 +58,9 @@ class TestParseRevRange(JigTestCase):
         """
         self.gitrepo.create_head('feature-branch')
 
-        self.assertIsRevRange(parse_rev_range(self.gitrepodir, 'HEAD^1..feature-branch'))
+        self.assertIsRevRange(
+            parse_rev_range(self.gitrepodir, 'HEAD^1..feature-branch')
+        )
 
     def test_out_of_range(self):
         """
