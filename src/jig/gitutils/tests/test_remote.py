@@ -1,13 +1,89 @@
+from os.path import join
 from tempfile import mkdtemp
 from shutil import rmtree
 from time import sleep
 
-from git import Repo
-from git.exc import GitCommandError
 from mock import patch
+from git import Git, Repo
+from git.exc import GitCommandError
 
 from jig.tests.testcase import JigTestCase
-from jig.gitutils import clone, remote_has_updates
+from jig.exc import GitCloneError
+from jig.gitutils.checks import is_git_repo
+from jig.gitutils.remote import clone, remote_has_updates
+
+
+class TestClone(JigTestCase):
+
+    """
+    Git utils clone method can clone a repository.
+
+    """
+    def setUp(self):
+        self.workingdir = mkdtemp()
+
+    def tearDown(self):
+        rmtree(self.workingdir)
+
+    def test_clone_valid_repo(self):
+        """
+        Valid repo can be cloned.
+        """
+        with patch.object(Git, 'execute'):
+            to_dir = join(self.workingdir, 'a')
+
+            Git.execute.return_value = 'Cloning into X'
+
+            gitobj = clone('http://github.com/user/repo', to_dir)
+
+            Git.execute.assert_called_with(['git', 'clone',
+                'http://github.com/user/repo', to_dir])
+
+        self.assertIsInstance(gitobj, Git)
+
+    def test_clone_invalid_repo(self):
+        """
+        Invalid repo raises error.
+        """
+        with patch.object(Git, 'execute'):
+            to_dir = join(self.workingdir, 'a')
+
+            Git.execute.side_effect = GitCommandError(['command'], 128,
+                stderr='bad command')
+
+            with self.assertRaises(GitCloneError) as gce:
+                clone('http://github.com/user/repo', to_dir)
+
+            self.assertIn("'command' returned exit status 128: bad command",
+                gce.exception)
+
+    def test_local_directory_clone(self):
+        """
+        Clones a local file-based Git repository.
+        """
+        to_dir = join(self.workingdir, 'a')
+
+        clone(self.gitrepodir, to_dir)
+
+        self.assertTrue(is_git_repo(to_dir))
+
+    def test_clone_branch(self):
+        """
+        Clone a specific branch of a repository.
+        """
+        with patch.object(Git, 'execute'):
+            to_dir = join(self.workingdir, 'a')
+
+            Git.execute.return_value = 'Cloning into X'
+
+            gitobj = clone(
+                'http://github.com/user/repo',
+                to_dir,
+                branch='alternate')
+
+            Git.execute.assert_called_with(
+                ['git', 'clone', '--branch', 'alternate',
+                'http://github.com/user/repo', to_dir])
 
 
 class TestRemoteHasUpdates(JigTestCase):
@@ -54,17 +130,17 @@ class TestRemoteHasUpdates(JigTestCase):
         """
         If the fetch to retrieve new information results in an exception.
         """
-        with patch('jig.gitutils.git') as git:
+        with patch('jig.gitutils.remote.git') as git:
             git.Repo.side_effect = AttributeError
 
             self.assertTrue(remote_has_updates(self.local_workingdir))
 
-        with patch('jig.gitutils.git') as git:
+        with patch('jig.gitutils.remote.git') as git:
             git.Repo.side_effect = GitCommandError(None, None)
 
             self.assertTrue(remote_has_updates(self.local_workingdir))
 
-        with patch('jig.gitutils.git') as git:
+        with patch('jig.gitutils.remote.git') as git:
             git.Repo.side_effect = AssertionError
 
             self.assertTrue(remote_has_updates(self.local_workingdir))

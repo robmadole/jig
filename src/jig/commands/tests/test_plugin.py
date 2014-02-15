@@ -17,7 +17,7 @@ from jig.plugins import (
 from jig.plugins.testrunner import (
     Expectation, SuccessResult,
     FailureResult, REPORTER_HORIZONTAL_DIVIDER)
-from jig.gitutils import clone
+from jig.gitutils.remote import clone
 from jig.commands import plugin
 from jig.commands.hints import (
     FORK_PROJECT_GITHUB, NO_PLUGINS_INSTALLED, USE_RUNNOW, INVALID_RANGE)

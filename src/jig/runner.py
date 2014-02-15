@@ -6,7 +6,8 @@ from git import Repo
 
 from jig.exc import GitRepoNotInitialized
 from jig.conf import PLUGIN_CHECK_FOR_UPDATES
-from jig.gitutils import repo_jiginitialized, parse_rev_range
+from jig.gitutils.checks import repo_jiginitialized
+from jig.gitutils.branches import parse_rev_range
 from jig.diffconvert import GitDiffIndex
 from jig.plugins import get_jigconfig, PluginManager
 from jig.plugins.tools import (

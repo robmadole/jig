@@ -2,7 +2,7 @@ from git.objects.commit import Commit
 
 from jig.tests.testcase import JigTestCase
 from jig.exc import GitRevListMissing, GitRevListFormatError
-from jig.gitutils import parse_rev_range
+from jig.gitutils.branches import parse_rev_range
 
 
 class TestParseRevRange(JigTestCase):

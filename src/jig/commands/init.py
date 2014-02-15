@@ -2,7 +2,7 @@ import argparse
 
 from jig.commands.base import BaseCommand
 from jig.commands.hints import AFTER_INIT
-from jig.gitutils import hook
+from jig.gitutils.hooking import hook
 from jig.plugins import initializer
 
 _parser = argparse.ArgumentParser(

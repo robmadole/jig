@@ -5,10 +5,10 @@ from tempfile import mkdtemp
 from jig.tests.testcase import JigTestCase, result_with_hint
 from jig.commands.hints import GIT_REPO_NOT_INITIALIZED
 from jig.exc import NotGitRepo, PreCommitExists
-from jig.gitutils import hook
+from jig.gitutils.hooking import hook
 
 
-class TestAddingHook(JigTestCase):
+class TestHook(JigTestCase):
 
     """
     Can we properly hook a Git repository
