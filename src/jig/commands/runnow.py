@@ -1,7 +1,10 @@
-import argparse
-
 from jig.commands.base import BaseCommand
 from jig.runner import Runner
+
+try:
+    import argparse
+except ImportError:
+    from backports import argparse
 
 _parser = argparse.ArgumentParser(
     description='Run plugins on staged changes and show the results',

@@ -1,7 +1,10 @@
-import argparse
-
 from jig.exc import PluginError
 from jig.commands.base import BaseCommand
+
+try:
+    import argparse
+except ImportError:
+    from backports import argparse
 
 _parser = argparse.ArgumentParser(
     description='Make Jig auto-init every time you git clone',

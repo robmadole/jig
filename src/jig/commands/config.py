@@ -1,4 +1,3 @@
-import argparse
 from os.path import join
 from ConfigParser import SafeConfigParser
 from collections import namedtuple
@@ -10,6 +9,11 @@ from jig.commands.base import BaseCommand, plugins_by_bundle
 from jig.commands.hints import NO_PLUGINS_INSTALLED, CHANGE_PLUGIN_SETTINGS
 from jig.plugins import (
     get_jigconfig, set_jigconfig, PluginManager)
+
+try:
+    import argparse
+except ImportError:
+    from backports import argparse
 
 _parser = argparse.ArgumentParser(
     description='Manage settings for installed Jig plugins',

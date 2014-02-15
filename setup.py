@@ -18,8 +18,7 @@ install_requires = [
 # Shims for missing stuff in Python 2.6
 major, minor, patch, releaselevel, serial = sys.version_info
 if major == 2 and minor < 7:
-    install_requires += ['ordereddict==1.1', 'unittest2==0.5.1',
-                         'argparse==1.2.1']
+    install_requires += ['ordereddict==1.1', 'unittest2==0.5.1']
 
 setup(
     name='jig',

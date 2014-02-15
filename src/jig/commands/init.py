@@ -1,9 +1,12 @@
-import argparse
-
 from jig.commands.base import BaseCommand
 from jig.commands.hints import AFTER_INIT
 from jig.gitutils.hooking import hook
 from jig.plugins import initializer
+
+try:
+    import argparse
+except ImportError:
+    from backports import argparse
 
 _parser = argparse.ArgumentParser(
     description='Initialize a Git repository for use with Jig',

@@ -1,7 +1,10 @@
-import argparse
-
 import jig
 from jig.commands.base import BaseCommand
+
+try:
+    import argparse
+except ImportError:
+    from backports import argparse
 
 _parser = argparse.ArgumentParser(
     description='Show Jig\'s version number',
