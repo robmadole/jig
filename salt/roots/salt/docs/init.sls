@@ -1,3 +1,9 @@
+supervisor:
+  pkg:
+    - installed
+  service:
+    - running
+
 /envs/docs:
   virtualenv.managed:
     - user: vagrant
@@ -29,9 +35,7 @@ jig-develop-egg:
 docs:
   supervisord:
     - running
-    - restart: False
-    - require:
-      - service: supervisor
+    - restart: True
 
 {% set jigops_rst = "/tmp/jigops.rst" %}
 

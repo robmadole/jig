@@ -1,9 +1,8 @@
 base:
   '*':
-    - locale
+    - common.locale
     - python
-    - environments
+    - jig.environments
     - jig.editable
-    - supervisord
     - motd
     - docs
