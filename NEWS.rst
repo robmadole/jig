@@ -1,6 +1,11 @@
 News
 ====
 
+*Release 0.1.9 - February 22nd, 2014*
+
+* Adds a ``jig sticky`` command that auto-initializes freshly cloned Git
+  repositories for use with Jig.
+
 *Release 0.1.8 - February 1st, 2014*
 
 * Adds a ``jig report`` command allowing Jig to be ran on any Git revision range.
