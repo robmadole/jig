@@ -1,4 +1,6 @@
 from jig.commands.base import BaseCommand
+from jig.gitutils.hooking import (
+    create_auto_init_templates, set_templates_directory)
 
 try:
     import argparse
@@ -15,4 +17,8 @@ class Command(BaseCommand):
 
     def process(self, argv):
         with self.out() as out:
-            out.extend('...')
+            templates_directory = create_auto_init_templates()
+
+            set_templates_directory(templates_directory)
+
+            out.append('Jig has been setup to run everytime you clone.')

@@ -93,6 +93,10 @@ class GitTemplatesMissing(JigException):
     """
     hint = 'GIT_TEMPLATES_MISSING'
 
+    def __init__(self):
+        super(GitTemplatesMissing, self).__init__(
+            'Unable to find templates.')
+
 
 class GitHomeTemplatesExists(JigException):
 
@@ -118,7 +122,7 @@ class InitTemplateDirAlreadySet(JigException):
 
     def __init__(self, init_templatedir):
         super(InitTemplateDirAlreadySet, self).__init__(
-            'Git configuration for init.templatedir is {0} '.format(
+            'Git configuration for init.templatedir is {0}'.format(
                 init_templatedir))
 
 
@@ -134,7 +138,9 @@ class GitConfigError(JigException):
 
         :param git.exc.GitCommandError git_command_error:
         """
-        super(GitConfigError, self).__init__(git_command_error.stderr)
+        super(GitConfigError, self).__init__(
+            'Problem when running {0}: {1}'.format(
+                git_command_error.command, git_command_error.stderr))
 
 
 class AlreadyInitialized(JigException):
