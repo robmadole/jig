@@ -5,3 +5,4 @@ rednose
 unicode-nazi
 Sphinx
 watchdog
+pdbpp
