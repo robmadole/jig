@@ -1,15 +1,20 @@
 import sys
 from stat import S_IXUSR, S_IXGRP, S_IXOTH
-from os import stat, chmod
-from os.path import isfile, join, realpath, dirname
+from os import stat, chmod, makedirs
+from os.path import isfile, isdir, join, realpath, dirname
+from shutil import copytree
 
 import git
 import gitdb
 import async
 import smmap
 
-from jig.exc import NotGitRepo, PreCommitExists
-from jig.gitutils.scripts import PRE_COMMIT_HOOK_SCRIPT, AUTO_JIG_INIT_SCRIPT
+from jig.exc import (
+    NotGitRepo, PreCommitExists, JigUserDirectoryError,
+    GitTemplatesMissing, GitHomeTemplatesExists, GitConfigError,
+    InitTemplateDirAlreadySet)
+from jig.conf import JIG_DIR_NAME
+from jig.gitutils.scripts import RUN_JIG_SCRIPT, AUTO_JIG_INIT_SCRIPT
 from jig.gitutils.checks import is_git_repo
 
 # Dependencies to make jig run
@@ -19,36 +24,69 @@ GITDB_DIR = realpath(join(dirname(gitdb.__file__), '..'))
 ASYNC_DIR = realpath(join(dirname(async.__file__), '..'))
 SMMAP_DIR = realpath(join(dirname(smmap.__file__), '..'))
 
-# Possible locations of the shared Git templates directory
-GIT_TEMPLATES_SEARCH_LOCATIONS = [
-    '/usr/share/git-core/templates',
-    '/usr/local/share/git-core/templates',
-    '/usr/local/git/share/git-core/templates'
-]
+
+def _git_templates():
+    """
+    Search and return the location of the shared Git templates directory.
+
+    :rtype: string or None
+    """
+    search_locations = [
+        '/usr/share/git-core/templates',
+        '/usr/local/share/git-core/templates',
+        '/usr/local/git/share/git-core/templates'
+    ]
+
+    for possible_location in search_locations:
+        if isdir(possible_location):
+            return possible_location
+
+    return None
+
+
+def _create_pre_commit(destination, template, context):
+    """
+    Writes a Git pre-commit hook from the template and make it executable.
+
+    :param string destination: the filename of the pre-commit to create
+    :param string template: the script template with replaceable vars
+        compatible with string.format()
+    :param dict context: keys and values to replace in the template
+    :raises jig.exc.PreCommitExists: if there is already a Git hook for
+        pre-commit present.
+    """
+    # Is there already a hook?
+    if isfile(destination):
+        raise PreCommitExists('{0} already exists'.format(destination))
+
+    with open(destination, 'w') as fh:
+        fh.write(template.format(**context))
+
+    sinfo = stat(destination)
+    mode = sinfo.st_mode | S_IXUSR | S_IXGRP | S_IXOTH
+
+    # Make sure it's executable
+    chmod(destination, mode)
+
+    return destination
 
 
 def hook(gitdir):
     """
-    Places a pre-commit hook in the given directory.
+    Creates a pre-commit hook that runs Jig in normal mode.
 
     The hook will be configured to run using the version of Python that was
     used to install jig.
 
     Returns the full path to the newly created post-commit hook.
 
-    Raises :py:exc:`NotGitRepo` if the directory given is not a Git repository.
-    Raises :py:exc:`PreCommitExists` if there is already a Git hook for
-        pre-commit present.
+    :raises jig.exc.NotGitRepo: if the directory given is not a Git repository.
     """
     if not is_git_repo(gitdir):
         raise NotGitRepo('{0} is not a Git repository.'.format(
             gitdir))
 
     pc_filename = realpath(join(gitdir, '.git', 'hooks', 'pre-commit'))
-
-    # Is there already a hook?
-    if isfile(pc_filename):
-        raise PreCommitExists('{0} already exists'.format(pc_filename))
 
     script_kwargs = {
         'python_executable': sys.executable,
@@ -58,16 +96,7 @@ def hook(gitdir):
         'async_dir': ASYNC_DIR,
         'smmap_dir': SMMAP_DIR}
 
-    with open(pc_filename, 'w') as fh:
-        fh.write(PRE_COMMIT_HOOK_SCRIPT.format(**script_kwargs))
-
-    sinfo = stat(pc_filename)
-    mode = sinfo.st_mode | S_IXUSR | S_IXGRP | S_IXOTH
-
-    # Make sure it's executable
-    chmod(pc_filename, mode)
-
-    return pc_filename
+    return _create_pre_commit(pc_filename, RUN_JIG_SCRIPT, script_kwargs)
 
 
 def create_auto_init_templates(user_home_directory):
@@ -82,19 +111,74 @@ def create_auto_init_templates(user_home_directory):
 
     :param string user_home_directory: Full path to the user's home directory
     """
-    # Create the .jig directory in the home directory
+    jig_user_directory = join(user_home_directory, JIG_DIR_NAME)
+    jig_git_user_directory = join(jig_user_directory, 'git')
+
+    try:
+        map(makedirs, [jig_user_directory, jig_git_user_directory])
+    except OSError as ose:
+        if ose.errno == 13:
+            # Permission denied
+            raise JigUserDirectoryError(
+                'Cannot create {0} Jig user directory'.format(
+                    jig_user_directory
+                )
+            )
+        if ose.errno != 17:
+            # Some other kind of OSError
+            raise JigUserDirectoryError(unicode(ose))
 
     # Copy the shared Git templates directory to .jig/git/templates
-    pass
+    git_templates_directory = _git_templates()
+
+    if not git_templates_directory:
+        raise GitTemplatesMissing()
+
+    home_templates_directory = join(jig_git_user_directory, 'templates')
+
+    if isdir(home_templates_directory):
+        raise GitHomeTemplatesExists(home_templates_directory)
+
+    copytree(git_templates_directory, home_templates_directory)
+
+    pc_filename = realpath(
+        join(home_templates_directory, 'hooks', 'pre-commit')
+    )
+
+    script_kwargs = {'python_executable': sys.executable}
+
+    _create_pre_commit(
+        pc_filename, AUTO_JIG_INIT_SCRIPT, script_kwargs
+    )
+
+    return home_templates_directory
 
 
-def set_templates_directory(gitconfig, templates_directory):
+def set_templates_directory(templates_directory):
     """
-    Sets the template directory in the given ``gitconfig``.
+    Sets the template directory in the global Git config.
     """
-    # Load up the config
+    command = git.cmd.Git()
 
-    # Add the [init] section if it's not here
+    try:
+        raw_config = command.config(
+            '--global',
+            '--list'
+        )
+    except git.exc.GitCommandError as gce:
+        raise GitConfigError(gce)
 
-    # Set templatedir to the templates directory
-    pass
+    config = dict([i.split('=', 1) for i in raw_config.splitlines()])
+
+    if 'init.templatedir' in config:
+        raise InitTemplateDirAlreadySet(config['init.templatedir'])
+
+    try:
+        command.config(
+            '--global',
+            '--add',
+            'init.templatedir',
+            templates_directory
+        )
+    except git.exc.GitCommandError as gce:
+        raise GitConfigError(gce)

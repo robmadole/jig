@@ -85,6 +85,58 @@ class GitRevListMissing(JigException):
     hint = 'GIT_REV_LIST_MISSING'
 
 
+class GitTemplatesMissing(JigException):
+
+    """
+    The shared Git templates directory is not in any expected locations.
+
+    """
+    hint = 'GIT_TEMPLATES_MISSING'
+
+
+class GitHomeTemplatesExists(JigException):
+
+    """
+    The ~/.jig/templates directory already exists.
+
+    """
+    hint = 'GIT_HOME_TEMPLATES_EXISTS'
+
+    def __init__(self, home_templates_directory):
+        super(GitHomeTemplatesExists, self).__init__(
+            '{0} already exists'.format(home_templates_directory)
+        )
+
+
+class InitTemplateDirAlreadySet(JigException):
+
+    """
+    If the Git config already has a value for the init.templatedir key.
+
+    """
+    hint = 'INIT_TEMPLATE_DIR_ALREADY_SET'
+
+    def __init__(self, init_templatedir):
+        super(InitTemplateDirAlreadySet, self).__init__(
+            'Git configuration for init.templatedir is {0} '.format(
+                init_templatedir))
+
+
+class GitConfigError(JigException):
+
+    """
+    Raise when an error occurs reading or writing the Git config.
+
+    """
+    def __init__(self, git_command_error):
+        """
+        Use the stderr message from the command as this exception's message.
+
+        :param git.exc.GitCommandError git_command_error:
+        """
+        super(GitConfigError, self).__init__(git_command_error.stderr)
+
+
 class AlreadyInitialized(JigException):
 
     """
@@ -92,6 +144,15 @@ class AlreadyInitialized(JigException):
 
     """
     hint = 'ALREADY_INITIALIZED'
+
+
+class JigUserDirectoryError(JigException):
+
+    """
+    An error finding or creating the ~/.jig directory.
+
+    """
+    pass
 
 
 class PluginError(JigException):

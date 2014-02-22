@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-PRE_COMMIT_HOOK_SCRIPT = \
+RUN_JIG_SCRIPT = \
     dedent("""\
     #!{python_executable}
     from sys import path
@@ -39,7 +39,7 @@ AUTO_JIG_INIT_SCRIPT = \
     stdout.flush()
 
     try:
-        check_call(u'jig init {}'.format(repository_directory), shell=True)
+        check_call(u'jig init {{0}}'.format(repository_directory), shell=True)
     except (OSError, CalledProcessError) as e:
         stderr.write(
             u'Initialization of Jig failed so we are disabling\n'

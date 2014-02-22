@@ -63,6 +63,26 @@ GIT_REV_LIST_MISSING = _hint(
     could not be found.
     """)
 
+GIT_TEMPLATES_MISSING = _hint(
+    u"""
+    Jig looks for the shared Git templates in /usr/share and /usr/local. You may
+    have a non-standard installation of Git.
+    """)
+
+GIT_HOME_TEMPLATES_EXISTS = _hint(
+    u"""
+    You may have already configured Jig for this. Delete the directory
+    and run the command again if you are sure this is what you want to
+    do.
+    """)
+
+INIT_TEMPLATE_DIR_ALREADY_SET = _hint(
+    u"""
+    Your Git config already has a value set for init.templatedir. Jig will not
+    change this because you have probably done this for a reason. If you'd like
+    to use hooks from Jig you can manually copy them from ~/.jig/git/templates/hooks.
+    """)
+
 ALREADY_INITIALIZED = _hint(
     u"""
     You are initializing a Git repository for use with Jig but it
