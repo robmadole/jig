@@ -1,5 +1,6 @@
 # coding=utf-8
 import git
+from os.path import expanduser
 from mock import patch, MagicMock
 
 from jig.tests.testcase import CommandTestCase, result_with_hint

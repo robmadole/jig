@@ -35,20 +35,20 @@ AUTO_JIG_INIT_SCRIPT = \
     # Remove this pre-commit script
     unlink(__file__)
 
-    stdout.write(u'Jig auto-install is beginning...\n\n')
+    stdout.write(u'Jig auto-install is beginning...\\n\\n')
     stdout.flush()
 
     try:
         check_call(u'jig init {{0}}'.format(repository_directory), shell=True)
     except (OSError, CalledProcessError) as e:
         stderr.write(
-            u'Initialization of Jig failed so we are disabling\n'
-            u'the auto-install process. You need to manually install\n'
-            u'jig to use it.\n'
+            u'Initialization of Jig failed so we are disabling\\n'
+            u'the auto-install process. You need to manually install\\n'
+            u'jig to use it.\\n'
         )
     else:
         stdout.write(
-            u'\nAfter you\'ve installed some plugins run git commit again\n'
+            u'\\nAfter you\\'ve installed some plugins run git commit again.\\n'
         )
 
     # Exit with non-zero so the commit can be checked with the real Jig

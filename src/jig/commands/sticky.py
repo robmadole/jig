@@ -1,10 +1,12 @@
+from os.path import expanduser
+
 from jig.commands.base import BaseCommand
 from jig.gitutils.hooking import (
     create_auto_init_templates, set_templates_directory)
 
 try:
     import argparse
-except ImportError:
+except ImportError:   # pragma: no cover
     from backports import argparse
 
 _parser = argparse.ArgumentParser(
@@ -17,7 +19,7 @@ class Command(BaseCommand):
 
     def process(self, argv):
         with self.out() as out:
-            templates_directory = create_auto_init_templates()
+            templates_directory = create_auto_init_templates(expanduser('~'))
 
             set_templates_directory(templates_directory)
 

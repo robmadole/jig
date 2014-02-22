@@ -5,7 +5,7 @@ from jig.plugins import initializer
 
 try:
     import argparse
-except ImportError:
+except ImportError:   # pragma: no cover
     from backports import argparse
 
 _parser = argparse.ArgumentParser(

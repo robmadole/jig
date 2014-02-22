@@ -13,7 +13,7 @@ from jig.exc import (
     JigUserDirectoryError, GitHomeTemplatesExists, InitTemplateDirAlreadySet,
     GitConfigError)
 from jig.gitutils.hooking import (
-    hook, create_auto_init_templates, set_templates_directory)
+    hook, _git_templates, create_auto_init_templates, set_templates_directory)
 
 
 class TestHook(JigTestCase):
@@ -77,6 +77,28 @@ class TestHook(JigTestCase):
             output)
 
 
+class TestGitTemplates(JigTestCase):
+
+    """
+    Function that finds the shared Git templates.
+
+    """
+    def test_will_find_one(self):
+        """
+        Can find a shared Git directory.
+        """
+        self.assertIsNotNone(_git_templates())
+
+    def test_returns_none_if_not_found(self):
+        """
+        Returns None if it cannnot find any templates.
+        """
+        with patch('jig.gitutils.hooking.isdir') as isdir:
+            isdir.return_value = False
+
+            self.assertIsNone(_git_templates())
+
+
 class TestCreateAutoInitTemplates(JigTestCase):
 
     """
@@ -103,6 +125,21 @@ class TestCreateAutoInitTemplates(JigTestCase):
         self.assertEqual(
             u'Cannot create {0}/.jig Jig user directory'.format(
                 self.user_home_directory),
+            unicode(ec.exception)
+        )
+
+    def test_raises_exception_other_os_error(self):
+        """
+        Raise if some other kind of OSError is found.
+        """
+        with patch('jig.gitutils.hooking.makedirs') as makedirs:
+            makedirs.side_effect = OSError(99, 'Flooglehorn is blocked')
+
+            with self.assertRaises(JigUserDirectoryError) as ec:
+                create_auto_init_templates(self.user_home_directory)
+
+        self.assertEqual(
+            u'[Errno 99] Flooglehorn is blocked',
             unicode(ec.exception)
         )
 
@@ -183,6 +220,14 @@ class TestSetTemplatesDirectory(JigTestCase):
 
         self.templates_directory = create_auto_init_templates(mkdtemp())
 
+        self._clear_gitconfig()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._clear_gitconfig()
+
+    @classmethod
+    def _clear_gitconfig(self):
         # Reset the global Git config
         with open(expanduser('~/.gitconfig'), 'w') as fh:
             fh.write('')
@@ -194,7 +239,7 @@ class TestSetTemplatesDirectory(JigTestCase):
         with patch('jig.gitutils.hooking.git.cmd') as mock_cmd:
             mock_command = Mock()
             mock_command.config.side_effect = git.exc.GitCommandError(
-                '', 1, 'error'
+                'git config', 1, 'error'
             )
 
             mock_cmd.Git.return_value = mock_command
@@ -203,7 +248,7 @@ class TestSetTemplatesDirectory(JigTestCase):
                 set_templates_directory(self.templates_directory)
 
         self.assertEqual(
-            u'error',
+            u'Problem when running git config: error',
             unicode(gce.exception)
         )
 
