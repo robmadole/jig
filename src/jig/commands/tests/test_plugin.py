@@ -17,7 +17,7 @@ from jig.plugins import (
 from jig.plugins.testrunner import (
     Expectation, SuccessResult,
     FailureResult, REPORTER_HORIZONTAL_DIVIDER)
-from jig.gitutils import clone
+from jig.gitutils.remote import clone
 from jig.commands import plugin
 from jig.commands.hints import (
     FORK_PROJECT_GITHUB, NO_PLUGINS_INSTALLED, USE_RUNNOW, INVALID_RANGE)
@@ -220,7 +220,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
             self.run_command(
                 'add --gitrepo {0} http://repo'.format(
-                self.gitrepodir))
+                    self.gitrepodir))
 
         # And clone was called with our URL and would have performed the
         # operation in our test directory.
@@ -245,7 +245,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
             self.run_command(
                 'add --gitrepo {0} http://url.com/repo@alternate'.format(
-                self.gitrepodir))
+                    self.gitrepodir))
 
         # And the branch name was passed to clone
         self.assertEqual('alternate', c.call_args[0][2])
@@ -285,11 +285,11 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
             self.run_command(
                 'add --gitrepo {0} http://repo'.format(
-                self.gitrepodir))
+                    self.gitrepodir))
 
         self.run_command(
             'update --gitrepo {0}'.format(
-            self.gitrepodir))
+                self.gitrepodir))
 
         self.assertResults(
             """

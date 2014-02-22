@@ -1,15 +1,19 @@
-import argparse
-
 from jig.commands.base import BaseCommand
 from jig.commands.hints import AFTER_INIT
-from jig.gitutils import hook
+from jig.gitutils.hooking import hook
 from jig.plugins import initializer
+
+try:
+    import argparse
+except ImportError:   # pragma: no cover
+    from backports import argparse
 
 _parser = argparse.ArgumentParser(
     description='Initialize a Git repository for use with Jig',
     usage='jig init [-h] [PATH]')
 
-_parser.add_argument('path', default='.', nargs='?',
+_parser.add_argument(
+    'path', default='.', nargs='?',
     help='Path to the Git repository')
 
 
@@ -23,6 +27,7 @@ class Command(BaseCommand):
             hook(path)
             initializer(path)
 
-            out.append('Git repository has been initialized for use '
-                'with Jig.')
+            out.append(
+                'Git repository has been initialized for use with Jig.'
+            )
             out.extend(AFTER_INIT)

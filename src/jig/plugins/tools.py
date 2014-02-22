@@ -16,7 +16,8 @@ from jig.conf import (
     JIG_DIR_NAME, JIG_PLUGIN_CONFIG_FILENAME,
     JIG_PLUGIN_DIR, PLUGIN_CONFIG_FILENAME, PLUGIN_PRE_COMMIT_SCRIPT,
     PLUGIN_PRE_COMMIT_TEMPLATE_DIR, CODEC)
-from jig.gitutils import is_git_repo, repo_jiginitialized, remote_has_updates
+from jig.gitutils.checks import is_git_repo, repo_jiginitialized
+from jig.gitutils.remote import remote_has_updates
 from jig.tools import slugify
 from jig.plugins.manager import PluginManager
 

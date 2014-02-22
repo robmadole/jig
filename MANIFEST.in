@@ -1,3 +1,5 @@
 include README.rst
 include NEWS.rst
+include packages/argparse/LICENSE.txt
+include packages/argparse/doc/Python-License.txt
 recursive-include src/jig/data *

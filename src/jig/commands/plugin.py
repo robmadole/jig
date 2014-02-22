@@ -1,4 +1,3 @@
-import argparse
 import errno
 
 from jig.commands.base import (
@@ -14,6 +13,11 @@ from jig.plugins.tools import update_plugins
 from jig.plugins.testrunner import (
     PluginTestRunner, PluginTestReporter,
     FailureResult, parse_range)
+
+try:
+    import argparse
+except ImportError:   # pragma: no cover
+    from backports import argparse
 
 _parser = argparse.ArgumentParser(
     description='Manage this repository\'s Jig plugins',

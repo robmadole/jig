@@ -2,7 +2,7 @@ from git.objects.commit import Commit
 
 from jig.tests.testcase import JigTestCase
 from jig.exc import GitRevListMissing, GitRevListFormatError
-from jig.gitutils import parse_rev_range
+from jig.gitutils.branches import parse_rev_range
 
 
 class TestParseRevRange(JigTestCase):
@@ -58,7 +58,9 @@ class TestParseRevRange(JigTestCase):
         """
         self.gitrepo.create_head('feature-branch')
 
-        self.assertIsRevRange(parse_rev_range(self.gitrepodir, 'HEAD^1..feature-branch'))
+        self.assertIsRevRange(
+            parse_rev_range(self.gitrepodir, 'HEAD^1..feature-branch')
+        )
 
     def test_out_of_range(self):
         """

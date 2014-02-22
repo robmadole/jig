@@ -23,6 +23,18 @@ from git.exc import BadObject
 from jig.conf import CODEC
 
 
+def _make_unicode(string):
+    """
+    Force a conversion to unicode if necessary.
+
+    :param str string: basestring
+    :rtype: unicode
+    """
+    if isinstance(string, unicode):
+        return string
+    return string.decode(CODEC)
+
+
 def describe_diff(a, b):
     """
     Takes two strings and calculates the difference between them.
@@ -50,14 +62,14 @@ def describe_diff(a, b):
     for tag, i1, i2, j1, j2 in SequenceMatcher(None, a, b).get_opcodes():
         if tag == 'equal':
             for idx, line in enumerate(b[j1:j2]):
-                yield (idx + j1 + 1, ' ', line.decode(CODEC))
+                yield (idx + j1 + 1, ' ', _make_unicode(line))
             continue
         if tag == 'replace' or tag == 'delete':
             for idx, line in enumerate(a[i1:i2]):
-                yield (idx + i1 + 1, '-', line.decode(CODEC))
+                yield (idx + i1 + 1, '-', _make_unicode(line))
         if tag == 'replace' or tag == 'insert':
             for idx, line in enumerate(b[j1:j2]):
-                yield (idx + j1 + 1, '+', line.decode(CODEC))
+                yield (idx + j1 + 1, '+', _make_unicode(line))
 
 
 class DiffType(object):

@@ -7,7 +7,7 @@ from uuid import uuid4 as uuid
 from jig.exc import PluginError
 from jig.conf import JIG_DIR_NAME, JIG_PLUGIN_DIR
 from jig.output import ConsoleView
-from jig.gitutils import clone
+from jig.gitutils.remote import clone
 
 _commands_dir = dirname(__file__)
 

@@ -1,11 +1,14 @@
-import argparse
-
 from jig.exc import PluginError
 from jig.plugins import (
     get_jigconfig, set_jigconfig, PluginManager)
 from jig.plugins.tools import read_plugin_list
 from jig.commands.base import BaseCommand, add_plugin
 from jig.commands.hints import USE_RUNNOW
+
+try:
+    import argparse
+except ImportError:   # pragma: no cover
+    from backports import argparse
 
 _parser = argparse.ArgumentParser(
     description='Install a list of Jig plugins from a file',

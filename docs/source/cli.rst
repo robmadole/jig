@@ -20,7 +20,10 @@ Jig's help menu is available by running ``jig`` or ``jig --help``.
       init        Initialize a Git repository for use with Jig
       install     Install a list of Jig plugins from a file
       plugin      Manage this repository's Jig plugins
-      runnow      Run all plugins and show the results
+      report      Run plugins on a revision range
+      runnow      Run plugins on staged changes and show the results
+      sticky      Make Jig auto-init every time you git clone
+      version     Show Jig's version number
 
     See `jig COMMAND --help` for more information
 
@@ -81,6 +84,29 @@ If there is a pre-existing hook, Jig will not overwrite it.
 
     If you do not need the existing pre-commit script, you can delete it
     and then run jig init again in this repository.
+
+
+.. _cli-sticky:
+
+Have Jig auto-init every time you clone
+---------------------------------------
+
+Calling ``jig init`` on every newly cloned repository can become tedious and there
+is a chance that you will forget to do it.
+
+Jig can modify your Git ``init.templatedir`` setting for you and automatically run
+``jig init`` when you clone or initialize a Git repository.
+
+This is referred to as "sticky" mode. To set this up:
+
+.. code-block:: console
+
+    $ jig sticky
+    Jig has been setup to run everytime you clone.
+
+.. hint:: Jig is cautious about making modifications to your ~/.gitconfig. It
+          will refuse to change the init.templatedir setting if you've already
+          set this previous to running the ``sticky`` command.
 
 .. _cli-plugin:
 

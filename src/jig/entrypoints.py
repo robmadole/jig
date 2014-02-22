@@ -38,6 +38,7 @@ def coverage():
         '*noseplugin*',
         '*entrypoints*',
         '*testcase*',
+        '*packages*',
         '*backports.py',
         '*jig/__init__.py']
 
