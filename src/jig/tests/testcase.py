@@ -183,6 +183,12 @@ class JigTestCase(unittest.TestCase):
 
         return True
 
+    def modify_file(self, *args, **kwargs):
+        """
+        Alias for create_file.
+        """
+        return self.create_file(*args, **kwargs)
+
     def stage(self, gitrepodir, name, content):
         """
         Create or modify a file in a Git repository and stage it in the index.
