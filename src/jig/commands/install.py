@@ -12,7 +12,7 @@ except ImportError:   # pragma: no cover
 
 _parser = argparse.ArgumentParser(
     description='Install a list of Jig plugins from a file',
-    usage='jig install [-h] [-r GITREPO] [PLUGINSFILE]')
+    usage='jig install [-h] [-r GITREPO] PLUGINSFILE')
 
 _parser.add_argument(
     '--gitrepo', '-r', default='.', dest='path',
@@ -23,13 +23,13 @@ _parser.add_argument(
     'each line of the file should contain URL|URL@BRANCH|PATH')
 
 
-class Command(BaseCommand):
-    parser = _parser
+class InstallCommandMixin(object):
 
-    def process(self, argv):
-        path = argv.path
-        plugins_file = argv.pluginsfile
+    """
+    Command mixin for install-related actions.
 
+    """
+    def install_plugins_file(self, plugins_file, path):
         with self.out() as out:
             try:
                 plugin_list = read_plugin_list(plugins_file)
@@ -58,3 +58,13 @@ class Command(BaseCommand):
                             p.name, p.bundle))
 
             out.extend(USE_RUNNOW)
+
+
+class Command(BaseCommand, InstallCommandMixin):
+    parser = _parser
+
+    def process(self, argv):
+        path = argv.path
+        plugins_file = argv.pluginsfile
+
+        self.install_plugins_file(plugins_file, path)

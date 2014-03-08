@@ -1,6 +1,6 @@
 from os import rmdir
 from os import access, X_OK
-from os.path import join, realpath, isdir, isfile, expanduser
+from os.path import join, realpath, isdir, isfile
 from tempfile import mkdtemp
 
 import git
@@ -93,8 +93,8 @@ class TestGitTemplates(JigTestCase):
         """
         Returns None if it cannnot find any templates.
         """
-        with patch('jig.gitutils.hooking.isdir') as isdir:
-            isdir.return_value = False
+        with patch('jig.gitutils.hooking.isdir') as mock_isdir:
+            mock_isdir.return_value = False
 
             self.assertIsNone(_git_templates())
 
@@ -219,18 +219,6 @@ class TestSetTemplatesDirectory(JigTestCase):
         super(TestSetTemplatesDirectory, self).setUp()
 
         self.templates_directory = create_auto_init_templates(mkdtemp())
-
-        self._clear_gitconfig()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls._clear_gitconfig()
-
-    @classmethod
-    def _clear_gitconfig(self):
-        # Reset the global Git config
-        with open(expanduser('~/.gitconfig'), 'w') as fh:
-            fh.write('')
 
     def test_error_reading_git_config(self):
         """

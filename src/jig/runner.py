@@ -4,9 +4,9 @@ from datetime import datetime
 
 from git import Repo
 
-from jig.exc import GitRepoNotInitialized
+from jig.exc import GitRepoNotInitialized, GitWorkingDirectoryDirty
 from jig.conf import PLUGIN_CHECK_FOR_UPDATES
-from jig.gitutils.checks import repo_jiginitialized
+from jig.gitutils.checks import repo_jiginitialized, working_directory_dirty
 from jig.gitutils.branches import parse_rev_range
 from jig.diffconvert import GitDiffIndex
 from jig.plugins import get_jigconfig, PluginManager
@@ -183,6 +183,13 @@ class Runner(object):
                     'This repository has not been initialized.')
 
         pm = PluginManager(get_jigconfig(self.gitrepo))
+
+        # Prepare the working directory for the plugins to run
+        with self.view.out() as out:
+            # If a rev_range is specified then we'd rather not
+            # make any modifications to the working directory.
+            if rev_range and working_directory_dirty(gitrepo):
+                raise GitWorkingDirectoryDirty()
 
         # Check to make sure we have some plugins to run
         with self.view.out() as out:

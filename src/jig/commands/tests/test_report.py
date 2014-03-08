@@ -1,7 +1,7 @@
 # coding=utf-8
 from jig.exc import ForcedExit
 from jig.tests.testcase import (
-    CommandTestCase, PluginTestCase, result_with_hint)
+    CommandTestCase, PluginTestCase)
 from jig.plugins import set_jigconfig
 from jig.output import ATTENTION
 from jig.commands import report
@@ -31,18 +31,37 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         Given a range that is invalid it notifies the user.
         """
         with self.assertRaises(ForcedExit) as ec:
-            self.run_command('--rev-range FOO..BAR {0}'.format(self.gitrepodir))
+            self.run_command(
+                '--rev-range FOO..BAR {0}'.format(self.gitrepodir))
 
         self.assertSystemExitCode(ec.exception, 1)
 
         self.assertTrue(self.error)
+
+    def test_will_not_run_dirty_working_directory(self):
+        """
+        A clean working directory is required to run.
+        """
+        self.modify_file(self.gitrepodir, 'a.txt', 'aa')
+
+        with self.assertRaises(ForcedExit):
+            self.run_command(
+                '--rev-range HEAD^1..HEAD {0}'.format(self.gitrepodir)
+            )
+
+        self.assertResults(
+            u'The Git working directory must be clean before '
+            u'running this command.\n',
+            self.error)
 
     def test_reports_one_commit(self):
         """
         With a range indicating one commit it reports on that one.
         """
         with self.assertRaises(SystemExit) as ec:
-            self.run_command('--rev-range HEAD^1..HEAD {0}'.format(self.gitrepodir))
+            self.run_command(
+                '--rev-range HEAD^1..HEAD {0}'.format(self.gitrepodir)
+            )
 
         self.assertSystemExitCode(ec.exception, 0)
 
@@ -60,7 +79,7 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         """
         Without a revision range it uses HEAD^1..HEAD.
         """
-        with self.assertRaises(SystemExit) as ec:
+        with self.assertRaises(SystemExit):
             self.run_command('{0}'.format(self.gitrepodir))
 
         self.assertResults(u"""
@@ -78,7 +97,9 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         With a range indicating two commits it reports on both.
         """
         with self.assertRaises(SystemExit) as ec:
-            self.run_command('--rev-range HEAD~2..HEAD {0}'.format(self.gitrepodir))
+            self.run_command(
+                '--rev-range HEAD~2..HEAD {0}'.format(self.gitrepodir)
+            )
 
         self.assertSystemExitCode(ec.exception, 0)
 
@@ -100,7 +121,11 @@ class TestReportCommand(CommandTestCase, PluginTestCase):
         If a plugin is given it will only report on that plugin.
         """
         with self.assertRaises(SystemExit) as ec:
-            self.run_command('--plugin plugin01 --rev-range HEAD^1..HEAD {0}'.format(self.gitrepodir))
+            self.run_command(
+                '--plugin plugin01 --rev-range HEAD^1..HEAD {0}'.format(
+                    self.gitrepodir
+                )
+            )
 
         self.assertSystemExitCode(ec.exception, 0)
 

@@ -67,6 +67,18 @@ class GitCloneError(JigException):
     pass
 
 
+class GitWorkingDirectoryDirty(JigException):
+
+    """
+    If the given Git repository has a non-clean working directory.
+
+    """
+    def __init__(self):
+        super(GitWorkingDirectoryDirty, self).__init__(
+            'The Git working directory must be clean before '
+            'running this command.')
+
+
 class GitRevListFormatError(JigException):
 
     """
