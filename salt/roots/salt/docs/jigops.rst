@@ -99,16 +99,17 @@ Install packer - ``brew install packer`` will do it - and then run the following
 
 ::
 
-    packer build jig-development-environment.json
+    packer build jig-development.json
 
 This will take a while. After the process is complete you should find a Vagrant
-.box file inside of the ``packer/vmware`` directory.
+.box file inside of the ``packer/vagrant`` directory.
 
 Remove any existing box that has already been downloaded from a previous `vagrant up`.
 
 ::
 
     vagrant box remove jig-development-vmware
+    vagrant box remove jig-development-virtualbox
 
 Uploading the base box to AWS
 -----------------------------
@@ -133,19 +134,34 @@ to configure the command-line client.
 
 Upload the box to S3.
 
-::
+VMware ::
 
     aws s3 --profile jig \
       --region us-east-1 \
       cp vagrant/jig-development-vmware.box s3://jig-base-boxes/jig-development-vmware.box
 
+VirtualBox ::
+
+    aws s3 --profile jig \
+      --region us-east-1 \
+      cp vagrant/jig-development-virtualbox.box s3://jig-base-boxes/jig-development-virtualbox.box
+
 Make it public.
 
-::
+VMware ::
 
     aws s3api --profile jig \
       --region us-east-1 \
       put-object-acl \
       --grant-read 'uri=http://acs.amazonaws.com/groups/global/AllUsers' \
-      --key jig-development-vmware.box
-      --bucket jig-base-boxes \
+      --key jig-development-vmware.box \
+      --bucket jig-base-boxes
+
+VirtualBox ::
+
+    aws s3api --profile jig \
+      --region us-east-1 \
+      put-object-acl \
+      --grant-read 'uri=http://acs.amazonaws.com/groups/global/AllUsers' \
+      --key jig-development-virtualbox.box \
+      --bucket jig-base-boxes
