@@ -25,6 +25,4 @@ def working_directory_dirty(gitdir):
     """
     repo = Repo(gitdir)
 
-    head_commit = repo.head.commit
-
-    return bool(head_commit.diff(None)) or bool(repo.untracked_files)
+    return repo.is_dirty()

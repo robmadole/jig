@@ -83,7 +83,8 @@ class Runner(object):
             if now > last_checked + PLUGIN_CHECK_FOR_UPDATES:
                 self.update_plugins(gitrepo)
 
-        results = self.results(gitrepo, plugin=plugin, rev_range=rev_range)
+        with prepare_working_directory(rev_range):
+            results = self.results(gitrepo, plugin=plugin, rev_range=rev_range)
 
         report_counts = self.view.print_results(results)
 
@@ -183,13 +184,6 @@ class Runner(object):
                     'This repository has not been initialized.')
 
         pm = PluginManager(get_jigconfig(self.gitrepo))
-
-        # Prepare the working directory for the plugins to run
-        with self.view.out() as out:
-            # If a rev_range is specified then we'd rather not
-            # make any modifications to the working directory.
-            if rev_range and working_directory_dirty(gitrepo):
-                raise GitWorkingDirectoryDirty()
 
         # Check to make sure we have some plugins to run
         with self.view.out() as out:
