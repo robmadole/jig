@@ -2,7 +2,7 @@
 A nose plugin to ease some testing pain.
 """
 from os import listdir, mkdir
-from os.path import dirname, join, realpath, isdir, expanduser
+from os.path import join, realpath, isdir, expanduser
 from tempfile import mkdtemp
 from shutil import rmtree
 from subprocess import call, PIPE
@@ -59,7 +59,15 @@ def _create_git_repo_property(repo_harness_dir):
         self._gitrepodir = value
 
     def deleter(self):
-        self._gitrepodir = None
+        try:
+            rmtree(self._gitrepodir)
+        except (AttributeError, OSError):
+            pass
+
+        try:
+            delattr(self, '_gitrepodir')
+        except AttributeError:
+            pass
 
     return property(getter, setter, deleter)
 
@@ -86,8 +94,7 @@ class TestSetup(Plugin):
     def __init__(self):
         super(TestSetup, self).__init__()
 
-        testrepos = ['..'] * 3 + ['.testrepos']
-        self.repo_harness_dir = join(dirname(__file__), *testrepos)
+        self.repo_harness_dir = mkdtemp()
 
     def options(self, parser, env):
         """
@@ -123,7 +130,7 @@ class TestSetup(Plugin):
         """
         Called after the test ran.
         """
-        rmtree(test.test.gitrepodir)
+        del test.test.gitrepodir
 
     def finalize(self, result):
         """
