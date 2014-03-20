@@ -5,7 +5,9 @@ from contextlib import contextmanager
 import git
 from git.exc import GitCommandError, BadObject
 
-from jig.exc import GitRevListFormatError, GitRevListMissing
+from jig.exc import (
+    GitRevListFormatError, GitRevListMissing, GitWorkingDirectoryDirty)
+from jig.gitutils.checks import working_directory_dirty
 
 
 def parse_rev_range(repository, rev_range):
@@ -40,11 +42,11 @@ def parse_rev_range(repository, rev_range):
 def _prepare_with_rev_range(repo, rev_range):
     # If a rev_range is specified then we need to make sure the working
     # directory is completely clean before continuing.
-    if rev_range and working_directory_dirty(repo):
+    if rev_range and working_directory_dirty(repo.working_dir):
         raise GitWorkingDirectoryDirty()
 
     head = repo.head
-    commit_a, commit_b = parse_rev_range(rev_range)
+    commit_a, commit_b = parse_rev_range(repo.working_dir, rev_range)
     repo.git.checkout(commit_b.hexsha)
 
     try:

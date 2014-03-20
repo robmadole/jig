@@ -73,8 +73,8 @@ class TestWorkingDirctoryDirty(JigTestCase):
 
     def test_directory_has_untracked_file(self):
         """
-        An untracked file is seen as dirty.
+        An untracked file is not dirty.
         """
         self.create_file(self.gitrepodir, 'd.txt', 'd')
 
-        self.assertTrue(working_directory_dirty(self.gitrepodir))
+        self.assertFalse(working_directory_dirty(self.gitrepodir))

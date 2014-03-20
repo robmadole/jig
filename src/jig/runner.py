@@ -4,10 +4,10 @@ from datetime import datetime
 
 from git import Repo
 
-from jig.exc import GitRepoNotInitialized, GitWorkingDirectoryDirty
+from jig.exc import GitRepoNotInitialized
 from jig.conf import PLUGIN_CHECK_FOR_UPDATES
-from jig.gitutils.checks import repo_jiginitialized, working_directory_dirty
-from jig.gitutils.branches import parse_rev_range
+from jig.gitutils.checks import repo_jiginitialized
+from jig.gitutils.branches import parse_rev_range, prepare_working_directory
 from jig.diffconvert import GitDiffIndex
 from jig.plugins import get_jigconfig, PluginManager
 from jig.plugins.tools import (
@@ -83,7 +83,7 @@ class Runner(object):
             if now > last_checked + PLUGIN_CHECK_FOR_UPDATES:
                 self.update_plugins(gitrepo)
 
-        with prepare_working_directory(rev_range):
+        with prepare_working_directory(gitrepo, rev_range):
             results = self.results(gitrepo, plugin=plugin, rev_range=rev_range)
 
         report_counts = self.view.print_results(results)
