@@ -3,8 +3,7 @@
 VAGRANTFILE_API_VERSION = '2'
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.box     = 'jig-development-vmware'
-  config.vm.box_url = 'http://jig-base-boxes.s3-website-us-east-1.amazonaws.com/jig-development-vmware.box'
+  config.vm.box     = 'robmadole/jig-development'
 
   config.vm.synced_folder '.', '/vagrant', type: 'nfs'
   config.vm.synced_folder 'salt/roots/', '/srv', type: 'nfs'
