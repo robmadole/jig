@@ -1,5 +1,6 @@
 from os import unlink
 from tempfile import mkstemp
+from functools import partial
 from contextlib import contextmanager
 
 import git
@@ -45,18 +46,20 @@ def _prepare_with_rev_range(repo, rev_range):
     if rev_range and working_directory_dirty(repo.working_dir):
         raise GitWorkingDirectoryDirty()
 
-    head = repo.head
+    try:
+        head = repo.head.reference
+        return_to_normal = head.checkout
+    except TypeError:
+        head = repo.head.commit
+        return_to_normal = partial(repo.git.checkout, head.hexsha)
+
     commit_a, commit_b = parse_rev_range(repo.working_dir, rev_range)
     repo.git.checkout(commit_b.hexsha)
 
     try:
         yield head
     finally:
-        try:
-            head.reference.checkout()
-        except TypeError:
-            # Must be a detached head, let's use checkout
-            repo.git.checkout(head.commit.hexsha)
+        return_to_normal()
 
 
 @contextmanager
@@ -71,24 +74,24 @@ def _prepare_against_staged_index(repo):
     if repo.is_dirty(index=False, working_tree=True, untracked_files=False):
         stash = repo.git.stash('save', '--keep-index')
 
-    yield stash
+    try:
+        yield stash
+    finally:
+        if not stash:
+            return
 
-    if not stash:
-        return
+        os_handle, patchfile = mkstemp()
 
-    os_handle, patchfile = mkstemp()
-
-    diff = repo.git.diff('-R', 'stash@{0}')
-
-    if diff:
         with open(patchfile, 'w') as fh:
-            fh.write(diff)
+            repo.git.diff(
+                '--color=never', '-R', 'stash@{0}',
+                output_stream=fh)
 
         repo.git.apply(patchfile)
 
         unlink(patchfile)
 
-    repo.git.stash('drop', '-q')
+        repo.git.stash('drop', '-q')
 
 
 @contextmanager

@@ -4,11 +4,12 @@ from contextlib import contextmanager
 from functools import partial
 from itertools import chain, combinations
 
-from git import Repo
-from git.objects.commit import Commit
+from git import Repo, Head, Commit
+from mock import patch, MagicMock
 
 from jig.tests.testcase import JigTestCase
-from jig.exc import GitRevListMissing, GitRevListFormatError
+from jig.exc import (
+    GitRevListMissing, GitRevListFormatError, GitWorkingDirectoryDirty)
 from jig.gitutils.branches import (
     parse_rev_range, prepare_working_directory,
     _prepare_against_staged_index, _prepare_with_rev_range)
@@ -21,13 +22,54 @@ def assert_git_status_unchanged(repository):
 
     :param string repository: Git repo
     """
-    before = Repo(repository).git.status('--long')
+    def long_status(repository):
+        output = Repo(repository).git.status('--long')
+
+        # Skip the first line, it tells us the branch
+        return output.splitlines()[1:]
+
+    before = long_status(repository)
 
     yield
 
-    after = Repo(repository).git.status('--long')
+    after = long_status(repository)
 
     assert before == after, "Working directory status has changed"
+
+
+class PrepareTestCase(JigTestCase):
+
+    """
+    Base test class for private functions that prepare the working directory.
+
+    """
+    def setUp(self):
+        super(PrepareTestCase, self).setUp()
+
+        self.reset_gitrepo()
+
+    def reset_gitrepo(self):
+        del self.gitrepodir
+
+        self.commits = [
+            self.commit(self.gitrepodir, 'a.txt', 'a'),
+            self.commit(self.gitrepodir, 'b.txt', 'b'),
+            self.commit(self.gitrepodir, 'c.txt', 'c'),
+            self.commit(self.gitrepodir, 'd.txt', 'd')
+        ]
+
+    @property
+    def repo(self):
+        return Repo(self.gitrepodir)
+
+    def diff_head(self):
+        return self.repo.index.diff('HEAD')
+
+    @contextmanager
+    def prepare(self):
+        with assert_git_status_unchanged(self.gitrepodir):
+            with self.prepare_context_manager() as subject:
+                yield subject
 
 
 class TestParseRevRange(JigTestCase):
@@ -95,35 +137,14 @@ class TestParseRevRange(JigTestCase):
             parse_rev_range(self.gitrepodir, 'HEAD~1000..HEAD')
 
 
-class TestPrepareAgainstStagedIndex(JigTestCase):
+class TestPrepareAgainstStagedIndex(PrepareTestCase):
 
     """
     Prepare the working directory against the staged index.
 
     """
-    def setUp(self):
-        self.reset_gitrepo()
-
-    def reset_gitrepo(self):
-        del self.gitrepodir
-
-        self.commit(self.gitrepodir, 'a.txt', 'a'),
-        self.commit(self.gitrepodir, 'b.txt', 'b'),
-        self.commit(self.gitrepodir, 'c.txt', 'c'),
-        self.commit(self.gitrepodir, 'd.txt', 'd')
-
-    @property
-    def repo(self):
-        return Repo(self.gitrepodir)
-
-    def diff_head(self):
-        return self.repo.index.diff('HEAD')
-
-    @contextmanager
-    def prepare(self):
-        with assert_git_status_unchanged(self.gitrepodir):
-            with _prepare_against_staged_index(self.repo) as stash:
-                yield stash
+    def prepare_context_manager(self):
+        return _prepare_against_staged_index(self.repo)
 
     def test_working_directory_clean(self):
         """
@@ -239,14 +260,136 @@ class TestPrepareAgainstStagedIndex(JigTestCase):
             self.reset_gitrepo()
 
 
+class TestPrepareWithRevRange(PrepareTestCase):
+
+    """
+    With a given rev range test that we can checkout the repository.
+
+    """
+    def prepare_context_manager(self):
+        return _prepare_with_rev_range(self.repo, self.rev_range)
+
+    def test_dirty_working_directory(self):
+        """
+        Dirty working directory will raise an exception.
+        """
+        self.rev_range = 'HEAD~3..HEAD~0'
+
+        # Force the working directory to be dirty
+        self.modify_file(self.gitrepodir, 'a.txt', 'aa')
+
+        with self.assertRaises(GitWorkingDirectoryDirty):
+            with self.prepare():
+                pass
+
+    def test_yields_git_named_head(self):
+        """
+        The object that is yielded is a :py:class:`git.Head`.
+        """
+        self.rev_range = 'HEAD~1..HEAD~0'
+
+        with self.prepare() as head:
+            self.assertIsInstance(head, Head)
+
+    def test_yields_git_detached_head(self):
+        """
+        If detached HEAD, object that is yielded is a :py:class:`git.Commit`.
+        """
+        self.rev_range = 'HEAD~1..HEAD~0'
+
+        # Detach the head by checking out the commit hash
+        Repo(self.gitrepodir).git.checkout(self.commits[-1].hexsha)
+
+        with self.prepare() as head:
+            self.assertIsInstance(head, Commit)
+
+    def test_detached_head_right_side_of_rev_range(self):
+        """
+        The head object points to the right side of the rev range.
+        """
+        self.rev_range = 'HEAD~2..HEAD~1'
+
+        # HEAD~1 is going to be our second to last commit
+        expected = self.commits[-2]
+
+        with self.prepare():
+            # The symbolic ref for HEAD should now be our expected commit
+            self.assertEqual(
+                Repo(self.gitrepodir).head.commit,
+                expected
+            )
+
+    def test_returns_to_master(self):
+        """
+        After exiting the context manager, we should be back on master.
+        """
+        self.rev_range = 'HEAD~2..HEAD~1'
+
+        with self.prepare():
+            pass
+
+        self.assertEqual(
+            Repo(self.gitrepodir).head.reference.path,
+            'refs/heads/master'
+        )
+
+    def test_returns_to_detached_head(self):
+        """
+        From a detached head upon exiting we should be back where we started.
+        """
+        self.rev_range = 'HEAD~2..HEAD~1'
+
+        # Detach the head by checking out the commit hash
+        Repo(self.gitrepodir).git.checkout(self.commits[-2].hexsha)
+
+        # HEAD~1 is going to be our third to last commit
+        expected = self.commits[-3]
+
+        with self.prepare():
+            self.assertEqual(
+                Repo(self.gitrepodir).head.commit,
+                expected
+            )
+
+        # And we are back to our detached head we started with
+        self.assertEqual(
+            Repo(self.gitrepodir).head.commit,
+            self.commits[-2]
+        )
+
+
 class TestPrepareWorkingDirectory(JigTestCase):
 
     """
+    Make the working directory suitable for running Jig.
 
     """
-    def test_working_directory_clean_no_rev_range(self):
+    def test_no_rev_range(self):
         """
-        Working directory is clean and no revision range is passed.
+        Should prepare against the staged index if no rev range.
         """
-        with prepare_working_directory(self.gitrepodir) as stash:
-            self.assertIsNone(stash)
+        prepare_function = \
+            'jig.gitutils.branches._prepare_against_staged_index'
+
+        with patch(prepare_function) as p:
+            p.return_value = MagicMock()
+
+            with prepare_working_directory(self.gitrepodir):
+                pass
+
+        self.assertTrue(p.return_value.__enter__.called)
+
+    def test_rev_range(self):
+        """
+        Should checkout the Git repo at the end of the rev range.
+        """
+        prepare_function = \
+            'jig.gitutils.branches._prepare_with_rev_range'
+
+        with patch(prepare_function) as p:
+            p.return_value = MagicMock()
+
+            with prepare_working_directory(self.gitrepodir, 'FOO..BAR'):
+                pass
+
+        self.assertTrue(p.return_value.__enter__.called)

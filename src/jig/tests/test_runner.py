@@ -45,6 +45,24 @@ class TestRunner(RunnerTestCase, PluginTestCase):
                 u'\U0001f44c  Jig ran 1 plugin, nothing to report\n',
                 self.output)
 
+    def test_uninitialized_repo(self):
+        """
+        The .jig directory has not been initialized.
+        """
+        # Remove the .jig directory, effectively un-initializing our repository
+        rmtree(join(self.gitrepodir, '.jig'))
+
+        with self.assertRaises(ForcedExit) as ec:
+            self.runner.fromhook(self.gitrepodir)  # pragma: no branch
+
+        self.assertSystemExitCode(ec.exception, 1)
+
+        self.assertResults(
+            result_with_hint(
+                u'This repository has not been initialized.',
+                GIT_REPO_NOT_INITIALIZED),
+            self.error)
+
     def test_will_not_prompt_if_no_messages(self):
         """
         No prompt is presented if there are no messages to communicate.
@@ -338,23 +356,6 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
 
         repo, working_dir, diffs = self.repo_from_fixture('repo01')
 
-    def test_uninitialized_repo(self):
-        """
-        The .jig directory has not been initialized.
-        """
-        # Remove the .jig directory, effectively un-initializing our repository
-        rmtree(join(self.gitrepodir, '.jig'))
-
-        with self.assertRaises(ForcedExit) as ec:
-            self.runner.results(self.gitrepodir)
-
-        self.assertEqual('1', str(ec.exception))
-        self.assertResults(
-            result_with_hint(
-                u'This repository has not been initialized.',
-                GIT_REPO_NOT_INITIALIZED),
-            self.error)
-
     def test_no_plugins(self):
         """
         If there is a .jig directory without any plugins.
@@ -364,7 +365,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.assertEqual(
             'There are no plugins installed, use jig '
             'install to add some.\n',
-            self.output)
+            self.output
+        )
 
     def test_empty_repository(self):
         """
@@ -378,7 +380,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.assertEqual(
             'This repository is empty, jig needs at '
             'least 1 commit to continue.\n',
-            self.output)
+            self.output
+        )
 
     def test_no_diff(self):
         """
@@ -390,13 +393,15 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.commit(
             self.gitrepodir,
             name='a.txt',
-            content='a')
+            content='a'
+        )
 
         self.runner.results(self.gitrepodir)
 
         self.assertEqual(
             'No staged changes in the repository, skipping jig.\n',
-            self.output)
+            self.output
+        )
 
     def test_unstaged_one_file(self):
         """
@@ -409,19 +414,22 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.commit(
             self.gitrepodir,
             name='a.txt',
-            content='a')
+            content='a'
+        )
 
         # We've created this but not added it to the index
         self.create_file(
             self.gitrepodir,
             name='b.txt',
-            content='b')
+            content='b'
+        )
 
         self.runner.results(self.gitrepodir)
 
         self.assertEqual(
             'No staged changes in the repository, skipping jig.\n',
-            self.output)
+            self.output
+        )
 
     def test_staged_one_file(self):
         """
@@ -434,13 +442,15 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.commit(
             self.gitrepodir,
             name='a.txt',
-            content='a')
+            content='a'
+        )
 
         # Create a new file an stage it to the index
         self.stage(
             self.gitrepodir,
             name='b.txt',
-            content='b')
+            content='b'
+        )
 
         results = self.runner.results(self.gitrepodir)
 
@@ -470,13 +480,15 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.commit(
             self.gitrepodir,
             name='a.txt',
-            content='a')
+            content='a'
+        )
 
         # We've created this but not added it to the index
         self.stage(
             self.gitrepodir,
             name='a.txt',
-            content='aaa')
+            content='aaa'
+        )
 
         results = self.runner.results(self.gitrepodir)
 
@@ -485,7 +497,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.assertEqual(
             {u'a.txt': [[1, u'warn', u'a is -'],
                         [1, u'warn', u'aaa is +']]},
-            stdout)
+            stdout
+        )
 
     def test_deleted_one_file(self):
         """
@@ -497,7 +510,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.commit(
             self.gitrepodir,
             name='a.txt',
-            content='a')
+            content='a'
+        )
 
         # Now stage a file for removal
         self.stage_remove(self.gitrepodir, name='a.txt')
@@ -519,22 +533,26 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.commit(
             self.gitrepodir,
             name='a.txt',
-            content='a')
+            content='a'
+        )
 
         self.stage(
             self.gitrepodir,
             name='b.txt',
-            content='b')
+            content='b'
+        )
 
         # We can filter to the one that is already installed
         self.assertEqual(
             1,
-            len(self.runner.results(self.gitrepodir, plugin='plugin01')))
+            len(self.runner.results(self.gitrepodir, plugin='plugin01'))
+        )
 
         # If we try to filter on a non-existent plugin we get no results
         self.assertEqual(
             0,
-            len(self.runner.results(self.gitrepodir, plugin='notinstalled')))
+            len(self.runner.results(self.gitrepodir, plugin='notinstalled'))
+        )
 
     def test_handles_non_json_stdout(self):
         """
@@ -542,7 +560,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         """
         with patch.object(Plugin, 'pre_commit'):
             Plugin.pre_commit.return_value = (
-                0, 'Test non-JSON output', '')
+                0, 'Test non-JSON output', ''
+            )
 
             self._add_plugin(self.jigconfig, 'plugin01')
             set_jigconfig(self.gitrepodir, config=self.jigconfig)
@@ -550,12 +569,14 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
             self.commit(
                 self.gitrepodir,
                 name='a.txt',
-                content='a')
+                content='a'
+            )
 
             self.stage(
                 self.gitrepodir,
                 name='b.txt',
-                content='b')
+                content='b'
+            )
 
             results = self.runner.results(self.gitrepodir)
 
@@ -592,7 +613,8 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.assertEqual(1, retcode)
         self.assertEqual(
             'Something went horribly wrong',
-            stderr)
+            stderr
+        )
 
 
 class TestRunnerRevRange(RunnerTestCase, PluginTestCase):
@@ -613,7 +635,8 @@ class TestRunnerRevRange(RunnerTestCase, PluginTestCase):
             self.commit(
                 self.gitrepodir,
                 name='{0}.txt'.format(letter),
-                content=letter)
+                content=letter
+            )
 
     def file_changes(self, results):
         """
@@ -625,32 +648,36 @@ class TestRunnerRevRange(RunnerTestCase, PluginTestCase):
         """
         If a range is not formatted correctly.
         """
-        with self.assertRaises(ForcedExit) as ec:
-            results = self.runner.results(self.gitrepodir, rev_range="BAR:BAZ")
+        with self.assertRaises(ForcedExit):
+            self.runner.results(self.gitrepodir, rev_range="BAR:BAZ")
 
         self.assertEqual(
             'BAR:BAZ\n\nThe revision range is not in a valid format.\n\n'
             'Use "REV_A..REV_B" to specify the revisions that Jig should operate '
             'against.\n',
-            self.error)
+            self.error
+        )
 
     def test_non_existent_rev_range(self):
         """
         If a range is given that does not exist.
         """
-        with self.assertRaises(ForcedExit) as ec:
-            results = self.runner.results(self.gitrepodir, rev_range="FOO..BAR")
+        with self.assertRaises(ForcedExit):
+            self.runner.results(self.gitrepodir, rev_range="FOO..BAR")
 
         self.assertEqual(
             'FOO..BAR\n\nThe revision specified is formatted correctly but one '
             'of both of the revisions\ncould not be found.\n',
-            self.error)
+            self.error
+        )
 
     def test_existing_rev_range(self):
         """
         Valid revision range returns results.
         """
-        results = self.runner.results(self.gitrepodir, rev_range="HEAD^1..HEAD")
+        results = self.runner.results(
+            self.gitrepodir, rev_range="HEAD^1..HEAD"
+        )
 
         self.assertEqual(1, len(self.file_changes(results)))
 
@@ -658,6 +685,8 @@ class TestRunnerRevRange(RunnerTestCase, PluginTestCase):
         """
         Valid revision that includes two changes returns both.
         """
-        results = self.runner.results(self.gitrepodir, rev_range="HEAD~2..HEAD")
+        results = self.runner.results(
+            self.gitrepodir, rev_range="HEAD~2..HEAD"
+        )
 
         self.assertEqual(2, len(self.file_changes(results)))

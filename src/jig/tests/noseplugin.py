@@ -32,10 +32,6 @@ def _create_git_repo_property(repo_harness_dir):
                 'Tried to create a directory to hold '
                 'the test repositories and could not.')
 
-        # Delete existing ~/.gitconfig
-        with open(expanduser('~/.gitconfig'), 'w') as fh:
-            fh.write('')
-
         retcode = call(
             ['git', 'init', repo],
             stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -118,6 +114,10 @@ class TestSetup(Plugin):
         Called before each test is ran.
         """
         try:
+            # Delete existing ~/.gitconfig
+            with open(expanduser('~/.gitconfig'), 'w') as fh:
+                fh.write('')
+
             # Set a descriptor on the class to lazy-create our git repo dir
             setattr(
                 test.test.__class__, 'gitrepodir',

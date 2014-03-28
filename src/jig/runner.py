@@ -83,8 +83,17 @@ class Runner(object):
             if now > last_checked + PLUGIN_CHECK_FOR_UPDATES:
                 self.update_plugins(gitrepo)
 
-        with prepare_working_directory(gitrepo, rev_range):
-            results = self.results(gitrepo, plugin=plugin, rev_range=rev_range)
+        with self.view.out():
+            if not repo_jiginitialized(gitrepo):
+                raise GitRepoNotInitialized(
+                    'This repository has not been initialized.')
+
+            with prepare_working_directory(gitrepo, rev_range):
+                results = self.results(
+                    gitrepo,
+                    plugin=plugin,
+                    rev_range=rev_range
+                )
 
         report_counts = self.view.print_results(results)
 
@@ -175,15 +184,7 @@ class Runner(object):
         :param unicode rev_range: the revision range to use instead of the Git
             index
         """
-        self.gitrepo = gitrepo
-
-        # Is this repository initialized to use jig on?
-        with self.view.out() as out:
-            if not repo_jiginitialized(self.gitrepo):
-                raise GitRepoNotInitialized(
-                    'This repository has not been initialized.')
-
-        pm = PluginManager(get_jigconfig(self.gitrepo))
+        pm = PluginManager(get_jigconfig(gitrepo))
 
         # Check to make sure we have some plugins to run
         with self.view.out() as out:
@@ -216,7 +217,7 @@ class Runner(object):
 
         # Our git diff index is an object that makes working with the diff much
         # easier in the context of our plugins.
-        gdi = GitDiffIndex(self.gitrepo, diff)
+        gdi = GitDiffIndex(gitrepo, diff)
 
         # Go through the plugins and gather up the results
         results = OrderedDict()
