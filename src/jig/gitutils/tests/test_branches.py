@@ -84,10 +84,8 @@ class TestParseRevRange(JigTestCase):
         self.gitrepo, self.gitrepodir, _ = self.repo_from_fixture('repo01')
 
     def assertIsRevRange(self, rev_range):
-        commit_a, commit_b = rev_range
-
-        self.assertIsInstance(commit_a, Commit)
-        self.assertIsInstance(commit_b, Commit)
+        self.assertIsInstance(rev_range.a, Commit)
+        self.assertIsInstance(rev_range.b, Commit)
 
     def test_bad_format(self):
         """
@@ -267,7 +265,9 @@ class TestPrepareWithRevRange(PrepareTestCase):
 
     """
     def prepare_context_manager(self):
-        return _prepare_with_rev_range(self.repo, self.rev_range)
+        rev_range_parsed = parse_rev_range(self.repo.working_dir, self.rev_range)
+
+        return _prepare_with_rev_range(self.repo, rev_range_parsed)
 
     def test_dirty_working_directory(self):
         """
@@ -364,6 +364,11 @@ class TestPrepareWorkingDirectory(JigTestCase):
     Make the working directory suitable for running Jig.
 
     """
+    def setUp(self):
+        super(TestPrepareWorkingDirectory, self).setUp()
+
+        self.gitrepo, self.gitrepodir, _ = self.repo_from_fixture('repo01')
+
     def test_no_rev_range(self):
         """
         Should prepare against the staged index if no rev range.
@@ -389,7 +394,9 @@ class TestPrepareWorkingDirectory(JigTestCase):
         with patch(prepare_function) as p:
             p.return_value = MagicMock()
 
-            with prepare_working_directory(self.gitrepodir, 'FOO..BAR'):
+            rev_range_parsed = parse_rev_range(self.gitrepodir, 'HEAD~1..HEAD~0')
+
+            with prepare_working_directory(self.gitrepodir, rev_range_parsed):
                 pass
 
         self.assertTrue(p.return_value.__enter__.called)

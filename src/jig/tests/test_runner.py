@@ -13,6 +13,7 @@ from jig.tests.mocks import MockPlugin
 from jig.exc import ForcedExit
 from jig.plugins import set_jigconfig, Plugin
 from jig.runner import Runner
+from jig.gitutils.branches import parse_rev_range
 
 
 class TestRunner(RunnerTestCase, PluginTestCase):
@@ -649,7 +650,11 @@ class TestRunnerRevRange(RunnerTestCase, PluginTestCase):
         If a range is not formatted correctly.
         """
         with self.assertRaises(ForcedExit):
-            self.runner.results(self.gitrepodir, rev_range="BAR:BAZ")
+            self.runner.main(
+                self.gitrepodir,
+                rev_range='BAR:BAZ',
+                interactive=False
+            )
 
         self.assertEqual(
             'BAR:BAZ\n\nThe revision range is not in a valid format.\n\n'
@@ -663,7 +668,11 @@ class TestRunnerRevRange(RunnerTestCase, PluginTestCase):
         If a range is given that does not exist.
         """
         with self.assertRaises(ForcedExit):
-            self.runner.results(self.gitrepodir, rev_range="FOO..BAR")
+            self.runner.main(
+                self.gitrepodir,
+                rev_range='FOO..BAR',
+                interactive=False
+            )
 
         self.assertEqual(
             'FOO..BAR\n\nThe revision specified is formatted correctly but one '
@@ -676,7 +685,8 @@ class TestRunnerRevRange(RunnerTestCase, PluginTestCase):
         Valid revision range returns results.
         """
         results = self.runner.results(
-            self.gitrepodir, rev_range="HEAD^1..HEAD"
+            self.gitrepodir,
+            rev_range=parse_rev_range(self.gitrepodir, 'HEAD^1..HEAD')
         )
 
         self.assertEqual(1, len(self.file_changes(results)))
@@ -686,7 +696,8 @@ class TestRunnerRevRange(RunnerTestCase, PluginTestCase):
         Valid revision that includes two changes returns both.
         """
         results = self.runner.results(
-            self.gitrepodir, rev_range="HEAD~2..HEAD"
+            self.gitrepodir,
+            rev_range=parse_rev_range(self.gitrepodir, 'HEAD~2..HEAD')
         )
 
         self.assertEqual(2, len(self.file_changes(results)))

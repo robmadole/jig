@@ -2,6 +2,7 @@ from os import unlink
 from tempfile import mkstemp
 from functools import partial
 from contextlib import contextmanager
+from collections import namedtuple
 
 import git
 from git.exc import GitCommandError, BadObject
@@ -34,7 +35,7 @@ def parse_rev_range(repository, rev_range):
         commit_a = repo.commit(rev_a)
         commit_b = repo.commit(rev_b)
 
-        return commit_a, commit_b
+        return RevRangePair(commit_a, commit_b, rev_range)
     except (BadObject, GitCommandError):
         raise GitRevListMissing(rev_range)
 
@@ -53,8 +54,7 @@ def _prepare_with_rev_range(repo, rev_range):
         head = repo.head.commit
         return_to_normal = partial(repo.git.checkout, head.hexsha)
 
-    commit_a, commit_b = parse_rev_range(repo.working_dir, rev_range)
-    repo.git.checkout(commit_b.hexsha)
+    repo.git.checkout(rev_range.b.hexsha)
 
     try:
         yield head
@@ -67,7 +67,7 @@ def _prepare_against_staged_index(repo):
     """
     Prepare the working directory to run Jig off the staged index.
 
-    :param string repo: Git repo
+    :param git.Repo repo: Git repo
     """
     stash = None
 
@@ -100,8 +100,7 @@ def prepare_working_directory(repository, rev_range=None):
     Use Git stash and checkout to prepare the working directory for a Jig run.
 
     :param string gitrepo: file path to the Git repository
-    :param string rev_range: Double dot-separated revision range, like
-        "FOO..BAR"
+    :param RevRangePair rev_range:
     """
     repo = git.Repo(repository)
 
@@ -111,3 +110,6 @@ def prepare_working_directory(repository, rev_range=None):
     else:
         with _prepare_against_staged_index(repo) as stash:
             yield stash
+
+
+RevRangePair = namedtuple('RevRangePair', 'a b raw')

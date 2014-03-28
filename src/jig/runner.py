@@ -27,12 +27,10 @@ def _diff_for(gitrepo, rev_range=None):
     Get a list of :py:class:`git.diff.Diff` objects for the repository.
 
     :param git.repo.base.Repo gitrepo: Git repository
-    :param string rev_range: optional revision to use instead of the Git index
+    :param RevRangePair rev_range: optional revision to use instead of the Git index
     """
     if rev_range:
-        commit_a, commit_b = parse_rev_range(gitrepo.working_dir, rev_range)
-
-        return commit_a.diff(commit_b)
+        return rev_range.a.diff(rev_range.b)
     else:
         # Assume we want a diff between what is staged and HEAD
         try:
@@ -88,11 +86,13 @@ class Runner(object):
                 raise GitRepoNotInitialized(
                     'This repository has not been initialized.')
 
-            with prepare_working_directory(gitrepo, rev_range):
+            rev_range_parsed = parse_rev_range(gitrepo, rev_range) if rev_range else None
+
+            with prepare_working_directory(gitrepo, rev_range_parsed):
                 results = self.results(
                     gitrepo,
                     plugin=plugin,
-                    rev_range=rev_range
+                    rev_range=rev_range_parsed
                 )
 
         report_counts = self.view.print_results(results)
@@ -181,7 +181,7 @@ class Runner(object):
         :param unicode gitrepo: path to the Git repository
         :param unicode plugin: the name of the plugin to run, if None then run
             all plugins
-        :param unicode rev_range: the revision range to use instead of the Git
+        :param RevRangePair rev_range: the revision range to use instead of the Git
             index
         """
         pm = PluginManager(get_jigconfig(gitrepo))
