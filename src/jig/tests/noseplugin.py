@@ -9,13 +9,13 @@ from subprocess import call, PIPE
 
 from nose.plugins.base import Plugin
 
-from jig.conf import JIG_DIR_NAME
-
 
 def _create_git_repo_property(repo_harness_dir):
     """
     Property object to lazy git init a directory in ``repo_harness_dir``.
     """
+    from jig.conf import JIG_DIR_NAME
+
     def getter(self):
         try:
             return self._gitrepodir

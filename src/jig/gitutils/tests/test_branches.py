@@ -279,8 +279,7 @@ class TestPrepareWithRevRange(PrepareTestCase):
         self.modify_file(self.gitrepodir, 'a.txt', 'aa')
 
         with self.assertRaises(GitWorkingDirectoryDirty):
-            with self.prepare():
-                pass
+            self.prepare().__enter__()
 
     def test_yields_git_named_head(self):
         """
@@ -394,7 +393,9 @@ class TestPrepareWorkingDirectory(JigTestCase):
         with patch(prepare_function) as p:
             p.return_value = MagicMock()
 
-            rev_range_parsed = parse_rev_range(self.gitrepodir, 'HEAD~1..HEAD~0')
+            rev_range_parsed = parse_rev_range(
+                self.gitrepodir, 'HEAD~1..HEAD~0'
+            )
 
             with prepare_working_directory(self.gitrepodir, rev_range_parsed):
                 pass

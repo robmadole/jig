@@ -15,9 +15,15 @@ class TestIsGitRepo(JigTestCase):
 
     """
     def test_is_not_git_directory(self):
+        """
+        Detects a non-git initialized directory.
+        """
         self.assertFalse(is_git_repo(mkdtemp()))
 
     def test_is_git_directory(self):
+        """
+        Detects a directory that has been initialized for Git.
+        """
         directory = mkdtemp()
 
         Repo.init(directory)
@@ -32,9 +38,15 @@ class TestRepoJiginitialized(JigTestCase):
 
     """
     def test_is_not_jig_initialized_directory(self):
+        """
+        Detect the directory has not been initialized.
+        """
         self.assertFalse(repo_jiginitialized(mkdtemp()))
 
     def test_is_jig_initialized_directory(self):
+        """
+        Detect the directory has been initialized.
+        """
         directory = mkdtemp()
 
         Repo.init(directory)
