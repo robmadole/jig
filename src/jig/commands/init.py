@@ -17,13 +17,12 @@ _parser.add_argument(
     help='Path to the Git repository')
 
 
-class InitCommandMixin(object):
+class Command(BaseCommand):
+    parser = _parser
 
-    """
-    Command mixin for init-related actions.
+    def process(self, argv):
+        path = argv.path
 
-    """
-    def init_for_jig(self, path):
         with self.out() as out:
             hook(path)
             initializer(path)
@@ -32,12 +31,3 @@ class InitCommandMixin(object):
                 'Git repository has been initialized for use with Jig.'
             )
             out.extend(AFTER_INIT)
-
-
-class Command(BaseCommand, InitCommandMixin):
-    parser = _parser
-
-    def process(self, argv):
-        path = argv.path
-
-        self.init_for_jig(path)

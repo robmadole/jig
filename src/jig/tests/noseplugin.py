@@ -47,6 +47,14 @@ def _create_git_repo_property(repo_harness_dir):
                 'Could not initialize a Git repository to '
                 'run tests, is Git installed?')
 
+        # Set email and name so we can stash as part of the tests
+        call(['git', 'config', '--local', 'user.email', '"no+reply@jig"', repo],
+            stdin=PIPE, stdout=PIPE, stderr=PIPE
+        )
+        call(['git', 'config', '--local', 'user.name', '"Jig"', repo],
+            stdin=PIPE, stdout=PIPE, stderr=PIPE
+        )
+
         self._gitrepodir = repo
 
         return repo

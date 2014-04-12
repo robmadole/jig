@@ -9,10 +9,11 @@ from mock import patch, MagicMock
 
 from jig.tests.testcase import JigTestCase
 from jig.exc import (
-    GitRevListMissing, GitRevListFormatError, GitWorkingDirectoryDirty)
+    GitRevListMissing, GitRevListFormatError, GitWorkingDirectoryDirty,
+    TrackingBranchMissing)
 from jig.gitutils.branches import (
     parse_rev_range, prepare_working_directory,
-    _prepare_against_staged_index, _prepare_with_rev_range)
+    _prepare_against_staged_index, _prepare_with_rev_range, Tracked)
 
 
 @contextmanager
@@ -265,7 +266,10 @@ class TestPrepareWithRevRange(PrepareTestCase):
 
     """
     def prepare_context_manager(self):
-        rev_range_parsed = parse_rev_range(self.repo.working_dir, self.rev_range)
+        rev_range_parsed = parse_rev_range(
+            self.repo.working_dir,
+            self.rev_range
+        )
 
         return _prepare_with_rev_range(self.repo, rev_range_parsed)
 
@@ -401,3 +405,116 @@ class TestPrepareWorkingDirectory(JigTestCase):
                 pass
 
         self.assertTrue(p.return_value.__enter__.called)
+
+
+class TestTracked(JigTestCase):
+
+    """
+    Git repositories can be tracked for CI mode.
+
+    """
+    def setUp(self):
+        super(TestTracked, self).setUp()
+
+        self.commits = [
+            self.commit(self.gitrepodir, 'a.txt', 'a'),
+            self.commit(self.gitrepodir, 'b.txt', 'b'),
+            self.commit(self.gitrepodir, 'c.txt', 'c'),
+        ]
+
+    def test_tracking_branch_does_not_exist(self):
+        """
+        Tracking branch does not exist.
+        """
+        tracked = Tracked(self.gitrepodir)
+
+        self.assertFalse(tracked.exists)
+
+    def test_tracking_branch_exists(self):
+        """
+        Tracking branch exists.
+        """
+        tracking_branch = Repo(self.gitrepodir).create_head('jig-ci-last-run')
+        tracking_branch.commit = 'HEAD'
+
+        tracked = Tracked(self.gitrepodir)
+
+        self.assertTrue(tracked.exists)
+
+    def test_tracking_branch_by_a_different_name(self):
+        """
+        Can check existence by a different name than the default.
+        """
+        name = 'different-tracking-name'
+
+        tracking_branch = Repo(self.gitrepodir).create_head(name)
+        tracking_branch.commit = 'HEAD'
+
+        tracked = Tracked(self.gitrepodir, name)
+
+        self.assertTrue(tracked.exists)
+
+    def test_update_defaults_to_head(self):
+        """
+        Updating the tracking branch defaults to current HEAD.
+        """
+        tracked = Tracked(self.gitrepodir)
+
+        reference = tracked.update()
+
+        self.assertEqual(
+            reference.commit,
+            self.commits[-1]
+        )
+
+    def test_non_existent_reference(self):
+        """
+        Without a tracking branch trying to get a references to it raises.
+        """
+        tracked = Tracked(self.gitrepodir)
+
+        with self.assertRaises(TrackingBranchMissing):
+            tracked.reference
+
+    def test_tracking_branch_reference(self):
+        """
+        With a tracking branch we can get a reference to it.
+        """
+        tracking_branch = Repo(self.gitrepodir).create_head('jig-ci-last-run')
+        tracking_branch.commit = 'HEAD~2'
+
+        tracked = Tracked(self.gitrepodir)
+
+        self.assertEqual(
+            tracked.reference.commit,
+            self.commits[0]
+        )
+
+    def test_update_takes_commit_hash(self):
+        """
+        Updating the tracking branch can be done with a commit hash.
+        """
+        tracked = Tracked(self.gitrepodir)
+
+        tracked.update(self.commits[0].hexsha)
+
+        self.assertEqual(
+            tracked.reference.commit,
+            self.commits[0]
+        )
+
+    def test_update_moves_head_forward(self):
+        """
+        The tracking branch reference can be moved forward.
+        """
+        tracking_branch = Repo(self.gitrepodir).create_head('jig-ci-last-run')
+        tracking_branch.commit = 'HEAD~2'
+
+        tracked = Tracked(self.gitrepodir)
+
+        tracked.update()
+
+        self.assertEqual(
+            tracked.reference.commit,
+            self.commits[-1]
+        )

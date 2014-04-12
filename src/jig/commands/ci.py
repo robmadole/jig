@@ -1,6 +1,8 @@
+from jig.exc import AlreadyInitialized
 from jig.commands.base import BaseCommand
-from jig.commands.init import InitCommandMixin
 from jig.commands.install import InstallCommandMixin
+from jig.gitutils.branches import Tracked
+from jig.plugins import initializer
 from jig.runner import Runner
 
 try:
@@ -28,7 +30,7 @@ _parser.add_argument(
     help='Path to the Git repository')
 
 
-class Command(BaseCommand, InitCommandMixin, InstallCommandMixin):
+class Command(BaseCommand, InstallCommandMixin):
     parser = _parser
 
     def process(self, argv):
@@ -38,14 +40,25 @@ class Command(BaseCommand, InitCommandMixin, InstallCommandMixin):
         output_format = argv.output_format
 
         # Make sure that the Git directory has been initialized
-        self.init_for_jig(path)
+        try:
+            initializer(path)
+        except AlreadyInitialized:
+            # This is OK since this command will run repeatedly in CI mode
+            pass
 
         # Make sure the plugins are installed
         self.install_plugins_file(plugins_file)
 
-        # If the tracking branch is not present, create it
-        # and tell the user it was the first time then exit
+        with self.out() as out:
+            # If the tracking branch is not present, create it
+            # and tell the user it was the first time then exit
+            tracked = Tracked(path, tracking_branch)
+            if not tracked.exists():
+                tracked.update(tracking_branch)
 
-        # Get the tracking branch reference
+                out.append('First run, tracking branch created for HEAD')
+            else:
+                # Run Jig from the tracking branch to HEAD
 
-        # Run Jig from the tracking branch to HEAD
+                # Update the tracking branch to reference current HEAD
+                tracked.update('HEAD')

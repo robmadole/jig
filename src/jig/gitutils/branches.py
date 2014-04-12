@@ -8,7 +8,8 @@ import git
 from git.exc import GitCommandError, BadObject
 
 from jig.exc import (
-    GitRevListFormatError, GitRevListMissing, GitWorkingDirectoryDirty)
+    GitRevListFormatError, GitRevListMissing, GitWorkingDirectoryDirty,
+    TrackingBranchMissing)
 from jig.gitutils.checks import working_directory_dirty
 
 
@@ -113,3 +114,47 @@ def prepare_working_directory(repository, rev_range=None):
 
 
 RevRangePair = namedtuple('RevRangePair', 'a b raw')
+
+
+class Tracked(object):
+
+    """
+    Manage the tracking branch Jig uses when running in CI mode.
+
+    """
+    def __init__(self, gitrepo, tracking_branch='jig-ci-last-run'):
+        self.gitrepo = git.Repo(gitrepo)
+        self.tracking_branch = tracking_branch
+
+    @property
+    def exists(self):
+        """
+        Whether the tracking branch exists in the Git repository.
+        """
+        return self.tracking_branch in self.gitrepo.references
+
+    def _create(self):
+        """
+        Create a new head on the repository with the tracking branch name.
+        """
+        return self.gitrepo.create_head(self.tracking_branch)
+
+    @property
+    def reference(self):
+        """
+        The :py:class:`git.Commit` object representing the tracking branch.
+        """
+        if not self.exists:
+            raise TrackingBranchMissing(self.tracking_branch)
+
+        return self.gitrepo.references[self.tracking_branch]
+
+    def update(self, commit='HEAD'):
+        """
+        Change the tracking branch to a new commit.
+        """
+        reference = self.reference if self.exists else self._create()
+
+        reference.commit = commit
+
+        return reference

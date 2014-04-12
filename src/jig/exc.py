@@ -164,6 +164,18 @@ class AlreadyInitialized(JigException):
     hint = 'ALREADY_INITIALIZED'
 
 
+class TrackingBranchMissing(JigException):
+
+    """
+    The tracking branch Jig uses in CI mode is missing.
+
+    """
+    def __init__(self, tracking_branch):
+        super(TrackingBranchMissing, self).__init__(
+            'Tracking branch {0} for CI mode is missing'.format(tracking_branch)
+        )
+
+
 class JigUserDirectoryError(JigException):
 
     """
