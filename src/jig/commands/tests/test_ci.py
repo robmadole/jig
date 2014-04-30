@@ -1,16 +1,153 @@
 # coding=utf-8
+import sys
 from tempfile import mkdtemp
+from os.path import isfile, join
 
-from jig.tests.testcase import CommandTestCase, cd_gitrepo, result_with_hint
-from jig.commands.hints import AFTER_INIT
+from mock import Mock
+from git import Repo
+
+from jig.tests.testcase import (
+    JigTestCase, CommandTestCase, cd_gitrepo)
+from jig.plugins import create_plugin, get_jigconfig, PluginManager
 from jig.exc import ForcedExit
 from jig.commands import ci
 
 
-class TestInitCommand(CommandTestCase):
+class TestWhenExitsZero(JigTestCase):
 
     """
-    Test the init subcommand.
+    Test for the utility that catches SystemExit and cals a function.
+
+    """
+    def test_does_not_call(self):
+        """
+        Doesn't call the passed function if the exit code is non-zero.
+        """
+        call_if_ok = Mock()
+
+        with self.assertRaises(SystemExit):
+            with ci._when_exits_zero(call_if_ok):
+                sys.exit(1)
+
+        self.assertFalse(call_if_ok.called)
+
+    def test_does_call(self):
+        """
+        Calls the passed function if the exit code is zero.
+        """
+        call_if_ok = Mock()
+
+        with self.assertRaises(SystemExit):
+            with ci._when_exits_zero(call_if_ok):
+                sys.exit(0)
+
+        self.assertTrue(call_if_ok.called)
+
+
+class TestCiCommand(CommandTestCase):
+
+    """
+    Test the ci subcommand.
 
     """
     command = ci.Command
+
+    def setUp(self):
+        super(TestCiCommand, self).setUp()
+
+        self.plugindir = mkdtemp()
+
+        self.pluginpath = create_plugin(
+            self.plugindir, template='python',
+            bundle='a', name='a'
+        )
+
+        self.commit(self.gitrepodir, '.jigplugins.txt', self.pluginpath)
+
+    def run_first_time(self):
+        try:
+            self.run_command('{0} {1}'.format(
+                '.jigplugins.txt', self.gitrepodir)
+            )
+        except ForcedExit:
+            pass
+
+        # Reset the buckets used to collect output
+        self.view.init_collector()
+
+    @cd_gitrepo
+    def test_initializes_path(self):
+        with self.assertRaises(ForcedExit):
+            self.run_command('{0} {1}'.format(
+                '.jigplugins.txt', self.gitrepodir)
+            )
+
+        self.assertTrue(isfile(join(self.gitrepodir, '.jig', 'plugins.cfg')))
+
+    @cd_gitrepo
+    def test_installs_plugins(self):
+        with self.assertRaises(ForcedExit):
+            self.run_command('{0} {1}'.format(
+                '.jigplugins.txt', self.gitrepodir)
+            )
+
+        pm = PluginManager(get_jigconfig(self.gitrepodir))
+
+        plugin = pm.plugins[0]
+
+        # This was the plugin that was installed in our setUp
+        self.assertEqual('a', plugin.name)
+
+        self.assertResults(
+            u'''
+            From {0}:
+             - Added plugin a in bundle a
+            '''.format(self.pluginpath),
+            self.output
+        )
+
+    @cd_gitrepo
+    def test_sets_tracking_branch(self):
+        with self.assertRaises(ForcedExit):
+            self.run_command('{0} {1}'.format(
+                '.jigplugins.txt', self.gitrepodir)
+            )
+
+        repo = Repo(self.gitrepodir)
+
+        self.assertEqual(
+            repo.heads['master'].commit,
+            repo.heads['jig-ci-last-run'].commit
+        )
+
+        self.assertResults(
+            u'First run, tracking branch created for HEAD',
+            self.error
+        )
+
+    @cd_gitrepo
+    def test_sets_tracking_branch_explicit(self):
+        tracking_branch = 'jig-custom'
+
+        with self.assertRaises(ForcedExit):
+            self.run_command('--tracking-branch {0} {1} {2}'.format(
+                tracking_branch, '.jigplugins.txt', self.gitrepodir)
+            )
+
+        repo = Repo(self.gitrepodir)
+
+        self.assertEqual(
+            repo.heads['master'].commit,
+            repo.heads[tracking_branch].commit
+        )
+
+    @cd_gitrepo
+    def test_runs_after_commit(self):
+        self.run_first_time()
+
+        self.commit(self.gitrepodir, 'a.txt', 'a')
+
+        with self.assertRaises(SystemExit):
+            self.run_command('{0} {1}'.format(
+                '.jigplugins.txt', self.gitrepodir)
+            )

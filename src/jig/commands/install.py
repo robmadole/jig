@@ -29,7 +29,7 @@ class InstallCommandMixin(object):
     Command mixin for install-related actions.
 
     """
-    def install_plugins_file(self, plugins_file, path):
+    def install_plugins_file(self, plugins_file, path, hints=True):
         with self.out() as out:
             try:
                 plugin_list = read_plugin_list(plugins_file)
@@ -57,7 +57,8 @@ class InstallCommandMixin(object):
                         ' - Added plugin {0} in bundle {1}'.format(
                             p.name, p.bundle))
 
-            out.extend(USE_RUNNOW)
+            if hints:
+                out.extend(USE_RUNNOW)
 
 
 class Command(BaseCommand, InstallCommandMixin):

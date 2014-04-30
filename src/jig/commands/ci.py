@@ -1,4 +1,6 @@
-from jig.exc import AlreadyInitialized
+from contextlib import contextmanager
+
+from jig.exc import AlreadyInitialized, CIFirstRun
 from jig.commands.base import BaseCommand
 from jig.commands.install import InstallCommandMixin
 from jig.gitutils.branches import Tracked
@@ -13,7 +15,7 @@ except ImportError:   # pragma: no cover
 _parser = argparse.ArgumentParser(
     description='Run in continuous integration (CI) mode',
     usage='jig ci [-h] [--tracking-branch TRACKING_BRANCH] '
-    '[--format FORMAT] PLUGINSFILE')
+    '[--format FORMAT] PLUGINSFILE [PATH]')
 
 _parser.add_argument(
     'pluginsfile',
@@ -28,6 +30,20 @@ _parser.add_argument(
 _parser.add_argument(
     'path', nargs='?', default='.',
     help='Path to the Git repository')
+
+
+@contextmanager
+def _when_exits_zero(call_if_ok):
+    """
+    Calls the function passed in if the SystemExit has a zero exit code.
+    """
+    try:
+        yield
+    except SystemExit as se:
+        if getattr(se, 'code', None) == 0:
+            # Update the tracking branch to reference current HEAD
+            call_if_ok()
+        raise
 
 
 class Command(BaseCommand, InstallCommandMixin):
@@ -47,18 +63,29 @@ class Command(BaseCommand, InstallCommandMixin):
             pass
 
         # Make sure the plugins are installed
-        self.install_plugins_file(plugins_file)
+        self.install_plugins_file(plugins_file, path, hints=False)
 
         with self.out() as out:
             # If the tracking branch is not present, create it
             # and tell the user it was the first time then exit
             tracked = Tracked(path, tracking_branch)
-            if not tracked.exists():
+            if not tracked.exists:
                 tracked.update(tracking_branch)
 
-                out.append('First run, tracking branch created for HEAD')
-            else:
-                # Run Jig from the tracking branch to HEAD
+                raise CIFirstRun()
 
-                # Update the tracking branch to reference current HEAD
-                tracked.update('HEAD')
+            out.append(u'')
+            out.append(u'Tracking branch {0} references commit {1}'.format(
+                tracking_branch, tracked.reference.commit.hexsha
+            ))
+            out.append(u'')
+
+        # Run Jig from the tracking branch to HEAD
+        runner = Runner(view=self.view)
+
+        with _when_exits_zero(tracked.update):
+            runner.main(
+                path,
+                rev_range='{0}..HEAD'.format(tracking_branch),
+                interactive=False
+            )

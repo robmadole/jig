@@ -172,7 +172,21 @@ class TrackingBranchMissing(JigException):
     """
     def __init__(self, tracking_branch):
         super(TrackingBranchMissing, self).__init__(
-            'Tracking branch {0} for CI mode is missing'.format(tracking_branch)
+            'Tracking branch {0} for CI mode is missing'.format(
+                tracking_branch
+            )
+        )
+
+
+class CIFirstRun(JigException):
+
+    """
+    Raised when CI runs for the first time and creates the tracking branch.
+
+    """
+    def __init__(self):
+        super(CIFirstRun, self).__init__(
+            'First run, tracking branch created for HEAD'
         )
 
 

@@ -182,6 +182,10 @@ class ConsoleView(object):
         # Do we collect output? False means we print it out
         self.collect_output = collect_output
         self.exit_on_exception = exit_on_exception
+
+        self.init_collector(stdout=stdout, stderr=stderr)
+
+    def init_collector(self, stdout=None, stderr=None):
         self._collect = {
             'stdout': stdout or StringIO(), 'stderr': stderr or StringIO()}
 
