@@ -5,7 +5,7 @@ from os import listdir, mkdir
 from os.path import join, realpath, isdir, expanduser
 from tempfile import mkdtemp
 from shutil import rmtree
-from subprocess import call, PIPE
+from subprocess import call, Popen, PIPE
 
 from nose.plugins.base import Plugin
 
@@ -48,12 +48,15 @@ def _create_git_repo_property(repo_harness_dir):
                 'run tests, is Git installed?')
 
         # Set email and name so we can stash as part of the tests
-        call(['git', 'config', '--local', 'user.email', '"no+reply@jig"', repo],
-            stdin=PIPE, stdout=PIPE, stderr=PIPE
-        )
-        call(['git', 'config', '--local', 'user.name', '"Jig"', repo],
-            stdin=PIPE, stdout=PIPE, stderr=PIPE
-        )
+        Popen(
+            ['git', 'config', '--local', 'user.email', 'no+reply@jig'],
+            stdin=PIPE, stdout=PIPE, stderr=PIPE, cwd=repo
+        ).wait()
+
+        Popen(
+            ['git', 'config', '--local', 'user.name', 'Jig'],
+            stdin=PIPE, stdout=PIPE, stderr=PIPE, cwd=repo
+        ).wait()
 
         self._gitrepodir = repo
 
