@@ -8,7 +8,7 @@ from jig.tests.testcase import (
     CommandTestCase, PluginTestCase, result_with_hint)
 from jig.plugins import set_jigconfig
 from jig.exc import ForcedExit
-from jig.output import ATTENTION
+from jig.formatters.fancy import ATTENTION
 from jig.commands import runnow
 from jig.commands.hints import GIT_REPO_NOT_INITIALIZED
 

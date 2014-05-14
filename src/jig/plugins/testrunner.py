@@ -18,7 +18,9 @@ from jig.conf import (
     CODEC, PLUGIN_EXPECTATIONS_FILENAME, PLUGIN_TESTS_DIRECTORY)
 from jig.tools import NumberedDirectoriesToGit, cwd_bounce, indent
 from jig.diffconvert import describe_diff
-from jig.output import ConsoleView, strip_paint, green_bold, red_bold
+from jig.formatters.utils import green_bold, red_bold
+from jig.formatters.fancy import FancyFormatter
+from jig.output import ConsoleView, ResultsCollator, strip_paint
 from jig.plugins import PluginManager
 from jig.plugins.manager import PluginDataJSONEncoder
 from jig.diffconvert import GitDiffIndex
@@ -293,7 +295,9 @@ class PluginTestRunner(object):
         except ValueError:
             raise ExpectationNoTests(
                 'Could not find any tests: {0}.'.format(
-                test_directory))
+                    test_directory
+                )
+            )
 
         try:
             expect_filename = join(
@@ -350,6 +354,9 @@ class PluginTestRunner(object):
             # View to help us create the output
             view = ConsoleView(collect_output=True, exit_on_exception=False)
 
+            # Standard fancy unicode result formatter
+            formatter = FancyFormatter()
+
             # Get a GitDiffIndex object from
             gdi = InstrumentedGitDiffIndex(
                 self.timeline.repo.working_dir,
@@ -386,7 +393,10 @@ class PluginTestRunner(object):
             if retcode == 0:
                 # Format the results according to what you normally see in the
                 # console.
-                view.print_results({plugin: (retcode, data, stderr)})
+                collator = ResultsCollator({plugin: (retcode, data, stderr)})
+
+                with view.out() as printer:
+                    formatter.print_results(printer, collator)
             else:
                 results.append(FailureResult(
                     exp,

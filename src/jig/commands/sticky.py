@@ -18,9 +18,9 @@ class Command(BaseCommand):
     parser = _parser
 
     def process(self, argv):
-        with self.out() as out:
+        with self.out() as printer:
             templates_directory = create_auto_init_templates(expanduser('~'))
 
             set_templates_directory(templates_directory)
 
-            out.append('Jig has been setup to run everytime you clone.')
+            printer('Jig has been setup to run everytime you clone.')

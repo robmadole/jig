@@ -65,7 +65,7 @@ class Command(BaseCommand, InstallCommandMixin):
         # Make sure the plugins are installed
         self.install_plugins_file(plugins_file, path, hints=False)
 
-        with self.out() as out:
+        with self.out() as printer:
             # If the tracking branch is not present, create it
             # and tell the user it was the first time then exit
             tracked = Tracked(path, tracking_branch)
@@ -74,11 +74,11 @@ class Command(BaseCommand, InstallCommandMixin):
 
                 raise CIFirstRun()
 
-            out.append(u'')
-            out.append(u'Tracking branch {0} references commit {1}'.format(
+            printer(u'')
+            printer(u'Tracking branch {0} references commit {1}'.format(
                 tracking_branch, tracked.reference.commit.hexsha
             ))
-            out.append(u'')
+            printer(u'')
 
         # Run Jig from the tracking branch to HEAD
         runner = Runner(view=self.view)

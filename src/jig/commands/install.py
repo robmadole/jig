@@ -30,7 +30,7 @@ class InstallCommandMixin(object):
 
     """
     def install_plugins_file(self, plugins_file, path, hints=True):
-        with self.out() as out:
+        with self.out() as printer:
             try:
                 plugin_list = read_plugin_list(plugins_file)
             except IOError as e:
@@ -44,21 +44,21 @@ class InstallCommandMixin(object):
                 try:
                     added = add_plugin(pm, plugin, path)
                 except Exception as e:
-                    out.append(
+                    printer(
                         'From {0}:\n - {1}'.format(
                             plugin, e))
                     continue
 
                 set_jigconfig(path, pm.config)
 
-                out.append('From {0}:'.format(plugin))
+                printer('From {0}:'.format(plugin))
                 for p in added:
-                    out.append(
+                    printer(
                         ' - Added plugin {0} in bundle {1}'.format(
                             p.name, p.bundle))
 
             if hints:
-                out.extend(USE_RUNNOW)
+                printer(USE_RUNNOW)
 
 
 class Command(BaseCommand, InstallCommandMixin):

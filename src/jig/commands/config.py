@@ -156,28 +156,30 @@ class Command(BaseCommand):
         """
         path = argv.path
 
-        with self.out() as out:
+        with self.out() as printer:
             config = get_jigconfig(path)
 
             pm = PluginManager(config)
 
             if not pm.plugins:
-                out.append(u'No plugins installed.')
-                out.extend(NO_PLUGINS_INSTALLED)
+                printer(u'No plugins installed.')
+                printer(NO_PLUGINS_INSTALLED)
                 return
 
-            for meta in self._settings(pm):
-                out.append(
+            settings = list(self._settings(pm))
+
+            for meta in settings:
+                printer(
                     u'{bundle}.{plugin}.{config_key}={config_value}'.format(
                         bundle=meta.plugin.bundle, plugin=meta.plugin.name,
                         config_key=meta.key, config_value=meta.value
                     )
                 )
 
-            if not out:
-                out.append(u'Installed plugins have no settings.')
+            if not settings:
+                printer(u'Installed plugins have no settings.')
 
-            out.extend(CHANGE_PLUGIN_SETTINGS)
+            printer(CHANGE_PLUGIN_SETTINGS)
 
     def about(self, argv):
         """
@@ -193,29 +195,31 @@ class Command(BaseCommand):
                 subsequent_indent=indent)
             return u'\n'.join(tw.wrap(payload))
 
-        with self.out() as out:
+        with self.out() as printer:
             config = get_jigconfig(path)
 
             pm = PluginManager(config)
 
             if not pm.plugins:
-                out.append(u'No plugins installed.')
-                out.extend(NO_PLUGINS_INSTALLED)
+                printer(u'No plugins installed.')
+                printer(NO_PLUGINS_INSTALLED)
                 return
 
-            for meta in self._settings(pm):
-                out.append(u'{bundle}.{plugin}.{config_key}'.format(
+            settings = list(self._settings(pm))
+
+            for meta in settings:
+                printer(u'{bundle}.{plugin}.{config_key}'.format(
                     bundle=meta.plugin.bundle, plugin=meta.plugin.name,
                     config_key=meta.key))
-                out.append(u'(default: {0})'.format(meta.default))
+                printer(u'(default: {0})'.format(meta.default))
 
                 if meta.about:
-                    out.append(wrap(meta.about.strip()))
+                    printer(wrap(meta.about.strip()))
 
-                out.append(u'')
+                printer(u'')
 
-            if not out:
-                out.append(u'Installed plugins have no settings.')
+            if not settings:
+                printer(u'Installed plugins have no settings.')
 
     def set(self, argv):
         """

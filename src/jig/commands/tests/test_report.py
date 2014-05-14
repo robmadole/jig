@@ -3,7 +3,7 @@ from jig.exc import ForcedExit
 from jig.tests.testcase import (
     CommandTestCase, PluginTestCase)
 from jig.plugins import set_jigconfig
-from jig.output import ATTENTION
+from jig.formatters.fancy import ATTENTION
 from jig.commands import report
 
 

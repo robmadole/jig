@@ -21,8 +21,10 @@ def test():
 
     from jig.tests.noseplugin import TestSetup
 
-    nose.main(argv=['nose', '-w', 'src'] + sys.argv[1:],
-            addplugins=[TestSetup()])
+    nose.main(
+        argv=['nose', '-w', 'src'] + sys.argv[1:],
+        addplugins=[TestSetup()]
+    )
 
 
 def coverage():
@@ -46,12 +48,16 @@ def coverage():
         branch=True, config_file=False, source=['jig'],
         omit=omit)
 
+    cov.erase()
+
     cov.start()
 
     nose.run(argv=['nose', '-w', 'src'] + sys.argv[1:],
              addplugins=[TestSetup()])
 
     cov.stop()
+    cov.save()
 
     cov.report()
+    cov.annotate()
     cov.html_report(directory='../cover')

@@ -6,35 +6,10 @@ from contextlib import contextmanager
 
 from jig.exc import ForcedExit
 
-OK_SIGN = u'\U0001f44c'
-ATTENTION = u'\U0001f449'
-EXPLODE = u'\U0001f4a5'
-
 # Message types
 INFO = u'info'
 WARN = u'warn'
 STOP = u'stop'
-
-
-def green_bold(payload):
-    """
-    Format payload as green.
-    """
-    return u'\x1b[32;1m{0}\x1b[39;22m'.format(payload)
-
-
-def yellow_bold(payload):
-    """
-    Format payload as yellow.
-    """
-    return u'\x1b[33;1m{0}\x1b[39;22m'.format(payload)
-
-
-def red_bold(payload):
-    """
-    Format payload as red.
-    """
-    return u'\x1b[31;1m{0}\x1b[39;22m'.format(payload)
 
 
 def strip_paint(payload):
@@ -93,10 +68,10 @@ def _get_hint(hint):
     """
     from jig.commands import hints
 
-    if isinstance(hint, list):
+    try:
+        return getattr(hints, hint)
+    except AttributeError:
         return hint
-
-    return getattr(hints, hint)
 
 
 def utf8_writer(filelike):
@@ -191,24 +166,18 @@ class ConsoleView(object):
 
     @contextmanager
     def out(self):
-        collected = []
-
         try:
-            yield collected
-
             stdout = utf8_writer(sys.stdout)
             fo = self._collect['stdout'] if self.collect_output else stdout
 
-            for line in collected:
-                fo.write(unicode(line) + u'\n')
+            yield lambda line: fo.write(unicode(line) + u'\n')
         except Exception as e:
             stderr = utf8_writer(sys.stderr)
             fo = self._collect['stderr'] if self.collect_output else stderr
             fo.write(unicode(e) + u'\n')
 
             if hasattr(e, 'hint'):
-                for line in _get_hint(e.hint):
-                    fo.write(unicode(line) + u'\n')
+                fo.write(unicode(_get_hint(e.hint)) + u'\n')
 
             try:
                 retcode = e.retcode
@@ -221,126 +190,31 @@ class ConsoleView(object):
             else:
                 raise ForcedExit(retcode)
 
-    def print_results(self, results):
-        """
-        Format and print plugins results.
-        """
-        if not results:
-            return
-
-        collater = ResultsCollater(results)
-
-        plugins = collater.plugins
-        errors = collater.errors
-        reporters = collater.reporters
-
-        form = u'plugin' if len(plugins) == 1 else u'plugins'
-
-        if len(reporters) == 0 and len(errors) == 0:
-            # Nothing to report
-            with self.out() as out:
-                form = u'plugin' if len(plugins) == 1 else u'plugins'
-                out.append(
-                    u'{ok_sign}  Jig ran {plen} {form}, '
-                    u'nothing to report'.format(
-                    ok_sign=OK_SIGN, plen=len(plugins), form=form))
-                return
-
-        # Gather the distinct message types from the results
-        cm, fm, lm = collater.messages
-
-        # Order them from least specific to most specific, put the errors last
-        messages = cm + fm + lm + errors
-
-        # How do our message types map to a symbol
-        type_to_symbol = {
-            INFO: green_bold(u'\u2713'),
-            WARN: yellow_bold(u'\u26a0'),
-            STOP: red_bold(u'\u2715')}
-
-        ic, wc, sc = (0, 0, 0)
-        with self.out() as out:
-            last_plugin = None
-            for msg in messages:
-                if last_plugin != msg.plugin:
-                    out.append(u'\u25be  {0}'.format(msg.plugin.name))
-                    out.append('')
-                    last_plugin = msg.plugin
-                colorized = u'{0}  {1}'.format(
-                    type_to_symbol[msg.type], self._format_message(msg))
-                out.extend(colorized.splitlines())
-                out.append('')
-
-            ic, wc, sc = [i[1] for i in collater.counts.items()]
-            info = green_bold(ic) if ic else ic
-            warn = yellow_bold(wc) if wc else wc
-            stop = red_bold(sc) if sc else sc
-
-            sign = EXPLODE if sc > 0 else ATTENTION
-            out.append(u'{explode}  Jig ran {plen} {form}'.format(
-                explode=sign, plen=len(plugins), form=form))
-
-            out.append(u'    Info {ic} Warn {wc} Stop {sc}'.format(
-                ic=info, wc=warn, sc=stop))
-
-            if len(errors):
-                out.append(u'    ({ec} {form} reported errors)'.format(
-                    ec=len(errors), form=form))
-
-        # Return the counts for the different types of messages
-        return (ic, wc, sc)
-
     def print_help(self, commands):
         """
         Format and print help for using the console script.
         """
-        with self.out() as out:
-            out.append('usage: jig [-h] COMMAND')
-            out.append('')
+        with self.out() as printer:
+            printer('usage: jig [-h] COMMAND')
+            printer('')
 
-            out.append('optional arguments:')
-            out.append('  -h, --help  show this help message and exit')
-            out.append('')
+            printer('optional arguments:')
+            printer('  -h, --help  show this help message and exit')
+            printer('')
 
-            out.append('jig commands:')
+            printer('jig commands:')
             for command in commands:
                 name = command.__module__.split('.')[-1]
                 description = command.parser.description
 
-                out.append('  {name:12}{description}'.format(
+                printer('  {name:12}{description}'.format(
                     name=name, description=description))
 
-            out.append('')
-            out.append('See `jig COMMAND --help` for more information')
-
-    def _format_message(self, msg):
-        """
-        Formats a single message to a string.
-        """
-        out = []
-        header = u''
-        body = u''
-
-        if msg.line:
-            header += u'line {0}: '.format(msg.line)
-
-        if msg.file:
-            header += msg.file
-
-        if header:
-            body = u'    {0}'.format(msg.body)
-        else:
-            body = u'{0}'.format(msg.body)
-
-        if header:
-            out.append(header)
-
-        out.append(body)
-
-        return '\n'.join(out)
+            printer('')
+            printer('See `jig COMMAND --help` for more information')
 
 
-class ResultsCollater(object):
+class ResultsCollator(object):
 
     """
     Collects and combines plugin results into a unified summary.
@@ -375,7 +249,7 @@ class ResultsCollater(object):
         Messages by type for the plugin results.
 
         Return a tuple of messages by type based on the results that were
-        provided when initializing the collater.
+        provided when initializing the collator.
 
         Each tuple contains a generator object which will return
         ``jig.output.Message`` objects.
@@ -424,7 +298,7 @@ class ResultsCollater(object):
         """
         Errors that were generated during collation.
 
-        Errors are found when a piece of data given to one of the collaters is
+        Errors are found when a piece of data given to one of the collators is
         of a type that can't be understood.
 
         Returns a list of ``jig.output.Error`` objects.
