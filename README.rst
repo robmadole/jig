@@ -1,7 +1,8 @@
 Jig
 ===
 
-.. image:: https://api.travis-ci.org/robmadole/jig.png?branch=develop
+.. image:: https://travis-ci.org/robmadole/jig.svg?branch=develop
+   :target: https://travis-ci.org/robmadole/jig
 
 A command line tool and framework for getting more from the Git pre-commit
 hook.
