@@ -13,6 +13,9 @@ class FancyFormatter(object):
     Fancy unicode symbol results formatter.
 
     """
+    # What is the simple name used to specify this formatter on the command line
+    name = 'fancy'
+
     def print_results(self, printer, collator):
         """
         Format and print plugins results.

@@ -49,7 +49,8 @@ class Runner(object):
     """
     def __init__(self, view=None, formatter=None):
         self.view = view or ConsoleView()
-        self.formatter = formatter or FancyFormatter()
+        create_formatter = lambda f: f() if f else FancyFormatter()
+        self.formatter = create_formatter(formatter)
 
     def fromhook(self, gitrepo):
         """

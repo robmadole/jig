@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 from jig.exc import AlreadyInitialized, CIFirstRun
-from jig.commands.base import BaseCommand
+from jig.commands.base import BaseCommand, get_formatter
 from jig.commands.install import InstallCommandMixin
 from jig.gitutils.branches import Tracked
 from jig.plugins import initializer
@@ -22,7 +22,7 @@ _parser.add_argument(
     help='Path to a file containing the location of plugins to install, '
     'each line of the file should contain URL|URL@BRANCH|PATH')
 _parser.add_argument(
-    '--format', dest='output_format', default='tap', choices=['tap', 'jig'],
+    '--format', dest='output_format', default='tap', choices=['tap', 'fancy'],
     help='Output format to show results')
 _parser.add_argument(
     '--tracking-branch', dest='tracking_branch', default='jig-ci-last-run',
@@ -81,7 +81,7 @@ class Command(BaseCommand, InstallCommandMixin):
             printer(u'')
 
         # Run Jig from the tracking branch to HEAD
-        runner = Runner(view=self.view)
+        runner = Runner(view=self.view, formatter=get_formatter(output_format))
 
         with _when_exits_zero(tracked.update):
             runner.main(

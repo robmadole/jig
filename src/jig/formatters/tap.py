@@ -65,6 +65,9 @@ class TapFormatter(object):
     Test Anything Protocol (TAP) formatter.
 
     """
+    # Simple name used to specify this formatter on the command line
+    name = 'tap'
+
     def print_results(self, printer, collator):
         """
         Format and print plugins results using TAP syntax.

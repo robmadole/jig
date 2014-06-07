@@ -11,6 +11,7 @@ from textwrap import dedent
 from jig.exc import PluginError, ForcedExit
 from jig.conf import JIG_DIR_NAME, JIG_PLUGIN_DIR
 from jig.output import ConsoleView
+from jig.formatters import tap, fancy
 from jig.gitutils.remote import clone
 
 _commands_dir = dirname(__file__)
@@ -46,6 +47,26 @@ def get_command(name):
         'jig.commands.{0}'.format(name.lower()),
         globals(), locals(), ['Command'], 0)
     return mod.Command
+
+
+def get_formatter(name, default=fancy.FancyFormatter):
+    """
+    Get a formatter class suitable for formatting Jig results.
+
+    :param str name: the short name of the formatter
+    :param class default: the default formatter to return if a bad name is given
+    :rtype: Formatter
+    """
+    formatter_classes = [
+        tap.TapFormatter,
+        fancy.FancyFormatter
+    ]
+
+    for cls in formatter_classes:
+        if cls.name == name:
+            return cls
+
+    return default
 
 
 def create_view():

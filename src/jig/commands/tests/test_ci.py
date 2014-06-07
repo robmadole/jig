@@ -151,3 +151,31 @@ class TestCiCommand(CommandTestCase):
             self.run_command('{0} {1}'.format(
                 '.jigplugins.txt', self.gitrepodir)
             )
+
+    @cd_gitrepo
+    def test_uses_default_tap_formatter(self):
+        self.run_first_time()
+
+        self.commit(self.gitrepodir, 'a.txt', 'a')
+
+        with self.assertRaises(SystemExit):
+            self.run_command('{0} {1}'.format(
+                '.jigplugins.txt', self.gitrepodir)
+            )
+
+        # This is a marker of TAP output
+        self.assertIn('TAP version 13', self.output)
+
+    @cd_gitrepo
+    def test_uses_alternative_formatter(self):
+        self.run_first_time()
+
+        self.commit(self.gitrepodir, 'a.txt', 'a')
+
+        with self.assertRaises(SystemExit):
+            self.run_command('--format fancy {0} {1}'.format(
+                '.jigplugins.txt', self.gitrepodir)
+            )
+
+        # This is a marker that will be present from the fancy formatter
+        self.assertIn(u'\U0001f449  Jig ran 1 plugin', self.output)

@@ -8,8 +8,9 @@ from mock import Mock, patch
 from jig.exc import PluginError
 from jig.entrypoints import main
 from jig.tests.testcase import JigTestCase, ViewTestCase, CommandTestCase
+from jig.formatters import tap, fancy
 from jig.commands.base import (
-    list_commands, create_view, add_plugin, BaseCommand)
+    get_formatter, list_commands, create_view, add_plugin, BaseCommand)
 
 try:
     import argparse
@@ -57,6 +58,40 @@ class TestCommands(ViewTestCase):
         self.view.print_help(commands)
 
         self.assertResultsIn(self.help_output_marker, self.output)
+
+
+class TestGetFormatter(JigTestCase):
+
+    """
+    Get a formatter used to format Jig results.
+
+    """
+    def test_default(self):
+        """
+        Get the default formatter.
+        """
+        self.assertEqual(
+            fancy.FancyFormatter,
+            get_formatter('notcorrect')
+        )
+
+    def test_tap(self):
+        """
+        Get the tap formatter.
+        """
+        self.assertEqual(
+            tap.TapFormatter,
+            get_formatter('tap')
+        )
+
+    def test_fancy(self):
+        """
+        Get the fancy formatter.
+        """
+        self.assertEqual(
+            fancy.FancyFormatter,
+            get_formatter('fancy')
+        )
 
 
 class TestBaseCommand(CommandTestCase):
