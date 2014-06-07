@@ -1,3 +1,4 @@
+# coding=utf-8
 from jig.tests.mocks import MockPlugin
 
 try:
@@ -82,17 +83,33 @@ def one_of_each():
     ])
 
 
-def commit_specific_error():
+def commit_specific_bad_syntax():
     return OrderedDict([
         (MockPlugin(), (0, anon_obj, '')),
         (MockPlugin(), (0, [[1, 2, 3, 4, 5]], ''))
     ])
 
 
-def file_specific_error():
+def commit_specific_error():
+    return OrderedDict([
+        (MockPlugin(), (1, anon_obj, '')),
+        (MockPlugin(), (1, [[1, 2, 3, 4, 5]], ''))
+    ])
+
+
+def file_specific_bad_syntax():
     return OrderedDict([
         (MockPlugin(), (0, {'a.txt': anon_obj}, '')),
         (MockPlugin(), (0, {'a.txt': [anon_obj]}, '')),
         (MockPlugin(), (0, {'a.txt': [1,  None]}, '')),
         (MockPlugin(), (0, {'a.txt': [[1, 2, 3, 4, 5]]}, ''))
+    ])
+
+
+def file_specific_error():
+    return OrderedDict([
+        (MockPlugin(), (1, {'a.txt': anon_obj}, '')),
+        (MockPlugin(), (1, {'a.txt': [anon_obj]}, '')),
+        (MockPlugin(), (1, {'a.txt': [1,  None]}, '')),
+        (MockPlugin(), (1, {'a.txt': [[1, 2, 3, 4, 5]]}, ''))
     ])

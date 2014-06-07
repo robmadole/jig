@@ -1,3 +1,4 @@
+# coding=utf-8
 from jig.output import INFO, WARN, STOP
 from jig.formatters.utils import green_bold, yellow_bold, red_bold
 

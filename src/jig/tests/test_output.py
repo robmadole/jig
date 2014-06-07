@@ -294,6 +294,20 @@ class TestResultsCollator(JigTestCase):
             rc.errors[0])
 
         self.assertEqual(
+            Error(None, type='s', body=[[1, 2, 3, 4, 5]]),
+            rc.errors[1])
+
+    def test_commit_specific_bad_syntax(self):
+        """
+        Exercise the bad syntax handling related to commit specific messages.
+        """
+        rc = ResultsCollator(factory.commit_specific_bad_syntax())
+
+        self.assertEqual(
+            Error(None, type='s', body=factory.anon_obj),
+            rc.errors[0])
+
+        self.assertEqual(
             Error(None, type='s', body=[1, 2, 3, 4, 5]),
             rc.errors[1])
 
@@ -304,17 +318,42 @@ class TestResultsCollator(JigTestCase):
         rc = ResultsCollator(factory.file_specific_error())
 
         self.assertEqual(
-            Error(None, type='s', file='a.txt', body=factory.anon_obj),
+            Error(None, type='s', body={'a.txt': factory.anon_obj}),
             rc.errors[0])
 
         self.assertEqual(
-            Error(None, type='s', file='a.txt', body=factory.anon_obj),
+            Error(None, type='s', body={'a.txt': [factory.anon_obj]}),
             rc.errors[1])
 
-        self.assertEqual([
-            Error(None, type='s', file='a.txt', body=1),
-            Error(None, type='s', file='a.txt', body=None)],
-            rc.errors[2:4])
+        self.assertEqual(
+            Error(None, type='s', body={'a.txt': [1, None]}),
+            rc.errors[2])
+
+        self.assertEqual(
+            Error(None, type='s', body={'a.txt': [[1, 2, 3, 4, 5]]}),
+            rc.errors[3])
+
+    def test_file_specific_bad_syntax(self):
+        """
+        Exercise the errors related to file specific messages.
+        """
+        rc = ResultsCollator(factory.file_specific_bad_syntax())
+
+        self.assertEqual(
+            Error(None, type='s', body=factory.anon_obj, file='a.txt'),
+            rc.errors[0])
+
+        self.assertEqual(
+            Error(None, type='s', body=factory.anon_obj, file='a.txt'),
+            rc.errors[1])
+
+        self.assertEqual(
+            Error(None, type='s', body=1, file='a.txt'),
+            rc.errors[2])
+
+        self.assertEqual(
+            Error(None, type='s', body=None, file='a.txt'),
+            rc.errors[3])
 
         self.assertEqual(
             Error(None, type='s', body={'a.txt': [[1, 2, 3, 4, 5]]}),

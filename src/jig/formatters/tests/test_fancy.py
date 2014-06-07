@@ -158,7 +158,7 @@ class TestFancyFormatter(FormatterTestCase):
 
             ▾  Unnamed
 
-            ✕  [1, 2, 3, 4, 5]
+            ✕  [[1, 2, 3, 4, 5]]
 
             {1}  Jig ran 2 plugins
                 Info 0 Warn 0 Stop 0
@@ -177,21 +177,15 @@ class TestFancyFormatter(FormatterTestCase):
             u"""
             ▾  Unnamed
 
-            ✕  a.txt
-                {0}
+            ✕  {{'a.txt': {0}}}
 
             ▾  Unnamed
 
-            ✕  a.txt
-                {0}
+            ✕  {{'a.txt': [{0}]}}
 
             ▾  Unnamed
 
-            ✕  a.txt
-                1
-
-            ✕  a.txt
-                None
+            ✕  {{'a.txt': [1, None]}}
 
             ▾  Unnamed
 
@@ -199,7 +193,7 @@ class TestFancyFormatter(FormatterTestCase):
 
             {1}  Jig ran 4 plugins
                 Info 0 Warn 0 Stop 0
-                (5 plugins reported errors)
+                (4 plugins reported errors)
             """.format(factory.anon_obj, ATTENTION),
             printed
         )

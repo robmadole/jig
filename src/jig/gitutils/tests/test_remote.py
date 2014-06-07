@@ -54,7 +54,7 @@ class TestClone(JigTestCase):
             )
 
             with self.assertRaises(GitCloneError) as gce:
-                clone('http://github.com/user/repo', to_dir)
+                clone('http://github.com/user/repo', to_dir)   # pragma: no branch
 
             self.assertIn(
                 "'command' returned exit status 128: bad command",

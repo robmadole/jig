@@ -59,5 +59,4 @@ def coverage():
     cov.save()
 
     cov.report()
-    cov.annotate()
     cov.html_report(directory='../cover')

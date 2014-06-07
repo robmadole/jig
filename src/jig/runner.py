@@ -95,7 +95,7 @@ class Runner(object):
                 rev_range_parsed = None
 
             with prepare_working_directory(gitrepo, rev_range_parsed):
-                results = self.results(
+                results = self.results(   # pragma: no branch
                     gitrepo,
                     plugin=plugin,
                     rev_range=rev_range_parsed

@@ -1,3 +1,4 @@
+# coding=utf-8
 import sys
 import codecs
 from functools import wraps
@@ -323,7 +324,7 @@ class ResultsCollator(object):
 
                 if not retcode == 0:
                     error = Error(plugin)
-                    error.body = stderr
+                    error.body = stderr or stdout
                     self._errors.append(error)
                     # Remove this plugin since it's an error. If we don't do
                     # this we'll end up reporting on this 3 times.
