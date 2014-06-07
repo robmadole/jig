@@ -6,6 +6,6 @@ install:
   - "pip install -r salt/roots/salt/jig/requirements.txt --use-mirrors"
   - "pip install -e ."
 script:
-  - "python script/test"
+  - "python script/coverage"
 after_success:
   - "coveralls"
