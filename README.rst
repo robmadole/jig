@@ -4,6 +4,10 @@ Jig
 .. image:: https://travis-ci.org/robmadole/jig.svg?branch=develop
    :target: https://travis-ci.org/robmadole/jig
 
+.. image:: https://coveralls.io/repos/robmadole/jig/badge.svg?branch=develop
+  :target: https://coveralls.io/r/robmadole/jig
+
+
 A command line tool and framework for getting more from the Git pre-commit
 hook.
 
