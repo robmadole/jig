@@ -4,7 +4,7 @@ Jig
 .. image:: https://travis-ci.org/robmadole/jig.svg?branch=develop
    :target: https://travis-ci.org/robmadole/jig
 
-.. image:: https://img.shields.io/coveralls/robmadole/jig.svg?branch=develop
+.. image:: https://img.shields.io/coveralls/robmadole/jig/develop.svg
   :target: https://coveralls.io/r/robmadole/jig
 
 
