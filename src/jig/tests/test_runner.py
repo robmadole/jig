@@ -400,7 +400,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.runner.results(self.gitrepodir)
 
         self.assertEqual(
-            'No staged changes in the repository, skipping jig.\n',
+            'No changes available for Jig to check, skipping.\n',
             self.output
         )
 
@@ -428,7 +428,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.runner.results(self.gitrepodir)
 
         self.assertEqual(
-            'No staged changes in the repository, skipping jig.\n',
+            'No changes available for Jig to check, skipping.\n',
             self.output
         )
 

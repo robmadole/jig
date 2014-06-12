@@ -224,7 +224,7 @@ class Runner(object):
                 # There is nothing changed in this repository, no need for
                 # jig to run so we exit with 0.
                 printer(
-                    'No staged changes in the repository, skipping jig.')
+                    'No changes available for Jig to check, skipping.')
                 return
 
         # Our git diff index is an object that makes working with the diff much

@@ -37,8 +37,8 @@ class TestRunNowCommand(CommandTestCase, PluginTestCase):
         self.assertSystemExitCode(ec.exception, 0)
 
         self.assertEqual(
-            u'No staged changes in the repository, '
-            u'skipping jig.\n', self.output)
+            u'No changes available for Jig to check, skipping.\n',
+            self.output)
 
     def test_changes(self):
         """
