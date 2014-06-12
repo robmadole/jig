@@ -24,6 +24,17 @@ def _format_description(message):
     return ' - {0}'.format(description)
 
 
+def _escape_for_yaml(body):
+    """
+    Performs YAML-compatible escaping on a string.
+
+    :param str body: the string to escape
+    """
+    escaped_body = str(body).replace(u'\\', u'\\\\').replace(u'"', u'\\"')
+
+    return u'"{0}"'.format(escaped_body)
+
+
 def _format_message(test_number, message):
     """
     Format a single message suitable for TAP output.
@@ -33,27 +44,27 @@ def _format_message(test_number, message):
     :rtype: str
     :returns: the formatted message
     """
-    preamble = 'ok' if message.type == INFO else 'not ok'
+    preamble = u'ok' if message.type == INFO else u'not ok'
     plugin = message.plugin.name
     description = _format_description(message)
     body = message.body
 
     lines = []
-    lines.append('{preamble} {test_number}{description}')
-    lines.append('  ---')
+    lines.append(u'{preamble} {test_number}{description}')
+    lines.append(u'  ---')
 
     if message.file:
-        lines.append('  message: {body}')
+        lines.append(u'  message: {body}')
 
-    lines.append('  plugin: {plugin}')
-    lines.append('  severity: {type}')
-    lines.append('  ...')
+    lines.append(u'  plugin: {plugin}')
+    lines.append(u'  severity: {type}')
+    lines.append(u'  ...')
 
-    return '\n'.join(lines).format(
+    return u'\n'.join(lines).format(
         preamble=preamble,
         test_number=test_number,
         description=description,
-        body=body,
+        body=_escape_for_yaml(body),
         plugin=plugin,
         type=message.type
     )

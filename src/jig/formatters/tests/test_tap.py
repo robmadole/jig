@@ -2,7 +2,8 @@
 from jig.tests import factory
 from jig.tests.testcase import JigTestCase, FormatterTestCase
 from jig.output import Message
-from jig.formatters.tap import TapFormatter, _format_description
+from jig.formatters.tap import (
+    TapFormatter, _format_description, _escape_for_yaml)
 
 
 class TestTapFormatDescription(JigTestCase):
@@ -42,6 +43,55 @@ class TestTapFormatDescription(JigTestCase):
         self.assertEqual(
             ' - a.txt:1',
             _format_description(Message(plugin=None, file='a.txt', line=1))
+        )
+
+
+class TestTapEscapeForYaml(JigTestCase):
+
+    """
+    Strings can be escaped and still be valid YAML.
+
+    """
+    def test_non_string(self):
+        self.assertEqual(
+            '"{0}"'.format(str(factory.anon_obj)),
+            _escape_for_yaml(factory.anon_obj)
+        )
+
+    def test_nothing_special(self):
+        """
+        Regular old string.
+        """
+        self.assertEqual(
+            '"simple string"',
+            _escape_for_yaml('simple string')
+        )
+
+    def test_double_quote(self):
+        """
+        A string that contains a double quote.
+        """
+        self.assertEqual(
+            '"\\""',
+            _escape_for_yaml('"')
+        )
+
+    def test_backslash(self):
+        """
+        A string that contains a backslash.
+        """
+        self.assertEqual(
+            '"\\\\"',
+            _escape_for_yaml('\\')
+        )
+
+    def test_double_quote_and_backslash(self):
+        """
+        Both a double quote and a backslash.
+        """
+        self.assertEqual(
+            '"\\\\\\""',
+            _escape_for_yaml('\\"')
         )
 
 
@@ -117,31 +167,31 @@ class TestTapFormatter(FormatterTestCase):
             1..5
             not ok 1 - a.txt
               ---
-              message: Problem with this file
+              message: "Problem with this file"
               plugin: Unnamed
               severity: warn
               ...
             not ok 2 - a.txt
               ---
-              message: Problem with this file
+              message: "Problem with this file"
               plugin: Unnamed
               severity: warn
               ...
             ok 3 - a.txt
               ---
-              message: Info A
+              message: "Info A"
               plugin: Unnamed
               severity: info
               ...
             not ok 4 - b.txt
               ---
-              message: Warn B
+              message: "Warn B"
               plugin: Unnamed
               severity: warn
               ...
             not ok 5 - c.txt
               ---
-              message: Stop C
+              message: "Stop C"
               plugin: Unnamed
               severity: stop
               ...
@@ -161,19 +211,19 @@ class TestTapFormatter(FormatterTestCase):
             1..3
             ok 1 - a.txt:1
               ---
-              message: Info A
+              message: "Info A"
               plugin: Unnamed
               severity: info
               ...
             not ok 2 - b.txt:2
               ---
-              message: Warn B
+              message: "Warn B"
               plugin: Unnamed
               severity: warn
               ...
             not ok 3 - c.txt:3
               ---
-              message: Stop C
+              message: "Stop C"
               plugin: Unnamed
               severity: stop
               ...
@@ -198,13 +248,13 @@ class TestTapFormatter(FormatterTestCase):
               ...
             ok 2 - a.txt
               ---
-              message: F
+              message: "F"
               plugin: Unnamed
               severity: info
               ...
             ok 3 - a.txt:1
               ---
-              message: L
+              message: "L"
               plugin: Unnamed
               severity: info
               ...
