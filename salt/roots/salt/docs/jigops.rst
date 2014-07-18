@@ -138,13 +138,13 @@ VMware ::
 
     aws s3 --profile jig \
       --region us-east-1 \
-      cp vagrant/jig-development-vmware.box s3://jig-base-boxes/jig-development-vmware.box
+      cp vagrant/jig-development-vmware.box s3://jig-base-boxes/jig-development-vmware-<TIMESTAMP>.box
 
 VirtualBox ::
 
     aws s3 --profile jig \
       --region us-east-1 \
-      cp vagrant/jig-development-virtualbox.box s3://jig-base-boxes/jig-development-virtualbox.box
+      cp vagrant/jig-development-virtualbox.box s3://jig-base-boxes/jig-development-virtualbox-<TIMESTAMP>.box
 
 Make it public.
 
@@ -154,7 +154,7 @@ VMware ::
       --region us-east-1 \
       put-object-acl \
       --grant-read 'uri=http://acs.amazonaws.com/groups/global/AllUsers' \
-      --key jig-development-vmware.box \
+      --key jig-development-vmware-TIMESTAMP.box \
       --bucket jig-base-boxes
 
 VirtualBox ::
@@ -163,5 +163,7 @@ VirtualBox ::
       --region us-east-1 \
       put-object-acl \
       --grant-read 'uri=http://acs.amazonaws.com/groups/global/AllUsers' \
-      --key jig-development-virtualbox.box \
+      --key jig-development-virtualbox-TIMESTAMP.box \
       --bucket jig-base-boxes
+
+Once the uploads are complete cut a new release at http://vagrantcloud.com/robmadole/jig-development.

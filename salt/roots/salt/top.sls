@@ -1,6 +1,6 @@
 base:
   '*':
-    - common.locale
+    #- common.locale
     - python
     - jig.environments
     - jig.editable
