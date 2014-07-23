@@ -67,7 +67,7 @@ The initialization process is quick and painless.
 
     Next install some plugins. Jig has a common set you may like:
 
-        $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+        $ curl -L https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
         $ jig install .jigplugins.txt
 
 If there is a pre-existing hook, Jig will not overwrite it.
@@ -148,7 +148,7 @@ For this example we can start with an example Python project list.
 
 .. code-block:: console
 
-    $ curl https://raw.github.com/robmadole/jig-plugins/lists/python.txt > .jigplugins.txt
+    $ curl -L https://raw.github.com/robmadole/jig-plugins/lists/python.txt > .jigplugins.txt
 
 After this is downloaded you can see that each line simply points to a specific
 plugin.

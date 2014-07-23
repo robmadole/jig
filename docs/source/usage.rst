@@ -49,7 +49,7 @@ If you haven't, :ref:`install Jig now <install>`.
 
     Next install some plugins. Jig has a common set you may like:
 
-        $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+        $ curl -L https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
         $ jig install .jigplugins.txt
 
 If you're curious, you can :ref:`see what this thing has done
