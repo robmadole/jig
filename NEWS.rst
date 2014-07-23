@@ -1,6 +1,11 @@
 News
 ====
 
+*Release 0.1.10 - July 23rd, 2014*
+
+* Fixed references to downloading files from GitHub after a security update
+  redirects all requests to githubusercontent.com
+
 *Release 0.1.9 - February 22nd, 2014*
 
 * Adds a ``jig sticky`` command that auto-initializes freshly cloned Git

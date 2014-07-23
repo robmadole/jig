@@ -42,7 +42,7 @@ setup(
     author='Rob Madole',
     author_email='robmadole@gmail.com',
     url='http://github.com/robmadole/jig',
-    license='BSD',
+    license='MIT',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     include_package_data=True,
