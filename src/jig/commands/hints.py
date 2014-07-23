@@ -12,7 +12,7 @@ AFTER_INIT = _hint(
 
     Next install some plugins. Jig has a common set you may like:
 
-        $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+        $ curl -L https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
         $ jig install .jigplugins.txt
     """)
 
@@ -101,7 +101,7 @@ NO_PLUGINS_INSTALLED = _hint(
 
     You can also install a list of plugins from a file:
 
-        $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+        $ curl -L https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
         $ jig install .jigplugins.txt
 
     It's a good idea to add .jigplugins.txt to your Git repository after you are done.

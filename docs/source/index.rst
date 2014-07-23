@@ -45,14 +45,14 @@ Change directories into your Git repository and initialize it to use Jig.
 
     Next install some plugins. Jig has a common set you may like:
 
-        $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+        $ curl -L https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
         $ jig install .jigplugins.txt
 
 Create a file that lists the plugins you'd like to install.
 
 .. code-block:: console
 
-    $ curl https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
+    $ curl -L https://raw.github.com/robmadole/jig-plugins/lists/common.txt > .jigplugins.txt
       % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                      Dload  Upload   Total   Spent    Left  Speed
     100    97  100    97    0     0    144      0 --:--:-- --:--:-- --:--:--   425
