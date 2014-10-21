@@ -12,6 +12,7 @@ from jig.exc import (
     NotGitRepo, PreCommitExists, GitTemplatesMissing,
     JigUserDirectoryError, GitHomeTemplatesExists, InitTemplateDirAlreadySet,
     GitConfigError)
+from jig.gitutils.scripts import AUTO_JIG_INIT_SCRIPT
 from jig.gitutils.hooking import (
     hook, _git_templates, create_auto_init_templates, set_templates_directory)
 
@@ -52,6 +53,23 @@ class TestHook(JigTestCase):
 
         with self.assertRaises(PreCommitExists):
             hook(self.gitrepodir)
+
+    def test_will_continue_if_pre_commit_owned_by_jig(self):
+        """
+        Continue if the .git/hooks/pre-commit looks like it was Jig-created.
+        """
+        hook(self.gitrepodir)
+
+        self.assertTrue(hook(self.gitrepodir))
+
+    def test_will_continue_if_pre_commit_is_auto_init(self):
+        """
+        Continue if the .git/hooks/pre-commit is the Jig auto-init.
+        """
+        with open(self.pc_filename, 'w') as fh:
+            fh.write(AUTO_JIG_INIT_SCRIPT)
+
+        self.assertTrue(hook(self.gitrepodir))
 
     def test_successfully_hooks(self):
         """

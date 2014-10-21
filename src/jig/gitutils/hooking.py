@@ -44,6 +44,19 @@ def _git_templates():
     return None
 
 
+def _pre_commit_has_hallmark(pre_commit_file):
+    """
+    Looks at a pre-commit file and determine if it was created by Jig.
+
+    :returns: True if Jig created it
+    """
+    with open(pre_commit_file) as fh:
+        script = fh.read()
+        if u'from jig' in script or u'jig init' in script:
+            return True
+    return False
+
+
 def _create_pre_commit(destination, template, context):
     """
     Writes a Git pre-commit hook from the template and make it executable.
@@ -56,7 +69,7 @@ def _create_pre_commit(destination, template, context):
         pre-commit present.
     """
     # Is there already a hook?
-    if isfile(destination):
+    if isfile(destination) and not _pre_commit_has_hallmark(destination):
         raise PreCommitExists('{0} already exists'.format(destination))
 
     with open(destination, 'w') as fh:
