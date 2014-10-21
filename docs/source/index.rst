@@ -94,7 +94,7 @@ Jig will run and let you know if it catches anything.
     Ran 1 plugin
         Info 0 Warn 1 Stop 0
 
-    Commit anyway (hit enter), or "c" to cancel the commit
+    Commit anyway (hit "c"), or stop (hit "s"):
 
 Where to go next
 ----------------

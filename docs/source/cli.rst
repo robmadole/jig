@@ -16,6 +16,7 @@ Jig's help menu is available by running ``jig`` or ``jig --help``.
       -h, --help  show this help message and exit
 
     jig commands:
+      ci          Run in continuous integration (CI) mode
       config      Manage settings for installed Jig plugins
       init        Initialize a Git repository for use with Jig
       install     Install a list of Jig plugins from a file
@@ -85,7 +86,6 @@ If there is a pre-existing hook, Jig will not overwrite it.
     If you do not need the existing pre-commit script, you can delete it
     and then run jig init again in this repository.
 
-
 .. _cli-sticky:
 
 Have Jig auto-init every time you clone
@@ -108,7 +108,7 @@ This is referred to as "sticky" mode. To set this up:
           will refuse to change the init.templatedir setting if you've already
           set this previous to running the ``sticky`` command.
 
-.. _cli-plugin:
+.. _cli-install:
 
 Install a list of plugins from a file
 -------------------------------------
@@ -124,8 +124,6 @@ To install from a file you use the ``jig install`` command.
 
 .. hint:: To find some handy examples of plugins that are useful based on the
           type of project you have, checkout https://github.com/robmadole/jig-plugins/tree/lists
-
-.. _cli-install:
 
 .. code-block:: console
 
@@ -182,6 +180,205 @@ Install the plugins:
     Jig works off of your staged files in the Git repository index.
     You place things in the index with `git add`. You will need to stage
     some files before you can run Jig.
+
+.. _cli-runnow:
+
+Run Jig manually
+----------------
+
+Jig is normally ran before you commit using Git's pre-commit hook.
+
+But, there are occasions where you want to check your progress and run Jig and
+all of your installed plugins without actually committing anything.
+
+For this case, the ``runnow`` command exists.
+
+.. code-block:: console
+
+    $ jig runnow --help
+    usage: jig runnow [-h] [-p PLUGIN] [PATH]
+
+    Run all plugins and show the results
+
+    positional arguments:
+      path                  Path to the Git repository
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --plugin PLUGIN, -p PLUGIN
+                            Only run this specific named plugin
+
+When you call this command, Jig will perform the same motions that happen with
+``git commit`` is ran.
+
+.. code-block:: console
+
+    $ jig runnow
+    ▾  pep8-checker
+
+    ⚠  line 1: a.py
+        import foo; import bar; import daz;
+         - E702 multiple statements on one line (semicolon)
+
+    ▾  pyflakes
+
+    ⚠  line 1: a.py
+        'foo' imported but unused
+
+    ⚠  line 1: a.py
+        'bar' imported but unused
+
+    ⚠  line 1: a.py
+        'daz' imported but unused
+
+    Ran 3 plugins
+        Info 0 Warn 4 Stop 0
+
+If you only want to run a specific plugin, use the ``--plugin`` option.
+
+.. code-block:: console
+
+    $ jig runnow --plugin pyflakes
+    ▾  pyflakes
+
+    ⚠  line 1: a.py
+        'foo' imported but unused
+
+    ⚠  line 1: a.py
+        'bar' imported but unused
+
+    ⚠  line 1: a.py
+        'daz' imported but unused
+
+    Ran 1 plugins
+        Info 0 Warn 3 Stop 0
+
+.. _cli-report:
+
+Run Jig on a given revision range
+---------------------------------
+
+Jig can also be ran on a list of previous commits instead of just on the changes
+that are staged in Git's index.
+
+Use the ``report`` command.
+
+.. code-block:: console
+
+    $ jig report --help
+    usage: jig report [-h] [-p PLUGIN] [--rev-range REVISION_RANGE] [PATH]
+
+    Run plugins on a revision range
+
+    positional arguments:
+      path                  Path to the Git repository
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --plugin PLUGIN, -p PLUGIN
+                            Only run this specific named plugin
+      --rev-range REV_RANGE
+                            Git revision range to run the plugins against
+
+The range is assumed to be the most recent commit but you can change that with
+the ``--rev-range`` option.  This needs to be formatted as ``REV_A..REV_B``
+with the double dots (``..``) to separate the first and second commit in the
+range.
+
+.. code-block:: console
+
+    $ jig report --rev-range origin/master..report-command
+    ▾  pep8-checker
+
+    ⚠  line 1: a.py
+        import foo; import bar; import daz;
+         - E702 multiple statements on one line (semicolon)
+
+    ▾  pyflakes
+
+    ⚠  line 1: a.py
+        'foo' imported but unused
+
+    ⚠  line 1: a.py
+        'bar' imported but unused
+
+    ⚠  line 1: a.py
+        'daz' imported but unused
+
+    Ran 3 plugins
+        Info 0 Warn 4 Stop 0
+
+This command also supports the ``--plugin`` option and works the same way as :ref:`runnow <cli-runnow>`
+
+.. _cli-ci:
+
+Run Jig within a CI server
+--------------------------
+
+While individuals can use Jig to check their changes before they commit it can also be
+used in a CI server. If you are using a product like `Jenkins` or a service like
+http://travis-ci.com you can use Jig from the command line as part of an
+automated job.
+
+You need to have a file created that lists the plugins that you wish to use.
+This is the same format which you would use if using :ref:`install <cli-install>`.
+
+.. hint:: It's a good idea to commit a ``.jigplugins.txt`` file into the root of the
+          repository. This makes it easy to find for other developers and provides a
+          consistent best practice.
+
+.. code-block:: console
+
+    $ jig ci --help
+    usage: jig ci [-h] [--tracking-branch TRACKING_BRANCH] [--format FORMAT] PLUGINSFILE [PATH]
+
+    Run in continuous integration (CI) mode
+
+    positional arguments:
+      pluginsfile           Path to a file containing the location of plugins to
+                            install, each line of the file should contain
+                            URL|URL@BRANCH|PATH
+      path                  Path to the Git repository
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --format {tap,fancy}  Output format to show results
+      --tracking-branch TRACKING_BRANCH
+                            Branch name Jig will use to keep its place
+
+The only required argument when running ``jig ci`` is the plugins file. If
+you've ``.jigplugins.txt`` file you can run this command as part of
+your CI job.
+
+.. code-block:: console
+
+    $ jig ci .jigplugins.txt
+
+The default output is in `Test Anything Protocol`_ (TAP) format. This would be
+the same as specifying it with the ``--format`` option.
+
+.. code-block:: console
+
+    $ jig ci --format tap .jigplugins.txt
+
+To format the output the same way Jig does whenever you are using the Git pre-commit hook use ``fancy``.
+
+.. code-block:: console
+
+    $ jig ci --format fancy .jigplugins.txt
+
+To track the last time that Jig ran in CI mode a local tracking branch is
+created. By default this tracking branch is named ``jig-ci-last-run``. You can
+change this to another branch identifier with the ``--tracking-branch`` option.
+
+.. code-block:: console
+
+    $ jig ci --tracking-branch my-jig-ci-tracker .jigplugins.txt
+
+.. _Jenkins: http://jenkins-ci.org
+.. _Test Anything Protocol: http://testanything.org
+
+.. _cli-plugin:
 
 Manage your plugins
 -------------------
@@ -534,132 +731,3 @@ List the help messages, if available:
     jig-plugins.pep8-checker.report_e501
     (default: yes)
        Report lines with greater than 80 characters? Either yes or no.
-
-.. _cli-runnow:
-
-Run Jig manually
-----------------
-
-Jig is normally ran before you commit using Git's pre-commit hook.
-
-But, there are occasions where you want to check your progress and run Jig and
-all of your installed plugins without actually committing anything.
-
-For this case, the ``runnow`` command exists.
-
-.. code-block:: console
-
-    $ jig runnow --help
-    usage: jig runnow [-h] [-p PLUGIN] [PATH]
-
-    Run all plugins and show the results
-
-    positional arguments:
-      path                  Path to the Git repository
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      --plugin PLUGIN, -p PLUGIN
-                            Only run this specific named plugin
-
-When you call this command, Jig will perform the same motions that happen with
-``git commit`` is ran.
-
-.. code-block:: console
-
-    $ jig runnow
-    ▾  pep8-checker
-
-    ⚠  line 1: a.py
-        import foo; import bar; import daz;
-         - E702 multiple statements on one line (semicolon)
-
-    ▾  pyflakes
-
-    ⚠  line 1: a.py
-        'foo' imported but unused
-
-    ⚠  line 1: a.py
-        'bar' imported but unused
-
-    ⚠  line 1: a.py
-        'daz' imported but unused
-
-    Ran 3 plugins
-        Info 0 Warn 4 Stop 0
-
-If you only want to run a specific plugin, use the ``--plugin`` option.
-
-.. code-block:: console
-
-    $ jig runnow --plugin pyflakes
-    ▾  pyflakes
-
-    ⚠  line 1: a.py
-        'foo' imported but unused
-
-    ⚠  line 1: a.py
-        'bar' imported but unused
-
-    ⚠  line 1: a.py
-        'daz' imported but unused
-
-    Ran 1 plugins
-        Info 0 Warn 3 Stop 0
-
-.. _cli-report:
-
-Run Jig on a given revision range
----------------------------------
-
-Jig can also be ran on a list of previous commits instead of just on the changes
-that are staged in Git's index.
-
-Use the ``report`` command.
-
-.. code-block:: console
-
-    $ jig report --help
-    usage: jig report [-h] [-p PLUGIN] [--rev-range REVISION_RANGE] [PATH]
-
-    Run plugins on a revision range
-
-    positional arguments:
-      path                  Path to the Git repository
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      --plugin PLUGIN, -p PLUGIN
-                            Only run this specific named plugin
-      --rev-range REV_RANGE
-                            Git revision range to run the plugins against
-
-The range is assumed to be the most recent commit but you can change that with
-the ``--rev-range`` option.  This needs to be formatted as ``REV_A..REV_B``
-with the double dots (``..``) to separate the first and second commit in the
-range.
-
-.. code-block:: console
-
-    $ jig report --rev-range origin/master..report-command
-    ▾  pep8-checker
-
-    ⚠  line 1: a.py
-        import foo; import bar; import daz;
-         - E702 multiple statements on one line (semicolon)
-
-    ▾  pyflakes
-
-    ⚠  line 1: a.py
-        'foo' imported but unused
-
-    ⚠  line 1: a.py
-        'bar' imported but unused
-
-    ⚠  line 1: a.py
-        'daz' imported but unused
-
-    Ran 3 plugins
-        Info 0 Warn 4 Stop 0
-
-This command also supports the ``--plugin`` option and works the same way as :ref:`runnow <cli-runnow>`
