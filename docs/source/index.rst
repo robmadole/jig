@@ -126,7 +126,7 @@ License
 Jig is licensed under a :doc:`BSD license <license>`.
 
 
-.. _Git Hooks: http://book.git-scm.com/5_git_hooks.html
+.. _Git Hooks: http://git-scm.com/book/en/Customizing-Git-Git-Hooks
 .. _PEP8: http://www.python.org/dev/peps/pep-0008/
 .. _pep8 checker: http://pypi.python.org/pypi/pep8
 .. _created a tool: `pep8 checker`_
