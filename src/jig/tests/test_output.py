@@ -1,144 +1,65 @@
 # coding=utf-8
-from jig.tests.testcase import JigTestCase, ViewTestCase
+from StringIO import StringIO
+
+from jig.tests import factory
+from jig.tests.testcase import JigTestCase
 from jig.tests.mocks import MockPlugin
+from jig.formatters.utils import green_bold, yellow_bold, red_bold
 from jig.output import (
-    ConsoleView, Message, Error, ResultsCollater, OK_SIGN, ATTENTION, EXPLODE)
-
-try:
-    from collections import OrderedDict
-except ImportError:   # pragma: no cover
-    from ordereddict import OrderedDict
+    strip_paint, utf8_writer, Message, Error, ResultsCollator)
 
 
-class TestConsoleView(ViewTestCase):
+class TestStripPaint(JigTestCase):
 
     """
-    With plugin results we can format them to the console.
+    Can remove the terminal escape sequences.
 
     """
-    def setUp(self):
-        self.view = ConsoleView()
-
-        self.view.collect_output = True
-        self.view.exit_on_exception = False
-
-    def test_error(self):
+    def test_strips_green(self):
         """
-        The plugin exits with something other than 0.
+        Strips the green color.
         """
-        plugin = MockPlugin()
-        plugin.name = 'Plugin 1'
+        self.assertEqual(
+            'Green',
+            strip_paint(green_bold('Green'))
+        )
 
-        counts = self.view.print_results({
-            plugin: (1, '', 'An error occurred')})
-
-        self.assertEqual((0, 0, 0), counts)
-        self.assertResults(u'''
-            ▾  Plugin 1
-
-            ✕  An error occurred
-
-            {0}  Jig ran 1 plugin
-                Info 0 Warn 0 Stop 0
-                (1 plugin reported errors)
-            '''.format(ATTENTION), self.output)
-
-    def test_commit_specific_message(self):
+    def test_strips_yellow(self):
         """
-        Messages generalized for the entire commit.
+        Strips the yellow color.
         """
-        plugin = MockPlugin()
-        plugin.name = 'Plugin 1'
+        self.assertEqual(
+            'Yellow',
+            strip_paint(yellow_bold('Yellow'))
+        )
 
-        counts = self.view.print_results({
-            plugin: (0, 'commit', '')})
-
-        self.assertEqual((1, 0, 0), counts)
-        self.assertResults(u"""
-            ▾  Plugin 1
-
-            ✓  commit
-
-            {0}  Jig ran 1 plugin
-                Info 1 Warn 0 Stop 0
-            """.format(ATTENTION), self.output)
-
-    def test_file_specific_message(self):
+    def test_strips_red(self):
         """
-        Messages specific to the file being committed.
+        Strips the red color.
         """
-        plugin = MockPlugin()
-        plugin.name = 'Plugin 1'
+        self.assertEqual(
+            'Red',
+            strip_paint(red_bold('Red'))
+        )
 
-        counts = self.view.print_results({
-            plugin: (0, {u'a.txt': [[None, u'w', 'file']]}, '')})
 
-        self.assertEqual((0, 1, 0), counts)
-        self.assertResults(u"""
-            ▾  Plugin 1
+class TestUTF8Writer(JigTestCase):
 
-            ⚠  a.txt
-                file
+    """
+    File-like objects can be wrapped to output utf-8.
 
-            {0}  Jig ran 1 plugin
-                Info 0 Warn 1 Stop 0
-            """.format(ATTENTION), self.output)
-
-    def test_line_specific_message(self):
+    """
+    def test_writes_utf8(self):
         """
-        Messages specific to a single line.
+        Writes utf-8 encoded strings to the file object.
         """
-        plugin = MockPlugin()
-        plugin.name = 'Plugin 1'
+        collector = StringIO()
 
-        counts = self.view.print_results({
-            plugin: (0, {u'a.txt': [[1, 's', 'stop']]}, '')})
+        writer = utf8_writer(collector)
 
-        self.assertEqual((0, 0, 1), counts)
-        self.assertResults(u"""
-            ▾  Plugin 1
+        writer.write(u'☆')
 
-            ✕  line 1: a.txt
-                stop
-
-            {0}  Jig ran 1 plugin
-                Info 0 Warn 0 Stop 1
-            """.format(EXPLODE), self.output)
-
-    def test_two_plugins(self):
-        """
-        Formats messages (more than one) correctly.
-        """
-        plugin1 = MockPlugin()
-        plugin1.name = 'Plugin 1'
-
-        plugin2 = MockPlugin()
-        plugin2.name = 'Plugin 2'
-
-        results = OrderedDict()
-
-        results[plugin1] = (0, ['a', 'b'], '')
-        results[plugin2] = (0, ['a', 'b'], '')
-
-        counts = self.view.print_results(results)
-
-        self.assertEqual((4, 0, 0), counts)
-        self.assertResults(u"""
-            ▾  Plugin 1
-
-            ✓  a
-
-            ✓  b
-
-            ▾  Plugin 2
-
-            ✓  a
-
-            ✓  b
-
-            {0}  Jig ran 2 plugins
-                Info 4 Warn 0 Stop 0
-            """.format(ATTENTION), self.output)
+        self.assertEqual(collector.getvalue(), '\xe2\x98\x86')
 
 
 class TestMessage(JigTestCase):
@@ -167,19 +88,22 @@ class TestMessage(JigTestCase):
         """
         Messages with the same content are considered equal.
         """
-        message1 = Message(MockPlugin(),
-            type='w', file='a.txt', body='body', line=1)
-        message2 = Message(MockPlugin(),
-            type='w', file='a.txt', body='body', line=1)
-        message3 = Message(MockPlugin(),
-            type='w', file='b.txt', body='bbbb', line=9)
+        message1 = Message(
+            MockPlugin(), type='w', file='a.txt', body='body', line=1
+        )
+        message2 = Message(
+            MockPlugin(), type='w', file='a.txt', body='body', line=1
+        )
+        message3 = Message(
+            MockPlugin(), type='w', file='b.txt', body='bbbb', line=9
+        )
 
         self.assertTrue(message1 == message2)
         self.assertFalse(message2 == message3)
         self.assertFalse(message3 == {})
 
 
-class TestResultsCollater(JigTestCase):
+class TestResultsCollator(JigTestCase):
 
     """
     Collate results into digestible summaries.
@@ -189,10 +113,7 @@ class TestResultsCollater(JigTestCase):
         """
         Results with non-zero exit codes create error messages.
         """
-        results = {
-            MockPlugin(): (1, '', 'Plugin failed')}
-
-        rc = ResultsCollater(results)
+        rc = ResultsCollator(factory.error())
 
         cm, fm, lm = rc.messages
 
@@ -200,23 +121,20 @@ class TestResultsCollater(JigTestCase):
             [Error(None, type='stop', body='Plugin failed')],
             rc.errors)
 
+    def test_empty_dict(self):
+        """
+        Empty dict do not generate empty messages.
+        """
+        rc = ResultsCollator({})
+
+        self.assertEqual(0, len(rc.plugins))
+        self.assertEqual(0, len(rc.reporters))
+
     def test_no_results(self):
         """
         We have results but no real content.
         """
-        results = {
-            MockPlugin(): (0, None, ''),
-            MockPlugin(): (0, '', ''),
-            MockPlugin(): (0, [''], ''),
-            MockPlugin(): (0, [['w', '']], ''),
-            MockPlugin(): (0, {u'a.txt': u''}, ''),
-            MockPlugin(): (0, {u'a.txt': [[]]}, ''),
-            MockPlugin(): (0, {u'a.txt': [[u'']]}, ''),
-            MockPlugin(): (0, {u'a.txt': [['', u'']]}, ''),
-            MockPlugin(): (0, {u'a.txt': [[None, '', u'']]}, ''),
-            MockPlugin(): (0, {u'a.txt': [[1, '', u'']]}, '')}
-
-        rc = ResultsCollater(results)
+        rc = ResultsCollator(factory.no_results())
 
         cm, fm, lm = rc.messages
 
@@ -232,19 +150,19 @@ class TestResultsCollater(JigTestCase):
         """
         Results that are commit specific are collated correctly.
         """
-        results = OrderedDict()
-        results[MockPlugin()] = (0, 'default', '')
-        results[MockPlugin()] = (0, [[u'warn', u'warning']], '')
-
-        rc = ResultsCollater(results)
+        rc = ResultsCollator(factory.commit_specific_message())
 
         messages, fm, lm = rc.messages
 
         # Defaults to info type
-        self.assertEqual(Message(None, type='info', body='default'),
-            messages[0])
-        self.assertEqual(Message(None, type='warn', body='warning'),
-            messages[1])
+        self.assertEqual(
+            Message(None, type='info', body='default'),
+            messages[0]
+        )
+        self.assertEqual(
+            Message(None, type='warn', body='warning'),
+            messages[1]
+        )
 
         # And our type counts should be 1 info 1 warning
         self.assertEqual({u'info': 1, u'warn': 1, u'stop': 0}, rc.counts)
@@ -260,25 +178,7 @@ class TestResultsCollater(JigTestCase):
         """
         Results that are file-specific are collated correctly.
         """
-        # Line number of None will be recognized as file-specific.
-        stdout1 = {u'a.txt': [
-            [None, u'warn', 'Problem with this file']]}
-        # Will a length of 2 be recognized as file-specific?
-        stdout2 = {u'a.txt': [
-            [u'warn', 'Problem with this file']]}
-        # Can we handle more than one file and different argument signatures
-        # for the type?
-        stdout3 = OrderedDict()
-        stdout3[u'a.txt'] = [['Info A']]
-        stdout3[u'b.txt'] = [[u'warn', 'Warn B']]
-        stdout3[u'c.txt'] = [[u's', 'Stop C']]
-
-        results = OrderedDict()
-        results[MockPlugin()] = (0, stdout1, '')
-        results[MockPlugin()] = (0, stdout2, '')
-        results[MockPlugin()] = (0, stdout3, '')
-
-        rc = ResultsCollater(results)
+        rc = ResultsCollator(factory.file_specific_message())
 
         self.assertEqual({u'info': 1, u'warn': 3, u'stop': 1}, rc.counts)
 
@@ -292,27 +192,37 @@ class TestResultsCollater(JigTestCase):
 
         # First set's None get's recognized as file-specific
         self.assertEqual(
-            Message(None, type='warn', body='Problem with this file',
-                file='a.txt'),
+            Message(
+                None, type='warn',
+                body='Problem with this file', file='a.txt'
+            ),
             messages[0])
 
         # Second set get's recognized as a warning
         self.assertEqual(
-            Message(None, type='warn', body='Problem with this file',
-                file='a.txt'),
+            Message(
+                None, type='warn',
+                body='Problem with this file', file='a.txt'
+            ),
             messages[1])
 
         self.assertEqual(
-            Message(None, type='info', body='Info A',
-                file='a.txt'),
+            Message(
+                None, type='info',
+                body='Info A', file='a.txt'
+            ),
             messages[2])
         self.assertEqual(
-            Message(None, type='warn', body='Warn B',
-                file='b.txt'),
+            Message(
+                None, type='warn',
+                body='Warn B', file='b.txt'
+            ),
             messages[3])
         self.assertEqual(
-            Message(None, type='stop', body='Stop C',
-                file='c.txt'),
+            Message(
+                None, type='stop',
+                body='Stop C', file='c.txt'
+            ),
             messages[4])
 
         # The other messages should be empty
@@ -326,15 +236,7 @@ class TestResultsCollater(JigTestCase):
         """
         Results that are line-specific are collated correctly.
         """
-        stdout = OrderedDict()
-        stdout[u'a.txt'] = [[1, None, 'Info A']]
-        stdout[u'b.txt'] = [[2, u'warn', 'Warn B']]
-        stdout[u'c.txt'] = [[3, u'stop', 'Stop C']]
-
-        results = OrderedDict()
-        results[MockPlugin()] = (0, stdout, '')
-
-        rc = ResultsCollater(results)
+        rc = ResultsCollator(factory.line_specific_message())
 
         self.assertEqual({u'info': 1, u'warn': 1, u'stop': 1}, rc.counts)
 
@@ -361,12 +263,7 @@ class TestResultsCollater(JigTestCase):
         """
         One of each type of message is captured.
         """
-        results = {
-            MockPlugin(): (0, ['C'], ''),
-            MockPlugin(): (0, {u'a.txt': u'F'}, ''),
-            MockPlugin(): (0, {u'a.txt': [[1, None, u'L']]}, '')}
-
-        rc = ResultsCollater(results)
+        rc = ResultsCollator(factory.one_of_each())
 
         self.assertEqual({u'info': 3, u'warn': 0, u'stop': 0}, rc.counts)
 
@@ -390,74 +287,74 @@ class TestResultsCollater(JigTestCase):
         """
         Exercise the errors related to commit specific messages.
         """
-        anon_obj = object()
+        rc = ResultsCollator(factory.commit_specific_error())
 
-        results = {
-            MockPlugin(): (0, anon_obj, '')}
         self.assertEqual(
-            [Error(None, type='s', body=anon_obj)],
-            ResultsCollater(results).errors)
+            Error(None, type='s', body=factory.anon_obj),
+            rc.errors[0])
 
-        results = {
-            MockPlugin(): (0, [[1, 2, 3, 4, 5]], '')}
         self.assertEqual(
-            [Error(None, type='s', body=[1, 2, 3, 4, 5])],
-            ResultsCollater(results).errors)
+            Error(None, type='s', body=[[1, 2, 3, 4, 5]]),
+            rc.errors[1])
+
+    def test_commit_specific_bad_syntax(self):
+        """
+        Exercise the bad syntax handling related to commit specific messages.
+        """
+        rc = ResultsCollator(factory.commit_specific_bad_syntax())
+
+        self.assertEqual(
+            Error(None, type='s', body=factory.anon_obj),
+            rc.errors[0])
+
+        self.assertEqual(
+            Error(None, type='s', body=[1, 2, 3, 4, 5]),
+            rc.errors[1])
 
     def test_file_specific_errors(self):
         """
         Exercise the errors related to file specific messages.
         """
-        anon_obj = object()
+        rc = ResultsCollator(factory.file_specific_error())
 
-        results = {
-            MockPlugin(): (0, {'a.txt': anon_obj}, '')}
         self.assertEqual(
-            [Error(None, type='s', file='a.txt', body=anon_obj)],
-            ResultsCollater(results).errors)
+            Error(None, type='s', body={'a.txt': factory.anon_obj}),
+            rc.errors[0])
 
-        results = {
-            MockPlugin(): (0, {'a.txt': [anon_obj]}, '')}
         self.assertEqual(
-            [Error(None, type='s', file='a.txt', body=anon_obj)],
-            ResultsCollater(results).errors)
+            Error(None, type='s', body={'a.txt': [factory.anon_obj]}),
+            rc.errors[1])
 
-        results = {
-            MockPlugin(): (0, {'a.txt': [1,  None]}, '')}
-        self.assertEqual([
-            Error(None, type='s', file='a.txt', body=1),
-            Error(None, type='s', file='a.txt', body=None)],
-            ResultsCollater(results).errors)
-
-        results = {
-            MockPlugin(): (0, {'a.txt': [[1, 2, 3, 4, 5]]}, '')}
         self.assertEqual(
-            [Error(None, type='s', body={'a.txt': [[1, 2, 3, 4, 5]]})],
-            ResultsCollater(results).errors)
+            Error(None, type='s', body={'a.txt': [1, None]}),
+            rc.errors[2])
 
-    def test_empty_results(self):
+        self.assertEqual(
+            Error(None, type='s', body={'a.txt': [[1, 2, 3, 4, 5]]}),
+            rc.errors[3])
+
+    def test_file_specific_bad_syntax(self):
         """
-        Empty results do not generate empty messages.
+        Exercise the errors related to file specific messages.
         """
-        rc1 = ResultsCollater({})
+        rc = ResultsCollator(factory.file_specific_bad_syntax())
 
-        rc2 = ResultsCollater({
-            MockPlugin(): (0, [''], ''),
-            MockPlugin(): (0, {u'a.txt': u'F'}, '')})
+        self.assertEqual(
+            Error(None, type='s', body=factory.anon_obj, file='a.txt'),
+            rc.errors[0])
 
-        rc3 = ResultsCollater({
-            MockPlugin(): (0, ['C'], ''),
-            MockPlugin(): (0, {u'a.txt': u'F'}, ''),
-            MockPlugin(): (0, {u'a.txt': [[1, None, u'L']]}, '')})
+        self.assertEqual(
+            Error(None, type='s', body=factory.anon_obj, file='a.txt'),
+            rc.errors[1])
 
-        # First collator had no results
-        self.assertEqual(0, len(rc1.plugins))
-        self.assertEqual(0, len(rc1.reporters))
+        self.assertEqual(
+            Error(None, type='s', body=1, file='a.txt'),
+            rc.errors[2])
 
-        # Second had a result with no meaningful content
-        self.assertEqual(2, len(rc2.plugins))
-        self.assertEqual(1, len(rc2.reporters))
+        self.assertEqual(
+            Error(None, type='s', body=None, file='a.txt'),
+            rc.errors[3])
 
-        # Third had something to report for all plugins
-        self.assertEqual(3, len(rc3.plugins))
-        self.assertEqual(3, len(rc3.reporters))
+        self.assertEqual(
+            Error(None, type='s', body={'a.txt': [[1, 2, 3, 4, 5]]}),
+            rc.errors[4])

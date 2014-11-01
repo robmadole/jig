@@ -28,7 +28,6 @@ class Command(BaseCommand):
         path = argv.path
         rev_range = argv.rev_range
 
-        # Make the runner use our view
         runner = Runner(view=self.view)
 
         runner.main(

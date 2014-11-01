@@ -4,6 +4,7 @@ from os import makedirs
 from os.path import join, dirname
 from subprocess import STDOUT, CalledProcessError
 from functools import wraps
+from StringIO import StringIO
 from textwrap import dedent
 
 from mock import patch
@@ -14,7 +15,7 @@ from jig.runner import Runner
 from jig.plugins import initializer
 from jig.diffconvert import GitDiffIndex
 from jig.tools import NumberedDirectoriesToGit, cwd_bounce
-from jig.output import strip_paint, ConsoleView
+from jig.output import strip_paint, ConsoleView, ResultsCollator
 
 
 try:
@@ -53,7 +54,7 @@ def result_with_hint(payload, hint):
     :param unicode payload: the first line of the result
     :param list hint: one of the attributes of :class:`jig.commands.hints`
     """
-    return dedent(payload).strip() + u'\n' + u'\n'.join(hint)
+    return dedent(payload).strip() + u'\n' + hint
 
 
 class JigTestCase(unittest.TestCase):
@@ -182,6 +183,12 @@ class JigTestCase(unittest.TestCase):
             fh.write(content)
 
         return True
+
+    def modify_file(self, *args, **kwargs):
+        """
+        Alias for create_file.
+        """
+        return self.create_file(*args, **kwargs)
 
     def stage(self, gitrepodir, name, content):
         """
@@ -333,3 +340,27 @@ class CommandTestCase(ViewTestCase):
             self.view = view
 
             return self.command(shlex.split(command or ''))
+
+
+class FormatterTestCase(JigTestCase):
+
+    """
+    Base test case for formatters.
+
+    """
+    def run_formatter(self, results):
+        """
+        Creates a collator and returns formatted results.
+
+        Subclasses must set the ``formatter`` class property to a valid
+        formatter.
+
+        :param dict results: the results to collate and format
+        """
+        collector = StringIO()
+        collator = ResultsCollator(results)
+        printer = lambda line: collector.write(unicode(line) + u'\n')
+
+        self.formatter().print_results(printer, collator)
+
+        return collector.getvalue()

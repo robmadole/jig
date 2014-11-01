@@ -117,7 +117,7 @@ class Command(BaseCommand):
         """
         path = argv.path
 
-        with self.out() as out:
+        with self.out() as printer:
             config = get_jigconfig(path)
 
             pm = PluginManager(config)
@@ -125,13 +125,13 @@ class Command(BaseCommand):
             bundles = plugins_by_bundle(pm)
 
             if not bundles:
-                out.append(u'No plugins installed.')
-                out.extend(NO_PLUGINS_INSTALLED)
+                printer(u'No plugins installed.')
+                printer(NO_PLUGINS_INSTALLED)
                 return
 
-            out.append(u'Installed plugins\n')
+            printer(u'Installed plugins\n')
 
-            out.append(u'{h1:<25} {h2}'.format(
+            printer(u'{h1:<25} {h2}'.format(
                 h1=u'Plugin name', h2=u'Bundle name'))
 
             sort_bundles = sorted(bundles.items(), key=lambda b: b[0])
@@ -140,10 +140,10 @@ class Command(BaseCommand):
                 sort_plugins = sorted(plugins, key=lambda p: p.name)
 
                 for plugin in sort_plugins:
-                    out.append(u'{plugin:.<25} {name}'.format(
+                    printer(u'{plugin:.<25} {name}'.format(
                         name=name, plugin=plugin.name))
 
-            out.extend(USE_RUNNOW)
+            printer(USE_RUNNOW)
 
     def add(self, argv):
         """
@@ -152,7 +152,7 @@ class Command(BaseCommand):
         path = argv.path
         plugin = argv.plugin
 
-        with self.out() as out:
+        with self.out() as printer:
             config = get_jigconfig(path)
 
             pm = PluginManager(config)
@@ -162,11 +162,11 @@ class Command(BaseCommand):
             set_jigconfig(path, pm.config)
 
             for p in added:
-                out.append(
+                printer(
                     'Added plugin {0} in bundle {1} to the '
                     'repository.'.format(p.name, p.bundle))
 
-            out.extend(USE_RUNNOW)
+            printer(USE_RUNNOW)
 
     def update(self, argv):
         """
@@ -178,26 +178,26 @@ class Command(BaseCommand):
         """
         path = argv.path
 
-        with self.out() as out:
+        with self.out() as printer:
             # Make sure that this directory has been initialized for Jig
             get_jigconfig(path)
 
             results = update_plugins(path)
 
             if not results:
-                out.append('No plugins to update.')
+                printer('No plugins to update.')
                 return
 
-            out.append('Updating plugins')
-            out.append('')
+            printer('Updating plugins')
+            printer('')
 
             for pm, output in results.items():
                 names = set([i.name for i in pm.plugins])
                 bundles = set([i.bundle for i in pm.plugins])
 
-                out.append('Plugin {0} in bundle {1}'.format(
+                printer('Plugin {0} in bundle {1}'.format(
                     ', '.join(names), ', '.join(bundles)))
-                out.extend(indent(output.splitlines()))
+                printer('\n'.join(indent(output.splitlines())))
 
     def remove(self, argv):
         """
@@ -211,7 +211,7 @@ class Command(BaseCommand):
         name = argv.name
         bundle = argv.bundle
 
-        with self.out() as out:
+        with self.out() as printer:
             config = get_jigconfig(path)
 
             pm = PluginManager(config)
@@ -233,7 +233,7 @@ class Command(BaseCommand):
 
             set_jigconfig(path, pm.config)
 
-            out.append('Removed plugin {0}'.format(name))
+            printer('Removed plugin {0}'.format(name))
 
     def create(self, argv):
         """
@@ -244,7 +244,7 @@ class Command(BaseCommand):
         template = argv.template
         save_dir = argv.dir
 
-        with self.out() as out:
+        with self.out() as printer:
             if template not in available_templates():
                 raise CommandError(
                     'Language {0} is not supported yet.'.format(template),
@@ -255,7 +255,7 @@ class Command(BaseCommand):
                     save_dir, bundle, name,
                     template=template)
 
-                out.append('Created plugin as {0}'.format(plugin_dir))
+                printer('Created plugin as {0}'.format(plugin_dir))
             except OSError as ose:
                 if ose.errno == errno.EEXIST:
                     # File exists
@@ -273,7 +273,7 @@ class Command(BaseCommand):
         test_range = argv.range
         verbose = argv.verbose
 
-        with self.out() as out:
+        with self.out() as printer:
             if test_range:
                 test_range = parse_range(test_range)
 
@@ -284,15 +284,15 @@ class Command(BaseCommand):
 
                 reporter = PluginTestReporter(results)
 
-                test_results = reporter.dumps(verbose=verbose).splitlines()
+                test_results = reporter.dumps(verbose=verbose)
 
                 failures = [i for i in results if isinstance(i, FailureResult)]
 
                 if failures:
                     # Raise as an error so the status code will be non-zero
-                    raise CommandError('\n'.join(test_results))
+                    raise CommandError(test_results)
 
                 # No failures, ok to send this to stdout
-                out.extend(test_results)
+                printer(test_results)
             except ExpectationError as e:
                 raise CommandError(str(e))

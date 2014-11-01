@@ -7,14 +7,15 @@ from git import Repo
 from jig.exc import GitRepoNotInitialized
 from jig.conf import PLUGIN_CHECK_FOR_UPDATES
 from jig.gitutils.checks import repo_jiginitialized
-from jig.gitutils.branches import parse_rev_range
+from jig.gitutils.branches import parse_rev_range, prepare_working_directory
 from jig.diffconvert import GitDiffIndex
 from jig.plugins import get_jigconfig, PluginManager
 from jig.plugins.tools import (
     set_jigconfig, last_checked_for_updates, plugins_have_updates,
     set_checked_for_updates, update_plugins)
 from jig.commands import get_command, list_commands
-from jig.output import ConsoleView
+from jig.output import ConsoleView, ResultsCollator
+from jig.formatters.fancy import FancyFormatter
 
 try:
     from collections import OrderedDict
@@ -27,12 +28,11 @@ def _diff_for(gitrepo, rev_range=None):
     Get a list of :py:class:`git.diff.Diff` objects for the repository.
 
     :param git.repo.base.Repo gitrepo: Git repository
-    :param string rev_range: optional revision to use instead of the Git index
+    :param RevRangePair rev_range: optional revision to use instead of the
+        Git index
     """
     if rev_range:
-        commit_a, commit_b = parse_rev_range(gitrepo.working_dir, rev_range)
-
-        return commit_a.diff(commit_b)
+        return rev_range.a.diff(rev_range.b)
     else:
         # Assume we want a diff between what is staged and HEAD
         try:
@@ -47,8 +47,10 @@ class Runner(object):
     Runs jig in a Git repo.
 
     """
-    def __init__(self, view=None):
+    def __init__(self, view=None, formatter=None):
         self.view = view or ConsoleView()
+        create_formatter = lambda f: f() if f else FancyFormatter()
+        self.formatter = create_formatter(formatter)
 
     def fromhook(self, gitrepo):
         """
@@ -83,9 +85,29 @@ class Runner(object):
             if now > last_checked + PLUGIN_CHECK_FOR_UPDATES:
                 self.update_plugins(gitrepo)
 
-        results = self.results(gitrepo, plugin=plugin, rev_range=rev_range)
+        with self.view.out() as printer:
+            if not repo_jiginitialized(gitrepo):
+                raise GitRepoNotInitialized(
+                    'This repository has not been initialized.')
 
-        report_counts = self.view.print_results(results)
+            if rev_range:
+                rev_range_parsed = parse_rev_range(gitrepo, rev_range)
+            else:
+                rev_range_parsed = None
+
+            with prepare_working_directory(gitrepo, rev_range_parsed):
+                results = self.results(   # pragma: no branch
+                    gitrepo,
+                    plugin=plugin,
+                    rev_range=rev_range_parsed
+                )
+
+            if not results:
+                report_counts = (0, 0, 0)
+            else:
+                collator = ResultsCollator(results)
+
+                report_counts = self.formatter.print_results(printer, collator)
 
         if interactive and report_counts and sum(report_counts):
             # Git will run a pre-commit hook with stdin pointed at /dev/null.
@@ -128,8 +150,8 @@ class Runner(object):
 
         :params string gitrepo: path to the Git repository
         """
-        with self.view.out() as out:
-            out.append(u'Checking for plugin updates\u2026')
+        with self.view.out() as printer:
+            printer(u'Checking for plugin updates\u2026')
 
         # Examine the remotes of the installed plugins
         if not plugins_have_updates(gitrepo):
@@ -171,23 +193,15 @@ class Runner(object):
         :param unicode gitrepo: path to the Git repository
         :param unicode plugin: the name of the plugin to run, if None then run
             all plugins
-        :param unicode rev_range: the revision range to use instead of the Git
-            index
+        :param RevRangePair rev_range: the revision range to use instead of the
+            Git index
         """
-        self.gitrepo = gitrepo
-
-        # Is this repository initialized to use jig on?
-        with self.view.out() as out:
-            if not repo_jiginitialized(self.gitrepo):
-                raise GitRepoNotInitialized(
-                    'This repository has not been initialized.')
-
-        pm = PluginManager(get_jigconfig(self.gitrepo))
+        pm = PluginManager(get_jigconfig(gitrepo))
 
         # Check to make sure we have some plugins to run
-        with self.view.out() as out:
+        with self.view.out() as printer:
             if len(pm.plugins) == 0:
-                out.append(
+                printer(
                     'There are no plugins installed, '
                     'use jig install to add some.')
                 return
@@ -198,7 +212,7 @@ class Runner(object):
 
             if diff is None:
                 # No diff on head, no commits have been written yet
-                out.append(
+                printer(
                     'This repository is empty, jig needs at '
                     'least 1 commit to continue.')
                 # Let execution continue so they *can* commit that first
@@ -209,13 +223,13 @@ class Runner(object):
             if len(diff) == 0:
                 # There is nothing changed in this repository, no need for
                 # jig to run so we exit with 0.
-                out.append(
-                    'No staged changes in the repository, skipping jig.')
+                printer(
+                    'No changes available for Jig to check, skipping.')
                 return
 
         # Our git diff index is an object that makes working with the diff much
         # easier in the context of our plugins.
-        gdi = GitDiffIndex(self.gitrepo, diff)
+        gdi = GitDiffIndex(gitrepo, diff)
 
         # Go through the plugins and gather up the results
         results = OrderedDict()

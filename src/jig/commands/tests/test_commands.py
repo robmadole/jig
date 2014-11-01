@@ -1,13 +1,21 @@
 # coding=utf-8
 import sys
+from contextlib import nested
+from tempfile import mkstemp
 
 from mock import Mock, patch
 
 from jig.exc import PluginError
 from jig.entrypoints import main
 from jig.tests.testcase import JigTestCase, ViewTestCase, CommandTestCase
+from jig.formatters import tap, fancy
 from jig.commands.base import (
-    list_commands, create_view, add_plugin, BaseCommand)
+    get_formatter, list_commands, create_view, add_plugin, BaseCommand)
+
+try:
+    import argparse
+except ImportError:   # pragma: no cover
+    from backports import argparse
 
 
 class TestCommands(ViewTestCase):
@@ -16,7 +24,6 @@ class TestCommands(ViewTestCase):
     Test the main parts of the command-line utility.
 
     """
-
     help_output_marker = '''
         usage: jig [-h] COMMAND
 
@@ -53,6 +60,40 @@ class TestCommands(ViewTestCase):
         self.assertResultsIn(self.help_output_marker, self.output)
 
 
+class TestGetFormatter(JigTestCase):
+
+    """
+    Get a formatter used to format Jig results.
+
+    """
+    def test_default(self):
+        """
+        Get the default formatter.
+        """
+        self.assertEqual(
+            fancy.FancyFormatter,
+            get_formatter('notcorrect')
+        )
+
+    def test_tap(self):
+        """
+        Get the tap formatter.
+        """
+        self.assertEqual(
+            tap.TapFormatter,
+            get_formatter('tap')
+        )
+
+    def test_fancy(self):
+        """
+        Get the fancy formatter.
+        """
+        self.assertEqual(
+            fancy.FancyFormatter,
+            get_formatter('fancy')
+        )
+
+
 class TestBaseCommand(CommandTestCase):
 
     """
@@ -68,6 +109,126 @@ class TestBaseCommand(CommandTestCase):
 
         with self.assertRaises(NotImplementedError):
             MissingProcessCommand([])
+
+
+class TestBaseCommandCrashReport(CommandTestCase):
+
+    """
+    Base command catches uncaught exceptions and creates a crash report.
+
+    """
+    def setUp(self):
+        self.mock_parser = argparse.ArgumentParser(
+            description='Mock parser')
+
+        self.uncaught_exception = Exception()
+        self.fd, self.report_file = mkstemp()
+
+    def run_command(self, command=None):
+        class MockCommand(BaseCommand):
+            parser = self.mock_parser
+
+            def process(self, args):
+                raise self.uncaught_exception
+
+        self.command = MockCommand
+        self.command.uncaught_exception = self.uncaught_exception
+
+        with nested(
+            patch('jig.commands.base.sys'),
+            patch('jig.commands.base.mkstemp')
+        ) as (mock_sys, mock_mkstemp):
+            mock_sys.exc_info.side_effect = sys.exc_info
+            mock_mkstemp.return_value = (1, self.report_file)
+
+            super(TestBaseCommandCrashReport, self).run_command(command)
+
+        with open(self.report_file) as fh:
+            report_contents = fh.read()
+
+        message = mock_sys.stderr.write.call_args[0][0]
+        exit_code = mock_sys.exit.call_args[0][0]
+
+        return report_contents, message, exit_code
+
+    def test_exits_with_2(self):
+        """
+        A crash report exits with 2 instead of 1.
+        """
+        self.mock_parser.add_argument('a')
+
+        report_contents, message, exit_code = self.run_command('1')
+
+        self.assertEqual(2, exit_code)
+
+    def test_includes_arguments(self):
+        """
+        The arguments for the command are included in the report.
+        """
+        self.mock_parser.add_argument('a')
+        self.mock_parser.add_argument('-b')
+        self.mock_parser.add_argument('--c')
+
+        report_contents, message, exit_code = self.run_command('1 -b 2 --c=3')
+
+        self.assertIn(
+            "Namespace(a='1', b='2', c='3')",
+            report_contents
+        )
+
+    def test_includes_formatted_traceback(self):
+        """
+        A formatted traceback is included.
+        """
+        self.mock_parser.add_argument('a')
+
+        report_contents, message, exit_code = self.run_command('1')
+
+        self.assertIn(
+            'Traceback (most recent call last)',
+            report_contents
+        )
+
+    def test_mentions_uncaught_exception(self):
+        """
+        The specific exception is included in the traceback.
+        """
+        self.uncaught_exception = Exception('Uncaught')
+
+        self.mock_parser.add_argument('a')
+
+        report_contents, message, exit_code = self.run_command('1')
+
+        self.assertIn(
+            'Exception: Uncaught',
+            report_contents
+        )
+
+    def test_displays_information_about_crash_report(self):
+        """
+        Written to stderr is human-readable information about what happened.
+        """
+        self.mock_parser.add_argument('a')
+
+        report_contents, message, exit_code = self.run_command('1')
+
+        self.assertIn(
+            'CRASH REPORT',
+            message
+        )
+
+    def test_mentions_the_crash_report_file(self):
+        """
+        Tells the user where the crash report is.
+        """
+        self.mock_parser.add_argument('a')
+
+        report_contents, message, exit_code = self.run_command('1')
+
+        self.assertIn(
+            self.report_file,
+            message
+        )
 
 
 class MockUUID(object):

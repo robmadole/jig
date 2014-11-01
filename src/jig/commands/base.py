@@ -1,12 +1,17 @@
+import sys
+import traceback
 from urlparse import urlparse
 from os import listdir
 from os.path import join, dirname, isdir
+from tempfile import mkstemp
 from shutil import rmtree
 from uuid import uuid4 as uuid
+from textwrap import dedent
 
-from jig.exc import PluginError
+from jig.exc import PluginError, ForcedExit
 from jig.conf import JIG_DIR_NAME, JIG_PLUGIN_DIR
 from jig.output import ConsoleView
+from jig.formatters import tap, fancy
 from jig.gitutils.remote import clone
 
 _commands_dir = dirname(__file__)
@@ -42,6 +47,26 @@ def get_command(name):
         'jig.commands.{0}'.format(name.lower()),
         globals(), locals(), ['Command'], 0)
     return mod.Command
+
+
+def get_formatter(name, default=fancy.FancyFormatter):
+    """
+    Get a formatter class suitable for formatting Jig results.
+
+    :param str name: the short name of the formatter
+    :param class default: the default formatter to return if a bad name is given
+    :rtype: Formatter
+    """
+    formatter_classes = [
+        tap.TapFormatter,
+        fancy.FancyFormatter
+    ]
+
+    for cls in formatter_classes:
+        if cls.name == name:
+            return cls
+
+    return default
 
 
 def create_view():
@@ -147,10 +172,63 @@ class BaseCommand(object):
         self.out = self.view.out
 
         # Finally, process the arguments
-        self.process(args)
+        try:
+            self.process(args)
+        except (NotImplementedError, SystemExit, ForcedExit):
+            raise
+        except Exception as e:
+            # Uncaught exception, usually means there is a bug in Jig
+            self.crash_report(e, args)
+            sys.exit(2)
 
     def process(self, args):
         """
         Perform whatever operation this command is supposed to do.
         """
         raise NotImplementedError
+
+    def crash_report(self, exception, args):
+        """
+        Create a crash report and ask the user to create a GitHub issue.
+
+        :param Exception exception: some uncaught exception
+        :param ArgumentParser args: original arguments for the command.
+        """
+        fd, report_file = mkstemp(suffix='.jigcrash')
+
+        exc_info = sys.exc_info()
+
+        report_contents = dedent(u"""
+            Arguments:
+
+            {args}
+
+            Traceback:
+
+            {traceback}
+            """
+        ).strip().format(
+            args=str(args),
+            traceback=u''.join(traceback.format_exception(*exc_info))
+        )
+
+        with open(report_file, 'w') as fh:
+            fh.write(report_contents + '\n')
+
+        message = dedent(u"""
+            --- CRASH REPORT ---
+
+            Jig has failed to operate as expected.
+
+            A crash report has been created: {report_file}
+
+            Please visit http://github.com/robmadole/jig/issues and file
+            an Issue and use the contents of this crash report in the description.
+
+            --- CRASH REPORT ---
+            """
+        ).strip().format(
+            report_file=report_file
+        )
+
+        sys.stderr.write(message + '\n')

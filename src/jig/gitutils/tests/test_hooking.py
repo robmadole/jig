@@ -1,6 +1,6 @@
 from os import rmdir
 from os import access, X_OK
-from os.path import join, realpath, isdir, isfile, expanduser
+from os.path import join, realpath, isdir, isfile
 from tempfile import mkdtemp
 
 import git
@@ -12,6 +12,7 @@ from jig.exc import (
     NotGitRepo, PreCommitExists, GitTemplatesMissing,
     JigUserDirectoryError, GitHomeTemplatesExists, InitTemplateDirAlreadySet,
     GitConfigError)
+from jig.gitutils.scripts import AUTO_JIG_INIT_SCRIPT
 from jig.gitutils.hooking import (
     hook, _git_templates, create_auto_init_templates, set_templates_directory)
 
@@ -53,6 +54,23 @@ class TestHook(JigTestCase):
         with self.assertRaises(PreCommitExists):
             hook(self.gitrepodir)
 
+    def test_will_continue_if_pre_commit_owned_by_jig(self):
+        """
+        Continue if the .git/hooks/pre-commit looks like it was Jig-created.
+        """
+        hook(self.gitrepodir)
+
+        self.assertTrue(hook(self.gitrepodir))
+
+    def test_will_continue_if_pre_commit_is_auto_init(self):
+        """
+        Continue if the .git/hooks/pre-commit is the Jig auto-init.
+        """
+        with open(self.pc_filename, 'w') as fh:
+            fh.write(AUTO_JIG_INIT_SCRIPT)
+
+        self.assertTrue(hook(self.gitrepodir))
+
     def test_successfully_hooks(self):
         """
         Creates the pre-commit hook.
@@ -93,8 +111,8 @@ class TestGitTemplates(JigTestCase):
         """
         Returns None if it cannnot find any templates.
         """
-        with patch('jig.gitutils.hooking.isdir') as isdir:
-            isdir.return_value = False
+        with patch('jig.gitutils.hooking.isdir') as mock_isdir:
+            mock_isdir.return_value = False
 
             self.assertIsNone(_git_templates())
 
@@ -219,18 +237,6 @@ class TestSetTemplatesDirectory(JigTestCase):
         super(TestSetTemplatesDirectory, self).setUp()
 
         self.templates_directory = create_auto_init_templates(mkdtemp())
-
-        self._clear_gitconfig()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls._clear_gitconfig()
-
-    @classmethod
-    def _clear_gitconfig(self):
-        # Reset the global Git config
-        with open(expanduser('~/.gitconfig'), 'w') as fh:
-            fh.write('')
 
     def test_error_reading_git_config(self):
         """

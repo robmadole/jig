@@ -23,11 +23,11 @@ class Command(BaseCommand):
     def process(self, argv):
         path = argv.path
 
-        with self.out() as out:
+        with self.out() as printer:
             hook(path)
             initializer(path)
 
-            out.append(
+            printer(
                 'Git repository has been initialized for use with Jig.'
             )
-            out.extend(AFTER_INIT)
+            printer(AFTER_INIT)

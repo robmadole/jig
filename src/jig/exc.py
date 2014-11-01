@@ -67,6 +67,18 @@ class GitCloneError(JigException):
     pass
 
 
+class GitWorkingDirectoryDirty(JigException):
+
+    """
+    If the given Git repository has a non-clean working directory.
+
+    """
+    def __init__(self):
+        super(GitWorkingDirectoryDirty, self).__init__(
+            'The Git working directory must be clean before '
+            'running this command.')
+
+
 class GitRevListFormatError(JigException):
 
     """
@@ -150,6 +162,32 @@ class AlreadyInitialized(JigException):
 
     """
     hint = 'ALREADY_INITIALIZED'
+
+
+class TrackingBranchMissing(JigException):
+
+    """
+    The tracking branch Jig uses in CI mode is missing.
+
+    """
+    def __init__(self, tracking_branch):
+        super(TrackingBranchMissing, self).__init__(
+            'Tracking branch {0} for CI mode is missing'.format(
+                tracking_branch
+            )
+        )
+
+
+class CIFirstRun(JigException):
+
+    """
+    Raised when CI runs for the first time and creates the tracking branch.
+
+    """
+    def __init__(self):
+        super(CIFirstRun, self).__init__(
+            'First run, tracking branch created for HEAD'
+        )
 
 
 class JigUserDirectoryError(JigException):

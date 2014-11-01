@@ -15,5 +15,5 @@ class Command(BaseCommand):
     parser = _parser
 
     def process(self, argv):
-        with self.out() as out:
-            out.append('{0}'.format(jig.__version__))
+        with self.out() as printer:
+            printer('{0}'.format(jig.__version__))

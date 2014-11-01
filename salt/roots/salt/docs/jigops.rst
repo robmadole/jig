@@ -86,3 +86,84 @@ Releases are cut from the develop branch, start there.
 #. Zip the docs up and upload
 
 .. _gitflow: http://nvie.com/posts/a-successful-git-branching-model/
+
+Rebuilding the base box
+-----------------------
+
+Inside the ``packer`` directory are Packer.io files to build the base box that
+Jig uses for Vagrant.
+
+Install packer - ``brew install packer`` will do it - and then run the following:
+
+**Note** you have to do this from the host operating system, not from within Vagrant.
+
+::
+
+    packer build jig-development.json
+
+This will take a while. After the process is complete you should find a Vagrant
+.box file inside of the ``packer/vagrant`` directory.
+
+Remove any existing box that has already been downloaded from a previous `vagrant up`.
+
+::
+
+    vagrant box remove jig-development-vmware
+    vagrant box remove jig-development-virtualbox
+
+Uploading the base box to AWS
+-----------------------------
+
+A convenient location to store a base box is within Amazon's S3.
+
+Create a bucket in ``us-east-1`` in the S3 service called "jig-base-boxes" and
+enable static content serving.
+
+To upload the box, install the ``awscli`` official client:
+
+::
+
+    pip install awscli
+
+Configure a user in the IAM service for Jig and use the access key and secret
+to configure the command-line client.
+
+::
+
+    aws configure --profile jig
+
+Upload the box to S3.
+
+VMware ::
+
+    aws s3 --profile jig \
+      --region us-east-1 \
+      cp vagrant/jig-development-vmware.box s3://jig-base-boxes/jig-development-vmware-<TIMESTAMP>.box
+
+VirtualBox ::
+
+    aws s3 --profile jig \
+      --region us-east-1 \
+      cp vagrant/jig-development-virtualbox.box s3://jig-base-boxes/jig-development-virtualbox-<TIMESTAMP>.box
+
+Make it public.
+
+VMware ::
+
+    aws s3api --profile jig \
+      --region us-east-1 \
+      put-object-acl \
+      --grant-read 'uri=http://acs.amazonaws.com/groups/global/AllUsers' \
+      --key jig-development-vmware-TIMESTAMP.box \
+      --bucket jig-base-boxes
+
+VirtualBox ::
+
+    aws s3api --profile jig \
+      --region us-east-1 \
+      put-object-acl \
+      --grant-read 'uri=http://acs.amazonaws.com/groups/global/AllUsers' \
+      --key jig-development-virtualbox-TIMESTAMP.box \
+      --bucket jig-base-boxes
+
+Once the uploads are complete cut a new release at http://vagrantcloud.com/robmadole/jig-development.

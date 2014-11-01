@@ -2,7 +2,7 @@ from textwrap import dedent
 
 
 def _hint(hint):
-    return [u''] + dedent(hint).strip().splitlines()
+    return u'\n' + dedent(hint).strip()
 
 AFTER_INIT = _hint(
     u"""

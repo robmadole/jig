@@ -94,7 +94,7 @@ Jig will run and let you know if it catches anything.
     Ran 1 plugin
         Info 0 Warn 1 Stop 0
 
-    Commit anyway (hit enter), or "c" to cancel the commit
+    Commit anyway (hit "c"), or stop (hit "s"):
 
 Where to go next
 ----------------
@@ -126,7 +126,7 @@ License
 Jig is licensed under a :doc:`BSD license <license>`.
 
 
-.. _Git Hooks: http://book.git-scm.com/5_git_hooks.html
+.. _Git Hooks: http://git-scm.com/book/en/Customizing-Git-Git-Hooks
 .. _PEP8: http://www.python.org/dev/peps/pep-0008/
 .. _pep8 checker: http://pypi.python.org/pypi/pep8
 .. _created a tool: `pep8 checker`_
