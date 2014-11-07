@@ -8,7 +8,6 @@ from StringIO import StringIO
 from textwrap import dedent
 
 from mock import patch
-from git import Repo
 
 from jig.exc import ForcedExit
 from jig.runner import Runner

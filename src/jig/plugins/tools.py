@@ -7,8 +7,6 @@ from datetime import datetime
 from calendar import timegm
 from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 
-import git
-
 from jig.exc import (
     NotGitRepo, AlreadyInitialized,
     GitRepoNotInitialized)

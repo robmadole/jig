@@ -46,13 +46,13 @@ Python 2.6:
 
 ::
 
-    vagrant@raring64:/vagrant$ /envs/python2.6/bin/python script/test
+    vagrant@raring64:/jig$ /envs/python2.6/bin/python script/test
 
 Python 2.7:
 
 ::
 
-    vagrant@raring64:/vagrant$ /envs/python2.7/bin/python script/test
+    vagrant@raring64:/jig$ /envs/python2.7/bin/python script/test
 
 Coverage report
 ---------------

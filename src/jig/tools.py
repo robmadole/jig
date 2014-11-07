@@ -6,8 +6,6 @@ from tempfile import mkdtemp
 from shutil import copy2
 from contextlib import contextmanager
 
-from git import Repo
-
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
 
 

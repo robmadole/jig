@@ -4,25 +4,20 @@ from os import stat, chmod, makedirs
 from os.path import isfile, isdir, join, realpath, dirname
 from shutil import copytree
 
-import git
-import gitdb
-import async
-import smmap
+import sh
 
 from jig.exc import (
     NotGitRepo, PreCommitExists, JigUserDirectoryError,
     GitTemplatesMissing, GitHomeTemplatesExists, GitConfigError,
     InitTemplateDirAlreadySet)
 from jig.conf import JIG_DIR_NAME
+from jig.gitutils import commands
 from jig.gitutils.scripts import RUN_JIG_SCRIPT, AUTO_JIG_INIT_SCRIPT
 from jig.gitutils.checks import is_git_repo
 
 # Dependencies to make jig run
 JIG_DIR = realpath(join(dirname(__file__), '..'))
-GIT_PYTHON_DIR = realpath(join(dirname(git.__file__), '..'))
-GITDB_DIR = realpath(join(dirname(gitdb.__file__), '..'))
-ASYNC_DIR = realpath(join(dirname(async.__file__), '..'))
-SMMAP_DIR = realpath(join(dirname(smmap.__file__), '..'))
+SH_DIR = realpath(join(dirname(sh.__file__), '..'))
 
 
 def _git_templates():
@@ -104,10 +99,8 @@ def hook(gitdir):
     script_kwargs = {
         'python_executable': sys.executable,
         'jig_dir': JIG_DIR,
-        'git_python_dir': GIT_PYTHON_DIR,
-        'gitdb_dir': GITDB_DIR,
-        'async_dir': ASYNC_DIR,
-        'smmap_dir': SMMAP_DIR}
+        'sh_dir': SH_DIR
+    }
 
     return _create_pre_commit(pc_filename, RUN_JIG_SCRIPT, script_kwargs)
 
@@ -171,15 +164,13 @@ def set_templates_directory(templates_directory):
     """
     Sets the template directory in the global Git config.
     """
-    command = git.cmd.Git()
-
     try:
-        raw_config = command.config(
+        raw_config = commands.config(
             '--global',
             '--list'
         )
-    except git.exc.GitCommandError as gce:
-        raise GitConfigError(gce)
+    except sh.ErrorReturnCode as e:
+        raise GitConfigError(e)
 
     config = dict([i.split('=', 1) for i in raw_config.splitlines()])
 
@@ -187,11 +178,11 @@ def set_templates_directory(templates_directory):
         raise InitTemplateDirAlreadySet(config['init.templatedir'])
 
     try:
-        command.config(
+        commands.config(
             '--global',
             '--add',
             'init.templatedir',
             templates_directory
         )
-    except git.exc.GitCommandError as gce:
-        raise GitConfigError(gce)
+    except sh.ErrorReturnCode as e:
+        raise GitConfigError(e)

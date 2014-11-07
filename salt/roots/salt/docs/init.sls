@@ -15,7 +15,7 @@ supervisor:
 jig-develop-egg:
   pip.installed:
     - editable:
-      - /vagrant
+      - /jig
     - env: /envs/docs
 
 /envs/docs/bin/httpdocs.py:

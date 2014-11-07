@@ -4,9 +4,6 @@ from functools import partial
 from contextlib import contextmanager
 from collections import namedtuple
 
-import git
-from git.exc import GitCommandError, BadObject
-
 from jig.exc import (
     GitRevListFormatError, GitRevListMissing, GitWorkingDirectoryDirty,
     TrackingBranchMissing)

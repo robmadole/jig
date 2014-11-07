@@ -148,11 +148,11 @@ class GitConfigError(JigException):
         """
         Use the stderr message from the command as this exception's message.
 
-        :param git.exc.GitCommandError git_command_error:
+        :param sh.ErrorReturnCode git_command_error:
         """
         super(GitConfigError, self).__init__(
             'Problem when running {0}: {1}'.format(
-                git_command_error.command, git_command_error.stderr))
+                git_command_error.full_cmd, git_command_error.stderr))
 
 
 class AlreadyInitialized(JigException):

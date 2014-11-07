@@ -3,7 +3,7 @@ from os import access, X_OK
 from os.path import join, realpath, isdir, isfile
 from tempfile import mkdtemp
 
-import git
+import sh
 from mock import patch, Mock
 
 from jig.tests.testcase import JigTestCase, result_with_hint
@@ -12,6 +12,7 @@ from jig.exc import (
     NotGitRepo, PreCommitExists, GitTemplatesMissing,
     JigUserDirectoryError, GitHomeTemplatesExists, InitTemplateDirAlreadySet,
     GitConfigError)
+from jig.gitutils import commands
 from jig.gitutils.scripts import AUTO_JIG_INIT_SCRIPT
 from jig.gitutils.hooking import (
     hook, _git_templates, create_auto_init_templates, set_templates_directory)
@@ -242,13 +243,10 @@ class TestSetTemplatesDirectory(JigTestCase):
         """
         Raises an exception if there are problems reading the Git config.
         """
-        with patch('jig.gitutils.hooking.git.cmd') as mock_cmd:
-            mock_command = Mock()
-            mock_command.config.side_effect = git.exc.GitCommandError(
-                'git config', 1, 'error'
+        with patch('jig.gitutils.hooking.commands') as mock_commands:
+            mock_commands.config.side_effect = sh.ErrorReturnCode(
+                'git config', '', 'error'
             )
-
-            mock_cmd.Git.return_value = mock_command
 
             with self.assertRaises(GitConfigError) as gce:
                 set_templates_directory(self.templates_directory)
@@ -262,7 +260,7 @@ class TestSetTemplatesDirectory(JigTestCase):
         """
         Will raise an exception if the config already has init.templatedir set.
         """
-        git.cmd.Git().config(
+        sh.git.config(
             '--global', '--add', 'init.templatedir', '/tmp/templates'
         )
 
@@ -275,7 +273,7 @@ class TestSetTemplatesDirectory(JigTestCase):
         """
         set_templates_directory(self.templates_directory)
 
-        config = git.cmd.Git().config('--global', '--list')
+        config = sh.git.config('--global', '--list')
 
         self.assertIn(
             'init.templatedir',
@@ -293,7 +291,7 @@ class TestSetTemplatesDirectory(JigTestCase):
         """
         side_effects = [
             '',
-            git.exc.GitCommandError('', 1, 'error')
+            sh.ErrorReturnCode('', '', '')
         ]
 
         def config(*args, **kwargs):
@@ -303,10 +301,9 @@ class TestSetTemplatesDirectory(JigTestCase):
             else:
                 return se
 
-        with patch('jig.gitutils.hooking.git.cmd') as mock_cmd:
+        with patch('jig.gitutils.hooking.commands') as mock_commands:
             mock_command = Mock()
-            mock_command.config.side_effect = config
-            mock_cmd.Git.return_value = mock_command
+            mock_commands.config.side_effect = config
 
             with self.assertRaises(GitConfigError):
                 set_templates_directory(self.templates_directory)

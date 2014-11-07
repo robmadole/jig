@@ -2,8 +2,6 @@ import json
 import sys
 from datetime import datetime
 
-from git import Repo
-
 from jig.exc import GitRepoNotInitialized
 from jig.conf import PLUGIN_CHECK_FOR_UPDATES
 from jig.gitutils.checks import repo_jiginitialized

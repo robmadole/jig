@@ -8,7 +8,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Use a private network so NFS can do its thing
   config.vm.network "private_network", type: "dhcp"
 
-  config.vm.synced_folder '.', '/vagrant', type: 'nfs'
+  # Disable the default share
+  config.vm.synced_folder '.', '/vagrant', disabled: true
+  # Use the name of the project
+  config.vm.synced_folder '.', '/jig', type: 'nfs'
+  # Configured for Salt
   config.vm.synced_folder 'salt/roots/', '/srv', type: 'nfs'
 
   # Documentation

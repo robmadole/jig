@@ -1,6 +1,3 @@
-import git
-from git.exc import GitCommandError
-
 from jig.exc import GitCloneError
 
 

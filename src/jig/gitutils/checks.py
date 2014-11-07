@@ -1,7 +1,5 @@
 from os.path import isdir, join
 
-from git import Repo
-
 from jig.conf import JIG_DIR_NAME
 
 
