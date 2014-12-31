@@ -1,6 +1,7 @@
 from os.path import isdir, join
 
 from jig.conf import JIG_DIR_NAME
+from jig.gitutils.commands import git
 
 
 def is_git_repo(gitdir):
@@ -17,10 +18,37 @@ def repo_jiginitialized(gitdir):
     return isdir(join(gitdir, JIG_DIR_NAME))
 
 
-def working_directory_dirty(gitdir):
+def repo_is_dirty(
+    gitdir,
+    index=True,
+    working_directory=True,
+    untracked_files=False
+):
     """
-    Returns boolean indicating if the working directory is dirty.
+    Determine if a repository is dirty by having local modifications.
     """
-    repo = Repo(gitdir)
+    dirty = []
 
-    return repo.is_dirty()
+    default_args = ('--abbrev=40', '--full-index', '--raw')
+
+    if index:
+        dirty.append(
+            len(git(gitdir).diff('--cached', *default_args))
+        )
+
+    if working_directory:
+        dirty.append(
+            len(git(gitdir).diff(*default_args))
+        )
+
+    if untracked_files:
+        dirty.append(
+            len(git(gitdir)(
+                'ls-files',
+                '--other',
+                '--directory',
+                '--exclude-standard'
+            ))
+        )
+
+    return any(dirty)

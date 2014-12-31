@@ -1,13 +1,15 @@
 from os import unlink
 from tempfile import mkstemp
-from functools import partial
 from contextlib import contextmanager
 from collections import namedtuple
+
+import sh
 
 from jig.exc import (
     GitRevListFormatError, GitRevListMissing, GitWorkingDirectoryDirty,
     TrackingBranchMissing)
-from jig.gitutils.checks import working_directory_dirty
+from jig.gitutils.commands import git
+from jig.gitutils.checks import repo_is_dirty
 
 
 def parse_rev_range(repository, rev_range):
@@ -28,13 +30,11 @@ def parse_rev_range(repository, rev_range):
     rev_a, rev_b = rev_pair
 
     try:
-        repo = git.Repo(repository)
-
-        commit_a = repo.commit(rev_a)
-        commit_b = repo.commit(rev_b)
+        commit_a = git(repository)('rev-parse', rev_a).strip()
+        commit_b = git(repository)('rev-parse', rev_b).strip()
 
         return RevRangePair(commit_a, commit_b, rev_range)
-    except (BadObject, GitCommandError):
+    except sh.ErrorReturnCode:
         raise GitRevListMissing(rev_range)
 
 
@@ -42,22 +42,22 @@ def parse_rev_range(repository, rev_range):
 def _prepare_with_rev_range(repo, rev_range):
     # If a rev_range is specified then we need to make sure the working
     # directory is completely clean before continuing.
-    if rev_range and working_directory_dirty(repo.working_dir):
+    if rev_range and repo_is_dirty(repo):
         raise GitWorkingDirectoryDirty()
 
-    try:
-        head = repo.head.reference
-        return_to_normal = head.checkout
-    except TypeError:
-        head = repo.head.commit
-        return_to_normal = partial(repo.git.checkout, head.hexsha)
+    git_bound = git(repo)
 
-    repo.git.checkout(rev_range.b.hexsha)
+    try:
+        head = git_bound('symbolic-ref', '--short', 'HEAD').strip()
+    except git.error:
+        head = git_bound('rev-parse', 'HEAD').strip()
+
+    git_bound.checkout(rev_range.b)
 
     try:
         yield head
     finally:
-        return_to_normal()
+        git_bound.checkout(head)
 
 
 @contextmanager
@@ -68,9 +68,16 @@ def _prepare_against_staged_index(repo):
     :param git.Repo repo: Git repo
     """
     stash = None
+    git_bound = git(repo)
 
-    if repo.is_dirty(index=False, working_tree=True, untracked_files=False):
-        stash = repo.git.stash('save', '--keep-index')
+    check_kwargs = {
+        'index': False,
+        'working_directory': True,
+        'untracked_files': False
+    }
+
+    if repo_is_dirty(repo, **check_kwargs):
+        stash = git_bound.stash('save', '--keep-index')
 
     try:
         yield stash
@@ -80,33 +87,30 @@ def _prepare_against_staged_index(repo):
 
         os_handle, patchfile = mkstemp()
 
-        with open(patchfile, 'w') as fh:
-            repo.git.diff(
-                '--color=never', '-R', 'stash@{0}',
-                output_stream=fh)
+        git_bound.diff(
+            '--color=never', '-R', 'stash@{0}',
+            _out=patchfile)
 
-        repo.git.apply(patchfile)
+        git_bound.apply(patchfile)
 
         unlink(patchfile)
 
-        repo.git.stash('drop', '-q')
+        git_bound.stash('drop', '-q')
 
 
 @contextmanager
-def prepare_working_directory(repository, rev_range=None):
+def prepare_working_directory(gitrepo, rev_range=None):
     """
     Use Git stash and checkout to prepare the working directory for a Jig run.
 
     :param string gitrepo: file path to the Git repository
     :param RevRangePair rev_range:
     """
-    repo = git.Repo(repository)
-
     if rev_range:
-        with _prepare_with_rev_range(repo, rev_range) as head:
+        with _prepare_with_rev_range(gitrepo, rev_range) as head:
             yield head
     else:
-        with _prepare_against_staged_index(repo) as stash:
+        with _prepare_against_staged_index(gitrepo) as stash:
             yield stash
 
 
@@ -120,38 +124,57 @@ class Tracked(object):
 
     """
     def __init__(self, gitrepo, tracking_branch='jig-ci-last-run'):
-        self.gitrepo = git.Repo(gitrepo)
+        self.gitrepo = gitrepo
         self.tracking_branch = tracking_branch
+        self.git = git(path=self.gitrepo)
+
+    @property
+    def _full_tracking_ref(self):
+        return 'refs/heads/{0}'.format(self.tracking_branch)
 
     @property
     def exists(self):
         """
         Whether the tracking branch exists in the Git repository.
         """
-        return self.tracking_branch in self.gitrepo.references
+        try:
+            self.git('rev-parse', self._full_tracking_ref)
+
+            return True
+        except git.error:
+            return False
+
+    def _update_ref(self, ref):
+        """
+        Updates the Git ref for the tracking branch to a new value.
+        """
+        rev = self.git('rev-parse', ref).strip()
+
+        self.git('update-ref', self._full_tracking_ref, rev)
+
+        return rev
 
     def _create(self):
         """
         Create a new head on the repository with the tracking branch name.
         """
-        return self.gitrepo.create_head(self.tracking_branch)
+        return self._update_ref('HEAD')
 
     @property
-    def reference(self):
+    def rev(self):
         """
-        The :py:class:`git.Commit` object representing the tracking branch.
+        The commit representing the tracking branch.
         """
         if not self.exists:
             raise TrackingBranchMissing(self.tracking_branch)
 
-        return self.gitrepo.references[self.tracking_branch]
+        return self.git('rev-parse', self._full_tracking_ref).strip()
 
-    def update(self, commit='HEAD'):
+    def update(self, ref='HEAD'):
         """
         Change the tracking branch to a new commit.
         """
-        reference = self.reference if self.exists else self._create()
+        if not self.exists:
+            self._update_ref('HEAD')
 
-        reference.commit = commit
-
-        return reference
+        return self._update_ref(ref)

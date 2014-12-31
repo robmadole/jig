@@ -1,12 +1,36 @@
 import re
 from unicodedata import normalize
-from os import listdir, walk, makedirs, unlink, chdir, getcwd
+from os import listdir, walk, makedirs, chdir, getcwd
 from os.path import join, dirname, isdir
 from tempfile import mkdtemp
 from shutil import copy2
 from contextlib import contextmanager
 
+from jig.gitutils.commands import git
+
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
+
+
+def _commit_hashes(repo):
+    return git(repo).log(
+        '--format=format:%H',
+        '--no-decorate',
+        '--no-color'
+    )
+
+
+def parent_of(commit):
+    reachable = git()(
+        'rev-list',
+        '--skip=1',
+        '--first-parent',
+        commit
+    ).splitlines()
+
+    try:
+        return reachable[0]
+    except IndexError:
+        return None
 
 
 def slugify(text, delim=u'-'):
@@ -116,7 +140,9 @@ class NumberedDirectoriesToGit(object):
         Does the conversion and returns the ``git.Repo`` object.
         """
         if not self._repo:
-            self._repo = Repo.init(self.target)
+            git().init(self.target)
+
+            self._repo = self.target
 
             for d in sorted(listdir(self.numdir)):
                 self._commit(self._repo, join(self.numdir, d))
@@ -129,9 +155,12 @@ class NumberedDirectoriesToGit(object):
         """
         repo = self.repo
 
+        raise NotImplementedError()
+
         diffs = []
-        for commit in repo.iter_commits():
+        for commit in _commit_hashes(repo).splitlines():
             try:
+                parent = parent_of(commit)
                 diffs.append(commit.parents[0].diff(commit))
             except IndexError:
                 pass
@@ -151,7 +180,7 @@ class NumberedDirectoriesToGit(object):
         """
         # List files currently in our repository
         paths_current = set(self._flattendirectory(
-            repo.working_dir, strip=self.target))
+            repo, strip=self.target))
 
         # What needs to be added
         paths_new = set(self._flattendirectory(
@@ -172,15 +201,13 @@ class NumberedDirectoriesToGit(object):
                 join(d, path),
                 join(self.target, path))
 
-            repo.index.add([path])
+            git(repo).add(path)
 
         # Delete
         for path in paths_to_del:
-            repo.index.remove([join(self.target, path)])
+            git(repo).rm(path)
 
-            unlink(join(self.target, path))
-
-        repo.index.commit('Commit from numbered directory {0}'.format(d))
+        git(repo).commit('-m', 'Commit from numbered directory {0}'.format(d))
 
     def _flattendirectory(self, d, strip=None):
         """
@@ -188,7 +215,7 @@ class NumberedDirectoriesToGit(object):
 
         If ``strip`` is not provided it defaults to ``d``.
         """
-        for (dirpath, dirname, filenames) in walk(d):
+        for (dirpath, _dirname, filenames) in walk(d):
             for fn in filenames:
                 sdir = dirpath.replace('{0}'.format(strip), '').lstrip('/')
                 if sdir.startswith('.git'):

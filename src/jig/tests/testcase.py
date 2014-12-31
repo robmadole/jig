@@ -12,6 +12,7 @@ from mock import patch
 from jig.exc import ForcedExit
 from jig.runner import Runner
 from jig.plugins import initializer
+from jig.gitutils.commands import git
 from jig.diffconvert import GitDiffIndex
 from jig.tools import NumberedDirectoriesToGit, cwd_bounce
 from jig.output import strip_paint, ConsoleView, ResultsCollator
@@ -117,6 +118,16 @@ class JigTestCase(unittest.TestCase):
         else:
             self.assertEqual(exception, code)
 
+    def assertIsGitSha1(self, value):
+        """
+        Assert that the string is a SHA1.
+        """
+        self.assertRegexpMatches(
+            value,
+            '[a-f0-9]{40}',
+            'Does not appear to be a Git SHA-1 hash'
+        )
+
     def runcmd(self, cmd):
         """
         Takes a string and runs it, returning the output and exit code.
@@ -149,9 +160,7 @@ class JigTestCase(unittest.TestCase):
         ndgit = NumberedDirectoriesToGit(
             join(self.fixturesdir, repo_name))
 
-        repo = ndgit.repo
-
-        return (ndgit.repo, repo.working_dir, ndgit.diffs())
+        return (ndgit.repo, ndgit.diffs())
 
     def git_diff_index(self, repo, diffs):
         """
@@ -197,10 +206,7 @@ class JigTestCase(unittest.TestCase):
         """
         self.create_file(gitrepodir, name, content)
 
-        repo = Repo(gitrepodir)
-        repo.index.add([name])
-
-        return repo.index
+        git(path=gitrepodir).add(name)
 
     def stage_remove(self, gitrepodir, name):
         """
@@ -208,21 +214,22 @@ class JigTestCase(unittest.TestCase):
 
         Where ``name`` is the path to the file.
         """
-        repo = Repo(gitrepodir)
-        repo.index.remove([name])
-
-        return repo.index
+        git(path=gitrepodir).rm(name)
 
     def commit(self, gitrepodir, name, content):
         """
         Create or modify a file in a Git repository and commit it.
 
-        A ``git.Commit`` object will be returned representing the commit.
+        A commit hash will be returned representing the commit.
 
         """
-        index = self.stage(gitrepodir, name, content)
+        git_bound = git(path=gitrepodir)
 
-        return index.commit(name)
+        self.stage(gitrepodir, name, content)
+
+        git_bound.commit('-m', name)
+
+        return git_bound('rev-parse', 'HEAD').strip()
 
 
 class ViewTestCase(JigTestCase):

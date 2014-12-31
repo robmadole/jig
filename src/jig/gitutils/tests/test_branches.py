@@ -4,13 +4,15 @@ from contextlib import contextmanager
 from functools import partial
 from itertools import chain, combinations
 
-from git import Repo, Head, Commit
+import sh
 from mock import patch, MagicMock
 
 from jig.tests.testcase import JigTestCase
 from jig.exc import (
     GitRevListMissing, GitRevListFormatError, GitWorkingDirectoryDirty,
     TrackingBranchMissing)
+from jig.tools import cwd_bounce
+from jig.gitutils.commands import git
 from jig.gitutils.branches import (
     parse_rev_range, prepare_working_directory,
     _prepare_against_staged_index, _prepare_with_rev_range, Tracked)
@@ -24,7 +26,7 @@ def assert_git_status_unchanged(repository):
     :param string repository: Git repo
     """
     def long_status(repository):
-        output = Repo(repository).git.status('--long')
+        output = git(repository).status('--long')
 
         # Skip the first line, it tells us the branch
         return output.splitlines()[1:]
@@ -59,12 +61,8 @@ class PrepareTestCase(JigTestCase):
             self.commit(self.gitrepodir, 'd.txt', 'd')
         ]
 
-    @property
-    def repo(self):
-        return Repo(self.gitrepodir)
-
     def diff_head(self):
-        return self.repo.index.diff('HEAD')
+        return git(self.gitrepodir).diff()
 
     @contextmanager
     def prepare(self):
@@ -82,11 +80,11 @@ class TestParseRevRange(JigTestCase):
     def setUp(self):
         super(TestParseRevRange, self).setUp()
 
-        self.gitrepo, self.gitrepodir, _ = self.repo_from_fixture('repo01')
+        self.gitrepodir, _ = self.repo_from_fixture('repo01')
 
     def assertIsRevRange(self, rev_range):
-        self.assertIsInstance(rev_range.a, Commit)
-        self.assertIsInstance(rev_range.b, Commit)
+        self.assertEqual(len(rev_range.a), 40)
+        self.assertEqual(len(rev_range.b), 40)
 
     def test_bad_format(self):
         """
@@ -122,7 +120,8 @@ class TestParseRevRange(JigTestCase):
         """
         A branch that is newly created can be referenced.
         """
-        self.gitrepo.create_head('feature-branch')
+        with cwd_bounce(self.gitrepodir):
+            sh.git.branch('feature-branch')
 
         self.assertIsRevRange(
             parse_rev_range(self.gitrepodir, 'HEAD^1..feature-branch')
@@ -143,7 +142,7 @@ class TestPrepareAgainstStagedIndex(PrepareTestCase):
 
     """
     def prepare_context_manager(self):
-        return _prepare_against_staged_index(self.repo)
+        return _prepare_against_staged_index(self.gitrepodir)
 
     def test_working_directory_clean(self):
         """
@@ -158,13 +157,16 @@ class TestPrepareAgainstStagedIndex(PrepareTestCase):
         """
         self.create_file(self.gitrepodir, 'e.txt', 'e')
 
-        expected_untracked = self.repo.untracked_files
+        ls_files = ('ls-files', '--other')
+        untracked = lambda: git(self.gitrepodir)(*ls_files).splitlines()
+
+        expected_untracked = untracked()
 
         with self.prepare() as stash:
             self.assertIsNone(stash)
 
             # We have no untracked files, they are stashed
-            self.assertEqual(expected_untracked, self.repo.untracked_files)
+            self.assertEqual(expected_untracked, untracked())
 
     def test_staged(self):
         """
@@ -190,7 +192,7 @@ class TestPrepareAgainstStagedIndex(PrepareTestCase):
             self.assertIsNotNone(stash)
 
             # The modifications are stashed
-            self.assertEqual([], self.repo.index.diff(None))
+            self.assertFalse(git(self.gitrepodir).diff().strip())
 
     def test_stageremoved(self):
         """
@@ -267,11 +269,11 @@ class TestPrepareWithRevRange(PrepareTestCase):
     """
     def prepare_context_manager(self):
         rev_range_parsed = parse_rev_range(
-            self.repo.working_dir,
+            self.gitrepodir,
             self.rev_range
         )
 
-        return _prepare_with_rev_range(self.repo, rev_range_parsed)
+        return _prepare_with_rev_range(self.gitrepodir, rev_range_parsed)
 
     def test_dirty_working_directory(self):
         """
@@ -287,24 +289,24 @@ class TestPrepareWithRevRange(PrepareTestCase):
 
     def test_yields_git_named_head(self):
         """
-        The object that is yielded is a :py:class:`git.Head`.
+        The object that is yielded is a short ref.
         """
         self.rev_range = 'HEAD~1..HEAD~0'
 
         with self.prepare() as head:
-            self.assertIsInstance(head, Head)
+            self.assertEqual('master', head)
 
     def test_yields_git_detached_head(self):
         """
-        If detached HEAD, object that is yielded is a :py:class:`git.Commit`.
+        If detached HEAD, object that is yielded is a hash.
         """
         self.rev_range = 'HEAD~1..HEAD~0'
 
         # Detach the head by checking out the commit hash
-        Repo(self.gitrepodir).git.checkout(self.commits[-1].hexsha)
+        git(self.gitrepodir).checkout(self.commits[-1])
 
         with self.prepare() as head:
-            self.assertIsInstance(head, Commit)
+            self.assertIsGitSha1(head)
 
     def test_detached_head_right_side_of_rev_range(self):
         """
@@ -318,7 +320,7 @@ class TestPrepareWithRevRange(PrepareTestCase):
         with self.prepare():
             # The symbolic ref for HEAD should now be our expected commit
             self.assertEqual(
-                Repo(self.gitrepodir).head.commit,
+                git(self.gitrepodir)('rev-parse', 'HEAD').strip(),
                 expected
             )
 
@@ -332,7 +334,7 @@ class TestPrepareWithRevRange(PrepareTestCase):
             pass
 
         self.assertEqual(
-            Repo(self.gitrepodir).head.reference.path,
+            git(self.gitrepodir)('symbolic-ref', 'HEAD').strip(),
             'refs/heads/master'
         )
 
@@ -343,20 +345,22 @@ class TestPrepareWithRevRange(PrepareTestCase):
         self.rev_range = 'HEAD~2..HEAD~1'
 
         # Detach the head by checking out the commit hash
-        Repo(self.gitrepodir).git.checkout(self.commits[-2].hexsha)
+        git(self.gitrepodir).checkout(self.commits[-2])
 
         # HEAD~1 is going to be our third to last commit
         expected = self.commits[-3]
 
+        head = lambda: git(self.gitrepodir)('rev-parse', 'HEAD').strip()
+
         with self.prepare():
             self.assertEqual(
-                Repo(self.gitrepodir).head.commit,
+                head(),
                 expected
             )
 
         # And we are back to our detached head we started with
         self.assertEqual(
-            Repo(self.gitrepodir).head.commit,
+            head(),
             self.commits[-2]
         )
 
@@ -370,7 +374,7 @@ class TestPrepareWorkingDirectory(JigTestCase):
     def setUp(self):
         super(TestPrepareWorkingDirectory, self).setUp()
 
-        self.gitrepo, self.gitrepodir, _ = self.repo_from_fixture('repo01')
+        self.gitrepodir, _ = self.repo_from_fixture('repo01')
 
     def test_no_rev_range(self):
         """
@@ -422,6 +426,18 @@ class TestTracked(JigTestCase):
             self.commit(self.gitrepodir, 'c.txt', 'c'),
         ]
 
+    def create_tracking_branch(self, name='jig-ci-last-run', rev='HEAD'):
+        """
+        Creates the tracking branch with a reference to the given rev.
+        """
+        rev_parsed = git(self.gitrepodir)('rev-parse', rev).strip()
+
+        git(self.gitrepodir)(
+            'update-ref',
+            'refs/heads/{0}'.format(name),
+            rev_parsed
+        )
+
     def test_tracking_branch_does_not_exist(self):
         """
         Tracking branch does not exist.
@@ -434,8 +450,7 @@ class TestTracked(JigTestCase):
         """
         Tracking branch exists.
         """
-        tracking_branch = Repo(self.gitrepodir).create_head('jig-ci-last-run')
-        tracking_branch.commit = 'HEAD'
+        self.create_tracking_branch()
 
         tracked = Tracked(self.gitrepodir)
 
@@ -447,8 +462,7 @@ class TestTracked(JigTestCase):
         """
         name = 'different-tracking-name'
 
-        tracking_branch = Repo(self.gitrepodir).create_head(name)
-        tracking_branch.commit = 'HEAD'
+        self.create_tracking_branch(name=name)
 
         tracked = Tracked(self.gitrepodir, name)
 
@@ -460,10 +474,10 @@ class TestTracked(JigTestCase):
         """
         tracked = Tracked(self.gitrepodir)
 
-        reference = tracked.update()
+        rev = tracked.update()
 
         self.assertEqual(
-            reference.commit,
+            rev,
             self.commits[-1]
         )
 
@@ -474,19 +488,18 @@ class TestTracked(JigTestCase):
         tracked = Tracked(self.gitrepodir)
 
         with self.assertRaises(TrackingBranchMissing):
-            tracked.reference
+            tracked.rev
 
     def test_tracking_branch_reference(self):
         """
         With a tracking branch we can get a reference to it.
         """
-        tracking_branch = Repo(self.gitrepodir).create_head('jig-ci-last-run')
-        tracking_branch.commit = 'HEAD~2'
+        self.create_tracking_branch(rev='HEAD~2')
 
         tracked = Tracked(self.gitrepodir)
 
         self.assertEqual(
-            tracked.reference.commit,
+            tracked.rev,
             self.commits[0]
         )
 
@@ -496,10 +509,10 @@ class TestTracked(JigTestCase):
         """
         tracked = Tracked(self.gitrepodir)
 
-        tracked.update(self.commits[0].hexsha)
+        tracked.update(self.commits[0])
 
         self.assertEqual(
-            tracked.reference.commit,
+            tracked.rev,
             self.commits[0]
         )
 
@@ -507,14 +520,13 @@ class TestTracked(JigTestCase):
         """
         The tracking branch reference can be moved forward.
         """
-        tracking_branch = Repo(self.gitrepodir).create_head('jig-ci-last-run')
-        tracking_branch.commit = 'HEAD~2'
+        self.create_tracking_branch(rev='HEAD~2')
 
         tracked = Tracked(self.gitrepodir)
 
         tracked.update()
 
         self.assertEqual(
-            tracked.reference.commit,
+            tracked.rev,
             self.commits[-1]
         )
