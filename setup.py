@@ -13,7 +13,8 @@ version = imp.load_source(
 
 install_requires = [
     'sh>=1.08',
-    'docutils>=0.9.1'
+    'docutils>=0.9.1',
+    'gitdb>=0.6.1'
 ]
 
 # Shims for missing stuff in Python 2.6
