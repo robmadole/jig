@@ -22,12 +22,3 @@ def git(path=None):
     return sh.git.bake(*args, **kwargs)
 
 git.error = sh.ErrorReturnCode
-
-#add = git.add
-#commit = git.commit
-#config = git.config
-#init = git.init
-#log = git.log
-#rev_list = getattr(git, 'rev-list')
-#rev_parse = getattr(git, 'rev-parse')
-#rm = git.rm

@@ -12,7 +12,6 @@ from jig.exc import (
     NotGitRepo, PreCommitExists, GitTemplatesMissing,
     JigUserDirectoryError, GitHomeTemplatesExists, InitTemplateDirAlreadySet,
     GitConfigError)
-from jig.gitutils import commands
 from jig.gitutils.scripts import AUTO_JIG_INIT_SCRIPT
 from jig.gitutils.hooking import (
     hook, _git_templates, create_auto_init_templates, set_templates_directory)
@@ -243,10 +242,11 @@ class TestSetTemplatesDirectory(JigTestCase):
         """
         Raises an exception if there are problems reading the Git config.
         """
-        with patch('jig.gitutils.hooking.commands') as mock_commands:
-            mock_commands.config.side_effect = sh.ErrorReturnCode(
+        with patch('jig.gitutils.hooking.git') as mock_git:
+            mock_git.return_value.config.side_effect = sh.ErrorReturnCode(
                 'git config', '', 'error'
             )
+            mock_git.error = sh.ErrorReturnCode
 
             with self.assertRaises(GitConfigError) as gce:
                 set_templates_directory(self.templates_directory)
@@ -301,9 +301,9 @@ class TestSetTemplatesDirectory(JigTestCase):
             else:
                 return se
 
-        with patch('jig.gitutils.hooking.commands') as mock_commands:
-            mock_command = Mock()
-            mock_commands.config.side_effect = config
+        with patch('jig.gitutils.hooking.git') as mock_git:
+            mock_git.return_value.config.side_effect = config
+            mock_git.error = sh.ErrorReturnCode
 
             with self.assertRaises(GitConfigError):
                 set_templates_directory(self.templates_directory)

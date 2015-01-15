@@ -3,12 +3,12 @@ from tempfile import mkdtemp
 from shutil import rmtree
 from time import sleep
 
+import sh
 from mock import patch
-from git import Git, Repo
-from git.exc import GitCommandError
 
 from jig.tests.testcase import JigTestCase
 from jig.exc import GitCloneError
+from jig.gitutils.commands import git
 from jig.gitutils.checks import is_git_repo
 from jig.gitutils.remote import clone, remote_has_updates
 
@@ -29,36 +29,35 @@ class TestClone(JigTestCase):
         """
         Valid repo can be cloned.
         """
-        with patch.object(Git, 'execute'):
+        with patch('jig.gitutils.remote.git') as mock_git:
             to_dir = join(self.workingdir, 'a')
 
-            Git.execute.return_value = 'Cloning into X'
+            result = clone('http://github.com/user/repo', to_dir)
 
-            gitobj = clone('http://github.com/user/repo', to_dir)
+            mock_git.return_value.assert_called_with(
+                'clone', 'http://github.com/user/repo', to_dir
+            )
 
-            Git.execute.assert_called_with([
-                'git', 'clone', 'http://github.com/user/repo', to_dir
-            ])
-
-        self.assertIsInstance(gitobj, Git)
+        self.assertTrue(result)
 
     def test_clone_invalid_repo(self):
         """
         Invalid repo raises error.
         """
-        with patch.object(Git, 'execute'):
-            to_dir = join(self.workingdir, 'a')
-
-            Git.execute.side_effect = GitCommandError(
-                ['command'], 128, stderr='bad command'
+        with patch('jig.gitutils.remote.git') as mock_git:
+            mock_git.side_effect = sh.ErrorReturnCode(
+                'git clone', '', 'error'
             )
+            mock_git.error = sh.ErrorReturnCode
+
+            to_dir = join(self.workingdir, 'a')
 
             with self.assertRaises(GitCloneError) as gce:
                 clone('http://github.com/user/repo', to_dir)   # pragma: no branch
 
-            self.assertIn(
-                "'command' returned exit status 128: bad command",
-                gce.exception
+            self.assertEqual(
+                'error',
+                str(gce.exception)
             )
 
     def test_local_directory_clone(self):
@@ -75,10 +74,8 @@ class TestClone(JigTestCase):
         """
         Clone a specific branch of a repository.
         """
-        with patch.object(Git, 'execute'):
+        with patch('jig.gitutils.remote.git') as mock_git:
             to_dir = join(self.workingdir, 'a')
-
-            Git.execute.return_value = 'Cloning into X'
 
             clone(
                 'http://github.com/user/repo',
@@ -86,10 +83,10 @@ class TestClone(JigTestCase):
                 branch='alternate'
             )
 
-            Git.execute.assert_called_with([
-                'git', 'clone', '--branch', 'alternate',
+            mock_git.return_value.assert_called_with(
+                'clone', '--branch', 'alternate',
                 'http://github.com/user/repo', to_dir
-            ])
+            )
 
 
 class TestRemoteHasUpdates(JigTestCase):
@@ -102,6 +99,7 @@ class TestRemoteHasUpdates(JigTestCase):
         super(TestRemoteHasUpdates, self).setUp()
 
         repo, working_dir, diffs = self.repo_from_fixture('repo01')
+        import pdb; pdb.set_trace()
 
         self.remote_repo = repo
         self.remote_workingdir = working_dir

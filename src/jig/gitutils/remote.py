@@ -1,4 +1,5 @@
 from jig.exc import GitCloneError
+from jig.gitutils.commands import git
 
 
 def clone(repository, to_dir, branch=None):
@@ -13,21 +14,19 @@ def clone(repository, to_dir, branch=None):
     :param string branch: branch to checkout instead of the repository's
         default
     """
-    gitobj = git.Git()
-
     try:
-        cmd = ['git', 'clone']
+        cmd = ['clone']
 
         if branch:
             cmd.extend(['--branch', branch])
 
         cmd.extend([repository, to_dir])
 
-        gitobj.execute(cmd)
+        git()(*cmd)
 
-        return gitobj
-    except git.GitCommandError as gce:
-        raise GitCloneError(str(gce))
+        return True
+    except git.error as e:
+        raise GitCloneError(str(e.stderr))
 
 
 def remote_has_updates(repository):

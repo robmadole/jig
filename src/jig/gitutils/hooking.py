@@ -11,7 +11,7 @@ from jig.exc import (
     GitTemplatesMissing, GitHomeTemplatesExists, GitConfigError,
     InitTemplateDirAlreadySet)
 from jig.conf import JIG_DIR_NAME
-from jig.gitutils import commands
+from jig.gitutils.commands import git
 from jig.gitutils.scripts import RUN_JIG_SCRIPT, AUTO_JIG_INIT_SCRIPT
 from jig.gitutils.checks import is_git_repo
 
@@ -165,11 +165,11 @@ def set_templates_directory(templates_directory):
     Sets the template directory in the global Git config.
     """
     try:
-        raw_config = commands.config(
+        raw_config = git().config(
             '--global',
             '--list'
         )
-    except sh.ErrorReturnCode as e:
+    except git.error as e:
         raise GitConfigError(e)
 
     config = dict([i.split('=', 1) for i in raw_config.splitlines()])
@@ -178,11 +178,11 @@ def set_templates_directory(templates_directory):
         raise InitTemplateDirAlreadySet(config['init.templatedir'])
 
     try:
-        commands.config(
+        git().config(
             '--global',
             '--add',
             'init.templatedir',
             templates_directory
         )
-    except sh.ErrorReturnCode as e:
+    except git.error as e:
         raise GitConfigError(e)

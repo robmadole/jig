@@ -6,31 +6,50 @@ from tempfile import mkdtemp
 from shutil import copy2
 from contextlib import contextmanager
 
+from gitdb.db import GitDB
+
+from jig.packages.gitpython.diff import Diff
 from jig.gitutils.commands import git
 
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
 
 
+class ProxiedRepo(object):
+    def __init__(self, working_directory):
+        self._working_directory = working_directory
+        self._odb = GitDB(join(working_directory, '.git', 'objects'))
+
+    @property
+    def odb(self):
+        return self._odb
+
+    @property
+    def working_tree_dir(self):
+        return self._working_directory
+
+
 def _commit_hashes(repo):
-    return git(repo).log(
-        '--format=format:%H',
-        '--no-decorate',
-        '--no-color'
-    )
+    for line in git(repo)('rev-list', '--all', _iter=True):
+        yield line.strip()
 
 
-def parent_of(commit):
-    reachable = git()(
+def _hash_from_nothing():
+    return git()('hash-object', '-t', 'tree', '/dev/null').strip()
+
+
+def parent_of(repo, commit):
+    reachable = git(repo)(
         'rev-list',
         '--skip=1',
         '--first-parent',
+        '--max-count=1',
         commit
     ).splitlines()
 
     try:
         return reachable[0]
     except IndexError:
-        return None
+        return _hash_from_nothing()
 
 
 def slugify(text, delim=u'-'):
@@ -155,15 +174,24 @@ class NumberedDirectoriesToGit(object):
         """
         repo = self.repo
 
-        raise NotImplementedError()
-
         diffs = []
-        for commit in _commit_hashes(repo).splitlines():
-            try:
-                parent = parent_of(commit)
-                diffs.append(commit.parents[0].diff(commit))
-            except IndexError:
-                pass
+        for commit in _commit_hashes(repo):
+            parent = parent_of(repo, commit)
+
+            raw_diff = git(repo).diff(
+                '--abbrev=40',
+                '--full-index',
+                '--color=never',
+                '--word-diff=none',
+                '--raw',
+                parent,
+                commit,
+                _iter=True
+            )
+            diffs.append(Diff._index_from_raw_format(
+                ProxiedRepo(self.target),
+                raw_diff
+            ))
 
         # Make the oldest first
         diffs.reverse()
