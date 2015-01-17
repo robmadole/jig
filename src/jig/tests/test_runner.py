@@ -25,7 +25,7 @@ class TestRunner(RunnerTestCase, PluginTestCase):
     def setUp(self):
         super(TestRunner, self).setUp()
 
-        repo, working_dir, diffs = self.repo_from_fixture('repo01')
+        self.repo_from_fixture('repo01')
 
     def test_simple_integration(self):
         """
@@ -199,7 +199,7 @@ class TestRunnerPluginUpdates(RunnerTestCase, PluginTestCase):
     def setUp(self):
         super(TestRunnerPluginUpdates, self).setUp()
 
-        repo, working_dir, diffs = self.repo_from_fixture('repo01')
+        #repo, working_dir, diffs = self.repo_from_fixture('repo01')
 
         targets = (
             'jig.runner.sys',
@@ -355,7 +355,7 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
     def setUp(self):
         super(TestRunnerResults, self).setUp()
 
-        repo, working_dir, diffs = self.repo_from_fixture('repo01')
+        self.repo_from_fixture('repo01')
 
     def test_no_plugins(self):
         """
@@ -366,21 +366,6 @@ class TestRunnerResults(RunnerTestCase, PluginTestCase):
         self.assertEqual(
             'There are no plugins installed, use jig '
             'install to add some.\n',
-            self.output
-        )
-
-    def test_empty_repository(self):
-        """
-        If .jig is ran on a repository that hasn't had any commits
-        """
-        self._add_plugin(self.jigconfig, 'plugin01')
-        set_jigconfig(self.gitrepodir, config=self.jigconfig)
-
-        self.runner.results(self.gitrepodir)
-
-        self.assertEqual(
-            'This repository is empty, jig needs at '
-            'least 1 commit to continue.\n',
             self.output
         )
 
@@ -627,7 +612,7 @@ class TestRunnerRevRange(RunnerTestCase, PluginTestCase):
     def setUp(self):
         super(TestRunnerRevRange, self).setUp()
 
-        repo, working_dir, diffs = self.repo_from_fixture('repo01')
+        #repo, working_dir, diffs = self.repo_from_fixture('repo01')
 
         self._add_plugin(self.jigconfig, 'plugin01')
         set_jigconfig(self.gitrepodir, config=self.jigconfig)

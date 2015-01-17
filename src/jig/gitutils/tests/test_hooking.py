@@ -3,8 +3,7 @@ from os import access, X_OK
 from os.path import join, realpath, isdir, isfile
 from tempfile import mkdtemp
 
-import sh
-from mock import patch, Mock
+from mock import patch
 
 from jig.tests.testcase import JigTestCase, result_with_hint
 from jig.commands.hints import GIT_REPO_NOT_INITIALIZED
@@ -12,6 +11,7 @@ from jig.exc import (
     NotGitRepo, PreCommitExists, GitTemplatesMissing,
     JigUserDirectoryError, GitHomeTemplatesExists, InitTemplateDirAlreadySet,
     GitConfigError)
+from jig.packages.sh import sh
 from jig.gitutils.scripts import AUTO_JIG_INIT_SCRIPT
 from jig.gitutils.hooking import (
     hook, _git_templates, create_auto_init_templates, set_templates_directory)

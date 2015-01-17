@@ -4,14 +4,12 @@ from contextlib import contextmanager
 from functools import partial
 from itertools import chain, combinations
 
-import sh
 from mock import patch, MagicMock
 
 from jig.tests.testcase import JigTestCase
 from jig.exc import (
     GitRevListMissing, GitRevListFormatError, GitWorkingDirectoryDirty,
     TrackingBranchMissing)
-from jig.tools import cwd_bounce
 from jig.gitutils.commands import git
 from jig.gitutils.branches import (
     parse_rev_range, prepare_working_directory,
@@ -120,8 +118,7 @@ class TestParseRevRange(JigTestCase):
         """
         A branch that is newly created can be referenced.
         """
-        with cwd_bounce(self.gitrepodir):
-            sh.git.branch('feature-branch')
+        git(self.gitrepodir).branch('feature-branch')
 
         self.assertIsRevRange(
             parse_rev_range(self.gitrepodir, 'HEAD^1..feature-branch')

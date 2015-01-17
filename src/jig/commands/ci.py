@@ -76,7 +76,7 @@ class Command(BaseCommand, InstallCommandMixin):
 
             printer(u'')
             printer(u'Tracking branch {0} references commit {1}'.format(
-                tracking_branch, tracked.reference.commit.hexsha
+                tracking_branch, tracked.rev
             ))
             printer(u'')
 

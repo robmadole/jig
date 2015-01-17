@@ -269,7 +269,7 @@ class TestPluginCommand(CommandTestCase, PluginTestCase):
 
         # This is the directory we will clone
         ngd = NumberedDirectoriesToGit(origin_repo)
-        dir_to_clone = ngd.repo.working_dir
+        dir_to_clone = ngd.repo
 
         # This is a trick, we give it the dir_to_clone when asked to install it
         def clone_local(plugin, to_dir, branch):

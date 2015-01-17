@@ -155,8 +155,10 @@ class TestPluginManager(PluginTestCase):
             # And the second time
             pm.add(join(self.fixturesdir, 'plugin01'))
 
-        self.assertEqual('The plugin is already installed.',
-            str(ec.exception))
+        self.assertEqual(
+            'The plugin is already installed.',
+            str(ec.exception)
+        )
 
     def test_remove_plugin(self):
         """
@@ -182,8 +184,10 @@ class TestPluginManager(PluginTestCase):
         with self.assertRaises(PluginError) as ec:
             pm.remove('bundle', 'name')
 
-        self.assertEqual('This plugin does not exist.',
-            str(ec.exception))
+        self.assertEqual(
+            'This plugin does not exist.',
+            str(ec.exception)
+        )
 
 
 class TestPlugin(PluginTestCase):
@@ -195,10 +199,9 @@ class TestPlugin(PluginTestCase):
     def setUp(self):
         super(TestPlugin, self).setUp()
 
-        repo, working_dir, diffs = self.repo_from_fixture('repo01')
+        repo, diffs = self.repo_from_fixture('repo01')
 
         self.testrepo = repo
-        self.testrepodir = working_dir
         self.testdiffs = diffs
 
     def test_new_file_pre_commit(self):
@@ -208,7 +211,7 @@ class TestPlugin(PluginTestCase):
         pm = PluginManager(self.jigconfig)
 
         pm.add(join(self.fixturesdir, 'plugin01'))
-        gdi = self.git_diff_index(self.testrepo, self.testdiffs[0])
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[1])
 
         retcode, stdout, stderr = pm.plugins[0].pre_commit(gdi)
 

@@ -1,10 +1,9 @@
 # coding=utf-8
-import git
-from os.path import expanduser
 from mock import patch, MagicMock
 
 from jig.tests.testcase import CommandTestCase, result_with_hint
 from jig.commands import sticky
+from jig.gitutils.commands import git
 from jig.exc import (
     ForcedExit, JigUserDirectoryError, GitConfigError,
     InitTemplateDirAlreadySet, GitTemplatesMissing, GitHomeTemplatesExists)
@@ -132,8 +131,8 @@ class TestStickyCommand(CommandTestCase):
         A failure to read or write to the Git config.
         """
         self.mocks['set_templates_directory'].side_effect = \
-            GitConfigError(git.exc.GitCommandError(
-                'git config', 1, 'error'))
+            GitConfigError(git.error(
+                'git config', '', 'error'))
 
         with self.assertRaises(ForcedExit):
             self.run_command()

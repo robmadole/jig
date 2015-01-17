@@ -3,8 +3,6 @@ from tempfile import mkstemp
 from contextlib import contextmanager
 from collections import namedtuple
 
-import sh
-
 from jig.exc import (
     GitRevListFormatError, GitRevListMissing, GitWorkingDirectoryDirty,
     TrackingBranchMissing)
@@ -34,7 +32,7 @@ def parse_rev_range(repository, rev_range):
         commit_b = git(repository)('rev-parse', rev_b).strip()
 
         return RevRangePair(commit_a, commit_b, rev_range)
-    except sh.ErrorReturnCode:
+    except git.error:
         raise GitRevListMissing(rev_range)
 
 
@@ -126,7 +124,7 @@ class Tracked(object):
     def __init__(self, gitrepo, tracking_branch='jig-ci-last-run'):
         self.gitrepo = gitrepo
         self.tracking_branch = tracking_branch
-        self.git = git(path=self.gitrepo)
+        self.git = git(self.gitrepo)
 
     @property
     def _full_tracking_ref(self):

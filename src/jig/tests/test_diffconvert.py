@@ -6,11 +6,11 @@ from pprint import PrettyPrinter
 from operator import itemgetter
 
 from mock import Mock
-from git import Repo
 
 from jig.tests.testcase import JigTestCase
 from jig.diffconvert import describe_diff, DiffType, GitDiffIndex
-from jig.tools import cwd_bounce
+from jig.gitutils.commands import git, iter_raw_diff
+from jig.tools import cwd_bounce, gitdb_diff
 
 
 def assertDiff(func):
@@ -317,17 +317,16 @@ class TestGitDiffIndex(JigTestCase):
     def setUp(self):
         super(TestGitDiffIndex, self).setUp()
 
-        repo, working_dir, diffs = self.repo_from_fixture('repo01')
+        repo, diffs = self.repo_from_fixture('repo01')
 
         self.testrepo = repo
-        self.testrepodir = working_dir
         self.testdiffs = diffs
 
     def test_new_file(self):
         """
         Handles new files.
         """
-        gdi = self.git_diff_index(self.testrepo, self.testdiffs[0])
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[1])
 
         self.assertEqual(1, len(list(gdi.files())))
 
@@ -339,14 +338,14 @@ class TestGitDiffIndex(JigTestCase):
         self.assertEqual('added', file1['type'])
         # This one is the full path to the file
         self.assertEqual(
-            realpath(join(self.testrepodir, 'argument.txt')),
+            realpath(join(self.testrepo, 'argument.txt')),
             realpath(file1['filename']))
 
     def test_modified(self):
         """
         Handles modified files.
         """
-        gdi = self.git_diff_index(self.testrepo, self.testdiffs[1])
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[2])
 
         self.assertEqual(1, len(list(gdi.files())))
 
@@ -370,7 +369,7 @@ class TestGitDiffIndex(JigTestCase):
         """
         Handles deleted files.
         """
-        gdi = self.git_diff_index(self.testrepo, self.testdiffs[2])
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[3])
 
         self.assertEqual(1, len(list(gdi.files())))
 
@@ -392,7 +391,7 @@ class TestGitDiffIndex(JigTestCase):
         """
         Handles multiple files changed.
         """
-        gdi = self.git_diff_index(self.testrepo, self.testdiffs[3])
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[4])
 
         self.assertEqual(2, len(list(gdi.files())))
 
@@ -412,7 +411,7 @@ class TestGitDiffIndex(JigTestCase):
         """
         If sub-directories are involved, those are included properly.
         """
-        gdi = self.git_diff_index(self.testrepo, self.testdiffs[4])
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[5])
 
         # Since we've moved the file Git will see this as a deletion of 2 files
         # plus the addition of 2 files, so it makes our count 4.
@@ -435,7 +434,7 @@ class TestGitDiffIndex(JigTestCase):
         """
         Binary files are ignored.
         """
-        gdi = self.git_diff_index(self.testrepo, self.testdiffs[5])
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[6])
 
         # We should see our file
         self.assertEqual(1, len(list(gdi.files())))
@@ -447,7 +446,7 @@ class TestGitDiffIndex(JigTestCase):
         """
         Does not include anything in the .jig directory.
         """
-        gdi = self.git_diff_index(self.testrepo, self.testdiffs[6])
+        gdi = self.git_diff_index(self.testrepo, self.testdiffs[7])
 
         # We should see our file
         self.assertEqual(0, len(list(gdi.files())))
@@ -466,11 +465,14 @@ class TestGitDiffIndex(JigTestCase):
 
         # We have to do this without our testcase since it's a special
         # situation.
-        repo = Repo(self.gitrepodir)
-        repo.git.add('also_text')
+        git(self.gitrepodir).add('also_text')
+
+        diffs = gitdb_diff(
+            self.gitrepodir, iter_raw_diff(self.gitrepodir, 'HEAD')
+        )
 
         # The symlink is staged, time to convert the diff
-        gdi = GitDiffIndex(self.gitrepodir, repo.head.commit.diff())
+        gdi = GitDiffIndex(self.gitrepodir, diffs)
 
         # If we ignored the symlink, which we should, there should be no files
         self.assertEqual(0, len(list(gdi.files())))

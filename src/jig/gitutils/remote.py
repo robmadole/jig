@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from jig.exc import GitCloneError
 from jig.gitutils.commands import git
 
@@ -29,6 +31,12 @@ def clone(repository, to_dir, branch=None):
         raise GitCloneError(str(e.stderr))
 
 
+def _datetime_of_commit(repository, commit):
+    return datetime.fromtimestamp(
+        int(git(repository).show('-s', '--format=%ct', commit).strip())
+    )
+
+
 def remote_has_updates(repository):
     """
     Fetches the remote and check for available updates.
@@ -36,18 +44,27 @@ def remote_has_updates(repository):
     :param string repository: path to the Git repository
     """
     try:
-        repo = git.Repo(repository)
+        git_bound = git(repository)
 
         # Get the latest tree from all remotes
-        [i.fetch() for i in repo.remotes]
+        git_bound.fetch('--all')
 
-        active = repo.active_branch
-        tracking = repo.active_branch.tracking_branch()
+        origin = git_bound.remote('show').strip()
+        active_ref = git_bound('symbolic-ref', 'HEAD').strip()
+        tracking_ref = active_ref.replace(
+            'heads', 'remotes/{0}'.format(origin)
+        )
 
-        is_different = active.commit != tracking.commit
-        is_tracking_newer = \
-            tracking.commit.committed_date > active.commit.committed_date
-    except (AttributeError, GitCommandError, AssertionError):
+        hash_of_ref = lambda x: git_bound('show-ref', '--hash', x).strip()
+        date_of_ref = lambda x: _datetime_of_commit(repository, x)
+        hash_and_date = lambda x: (hash_of_ref(x), date_of_ref(x))
+
+        active, active_date = hash_and_date(active_ref)
+        tracking, tracking_date = hash_and_date(tracking_ref)
+
+        is_different = active != tracking
+        is_tracking_newer = tracking_date > active_date
+    except (AttributeError, git.error, AssertionError):
         # The Python Git library issues some strange errors during
         # a fetch on occasion, so this "diaper"ish except is intended
         # to allow the process to continue without failing with a traceback.

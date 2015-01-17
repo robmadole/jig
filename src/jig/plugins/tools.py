@@ -16,6 +16,7 @@ from jig.conf import (
     PLUGIN_PRE_COMMIT_TEMPLATE_DIR, CODEC)
 from jig.gitutils.checks import is_git_repo, repo_jiginitialized
 from jig.gitutils.remote import remote_has_updates
+from jig.gitutils.commands import git
 from jig.tools import slugify
 from jig.plugins.manager import PluginManager
 
@@ -132,12 +133,10 @@ def update_plugins(gitrepo):
         pm = PluginManager()
         pm.add(plugin_dir)
 
-        gitobj = git.Git(plugin_dir)
-
-        retcode, stdout, stderr = gitobj.execute(
-            ['git', 'pull'], with_extended_output=True)
-
-        results[pm] = stdout or stderr
+        try:
+            results[pm] = git(plugin_dir).pull().strip()
+        except git.error as e:
+            results[pm] = e.stderr
 
     return results
 

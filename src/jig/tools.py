@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from gitdb.db import GitDB
 
 from jig.packages.gitpython.diff import Diff
-from jig.gitutils.commands import git
+from jig.gitutils.commands import git, iter_raw_diff
 
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
 
@@ -26,6 +26,13 @@ class ProxiedRepo(object):
     @property
     def working_tree_dir(self):
         return self._working_directory
+
+
+def gitdb_diff(repo, raw_diff):
+    return Diff._index_from_raw_format(
+        ProxiedRepo(repo),
+        raw_diff
+    )
 
 
 def _commit_hashes(repo):
@@ -178,20 +185,9 @@ class NumberedDirectoriesToGit(object):
         for commit in _commit_hashes(repo):
             parent = parent_of(repo, commit)
 
-            raw_diff = git(repo).diff(
-                '--abbrev=40',
-                '--full-index',
-                '--color=never',
-                '--word-diff=none',
-                '--raw',
-                parent,
-                commit,
-                _iter=True
+            diffs.append(
+                gitdb_diff(repo, iter_raw_diff(repo, parent, commit))
             )
-            diffs.append(Diff._index_from_raw_format(
-                ProxiedRepo(self.target),
-                raw_diff
-            ))
 
         # Make the oldest first
         diffs.reverse()

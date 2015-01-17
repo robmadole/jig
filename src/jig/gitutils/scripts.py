@@ -8,7 +8,7 @@ RUN_JIG_SCRIPT = \
 
     # Make sure that we can find the directory that jig is installed
     path.append('{jig_dir}')
-    path.append('{sh_dir}')
+    path.append('{gitdb_dir}')
 
     from jig.runner import Runner
 

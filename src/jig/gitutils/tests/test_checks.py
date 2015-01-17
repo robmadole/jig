@@ -4,7 +4,7 @@ from jig.tests.testcase import JigTestCase
 from jig.plugins import initializer
 from jig.gitutils.commands import git
 from jig.gitutils.checks import (
-    is_git_repo, repo_jiginitialized, repo_is_dirty)
+    is_git_repo, is_empty_git_repo, repo_jiginitialized, repo_is_dirty)
 
 
 class TestIsGitRepo(JigTestCase):
@@ -28,6 +28,41 @@ class TestIsGitRepo(JigTestCase):
         git(directory).init('.')
 
         self.assertTrue(is_git_repo(directory))
+
+
+class TestIsEmptyGitRepo(JigTestCase):
+
+    """
+    Detects if a Git repository is empty.
+
+    """
+    def test_is_empty_if_not_git_directory(self):
+        """
+        It's empty if it's not a Git repository.
+        """
+        self.assertTrue(is_empty_git_repo(mkdtemp()))
+
+    def test_is_empty(self):
+        """
+        Detects an empty Git database.
+        """
+        directory = mkdtemp()
+
+        git(directory).init('.')
+
+        self.assertTrue(is_empty_git_repo(directory))
+
+    def test_is_not_empty(self):
+        """
+        Detects that it's not empty if at least one object exists.
+        """
+        directory = mkdtemp()
+
+        git(directory).init('.')
+
+        self.commit(directory, 'a.txt', 'aaa')
+
+        self.assertFalse(is_empty_git_repo(directory))
 
 
 class TestRepoJiginitialized(JigTestCase):

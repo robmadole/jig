@@ -1,5 +1,7 @@
 from os.path import isdir, join
 
+from gitdb.db import LooseObjectDB
+
 from jig.conf import JIG_DIR_NAME
 from jig.gitutils.commands import git
 
@@ -9,6 +11,18 @@ def is_git_repo(gitdir):
     Returns boolean whether the directory appears to be a Git directory.
     """
     return isdir(join(gitdir, '.git'))
+
+
+def is_empty_git_repo(gitdir):
+    """
+    Determine if there are no objects in the Git database.
+    """
+    if not is_git_repo(gitdir):
+        return True
+
+    db = LooseObjectDB(join(gitdir, '.git', 'objects'))
+
+    return db.size() == 0
 
 
 def repo_jiginitialized(gitdir):

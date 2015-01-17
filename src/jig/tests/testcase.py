@@ -166,7 +166,7 @@ class JigTestCase(unittest.TestCase):
         """
         Retrieves the ``GitDiffIndex`` for the repository and diffs.
         """
-        return GitDiffIndex(self.testrepodir, diffs)
+        return GitDiffIndex(repo, diffs)
 
     def create_file(self, gitrepodir, name, content):
         """
@@ -206,7 +206,7 @@ class JigTestCase(unittest.TestCase):
         """
         self.create_file(gitrepodir, name, content)
 
-        git(path=gitrepodir).add(name)
+        git(gitrepodir).add(name)
 
     def stage_remove(self, gitrepodir, name):
         """
@@ -214,16 +214,15 @@ class JigTestCase(unittest.TestCase):
 
         Where ``name`` is the path to the file.
         """
-        git(path=gitrepodir).rm(name)
+        git(gitrepodir).rm(name)
 
     def commit(self, gitrepodir, name, content):
         """
         Create or modify a file in a Git repository and commit it.
 
         A commit hash will be returned representing the commit.
-
         """
-        git_bound = git(path=gitrepodir)
+        git_bound = git(gitrepodir)
 
         self.stage(gitrepodir, name, content)
 

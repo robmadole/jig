@@ -359,8 +359,8 @@ class PluginTestRunner(object):
 
             # Get a GitDiffIndex object from
             gdi = InstrumentedGitDiffIndex(
-                self.timeline.repo.working_dir,
-                self.timeline.diffs()[exp.range[0] - 1])
+                self.timeline.repo,
+                self.timeline.diffs()[exp.range[0]])
 
             # What is the numbered test directory reprsenting our commit?
             wd = abspath(join(
@@ -370,7 +370,7 @@ class PluginTestRunner(object):
             with cwd_bounce(wd):
                 # Patch up the filename to be within our numbered directory
                 # instead of the Git repository
-                gdi.replace_path = (self.timeline.repo.working_dir, wd)
+                gdi.replace_path = (self.timeline.repo, wd)
 
                 # Gather up the input to the plugin for logging
                 stdin = json.dumps({

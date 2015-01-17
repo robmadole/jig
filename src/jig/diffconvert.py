@@ -19,6 +19,8 @@ utilities for discovering differences between two strings.
 from os.path import islink
 from difflib import SequenceMatcher
 
+from gitdb.exc import BadObject
+
 from jig.conf import CODEC
 
 

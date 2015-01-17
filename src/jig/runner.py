@@ -6,6 +6,8 @@ from jig.exc import GitRepoNotInitialized
 from jig.conf import PLUGIN_CHECK_FOR_UPDATES
 from jig.gitutils.checks import repo_jiginitialized
 from jig.gitutils.branches import parse_rev_range, prepare_working_directory
+from jig.gitutils.commands import iter_raw_diff
+from jig.tools import gitdb_diff
 from jig.diffconvert import GitDiffIndex
 from jig.plugins import get_jigconfig, PluginManager
 from jig.plugins.tools import (
@@ -30,13 +32,15 @@ def _diff_for(gitrepo, rev_range=None):
         Git index
     """
     if rev_range:
-        return rev_range.a.diff(rev_range.b)
+        return gitdb_diff(
+            gitrepo,
+            iter_raw_diff(gitrepo, rev_range.a, rev_range.b)
+        )
     else:
-        # Assume we want a diff between what is staged and HEAD
-        try:
-            return gitrepo.head.commit.diff()
-        except ValueError:
-            return None
+        return gitdb_diff(
+            gitrepo,
+            iter_raw_diff(gitrepo, '--staged')
+        )
 
 
 class Runner(object):
@@ -204,19 +208,7 @@ class Runner(object):
                     'use jig install to add some.')
                 return
 
-            self.repo = Repo(gitrepo)
-
-            diff = _diff_for(self.repo, rev_range)
-
-            if diff is None:
-                # No diff on head, no commits have been written yet
-                printer(
-                    'This repository is empty, jig needs at '
-                    'least 1 commit to continue.')
-                # Let execution continue so they *can* commit that first
-                # changeset. This is a special mode that should not cause Jig
-                # to exit with non-zero.
-                return
+            diff = _diff_for(gitrepo, rev_range)
 
             if len(diff) == 0:
                 # There is nothing changed in this repository, no need for

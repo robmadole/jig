@@ -4,7 +4,7 @@ from os import stat, chmod, makedirs
 from os.path import isfile, isdir, join, realpath, dirname
 from shutil import copytree
 
-import sh
+import gitdb
 
 from jig.exc import (
     NotGitRepo, PreCommitExists, JigUserDirectoryError,
@@ -17,7 +17,7 @@ from jig.gitutils.checks import is_git_repo
 
 # Dependencies to make jig run
 JIG_DIR = realpath(join(dirname(__file__), '..'))
-SH_DIR = realpath(join(dirname(sh.__file__), '..'))
+GITDB_DIR = realpath(join(dirname(gitdb.__file__), '..'))
 
 
 def _git_templates():
@@ -99,7 +99,7 @@ def hook(gitdir):
     script_kwargs = {
         'python_executable': sys.executable,
         'jig_dir': JIG_DIR,
-        'sh_dir': SH_DIR
+        'gitdb_dir': GITDB_DIR
     }
 
     return _create_pre_commit(pc_filename, RUN_JIG_SCRIPT, script_kwargs)

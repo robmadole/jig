@@ -1,4 +1,4 @@
-import sh
+from jig.packages.sh import sh
 
 try:
     # Default to no TTY for out
@@ -12,13 +12,26 @@ except sh.CommandNoFound:
     )
 
 
-def git(path=None):
-    args = []
-    kwargs = {'_tty_stdout': False}
+def git(*args):
+    shargs = []
+    shkwargs = {'_tty_stdout': False}
 
-    if path:
-        args.extend(['-C', path])
+    if args:
+        shargs.extend(['-C', args[0]])
 
-    return sh.git.bake(*args, **kwargs)
+    return sh.git.bake(*shargs, **shkwargs)
+
+
+def iter_raw_diff(path, *args, **kwargs):
+    return git(path).diff(
+        '--abbrev=40',
+        '--full-index',
+        '--color=never',
+        '--word-diff=none',
+        '--raw',
+        *args,
+        _iter=True,
+        **kwargs
+    )
 
 git.error = sh.ErrorReturnCode

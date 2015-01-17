@@ -4,11 +4,11 @@ from tempfile import mkdtemp
 from os.path import isfile, join
 
 from mock import Mock
-from git import Repo
 
 from jig.tests.testcase import (
     JigTestCase, CommandTestCase, cd_gitrepo)
 from jig.plugins import create_plugin, get_jigconfig, PluginManager
+from jig.gitutils.commands import git
 from jig.exc import ForcedExit
 from jig.commands import ci
 
@@ -113,11 +113,11 @@ class TestCiCommand(CommandTestCase):
                 '.jigplugins.txt', self.gitrepodir)
             )
 
-        repo = Repo(self.gitrepodir)
+        rev_parse = git(self.gitrepodir).bake('rev-parse')
 
         self.assertEqual(
-            repo.heads['master'].commit,
-            repo.heads['jig-ci-last-run'].commit
+            rev_parse('master'),
+            rev_parse('jig-ci-last-run')
         )
 
         self.assertResults(
@@ -134,11 +134,11 @@ class TestCiCommand(CommandTestCase):
                 tracking_branch, '.jigplugins.txt', self.gitrepodir)
             )
 
-        repo = Repo(self.gitrepodir)
+        rev_parse = git(self.gitrepodir).bake('rev-parse')
 
         self.assertEqual(
-            repo.heads['master'].commit,
-            repo.heads[tracking_branch].commit
+            rev_parse('master'),
+            rev_parse(tracking_branch)
         )
 
     @cd_gitrepo

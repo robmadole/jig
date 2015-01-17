@@ -6,9 +6,9 @@ from calendar import timegm
 from ConfigParser import ConfigParser
 from datetime import datetime, timedelta
 
-from git import Git
 from mock import patch
 
+from jig.packages.sh import sh
 from jig.tests.testcase import JigTestCase, PluginTestCase, cd_gitrepo
 from jig.exc import (
     NotGitRepo, AlreadyInitialized,
@@ -191,11 +191,10 @@ class TestUpdatePlugins(PluginTestCase):
         create_plugin(fake_cloned_plugin, bundle='a', name='a')
         create_plugin(fake_cloned_plugin, bundle='b', name='b')
 
-        with patch.object(Git, 'execute'):
-            # Fake the git pull command
-            mock_execute = Git.execute
+        with patch('jig.plugins.tools.git') as mock_git:
+            mock_git.error = sh.ErrorReturnCode
 
-            Git.execute.return_value = (0, 'Already up to date.', '')
+            mock_git.return_value.pull.return_value = 'Already up to date.'
 
             results = update_plugins(self.gitrepodir)
 
@@ -205,8 +204,7 @@ class TestUpdatePlugins(PluginTestCase):
         self.assertEquals(2, len(pm.plugins))
 
         # And it called ``git pull`` on the repository
-        mock_execute.assert_called_once_with(
-            ['git', 'pull'], with_extended_output=True)
+        mock_git.return_value.pull.assert_called()
 
 
 class TestPluginsHaveUpdates(PluginTestCase):
