@@ -136,7 +136,7 @@ def update_plugins(gitrepo):
         try:
             results[pm] = git(plugin_dir).pull().strip()
         except git.error as e:
-            results[pm] = e.stderr
+            results[pm] = e.stderr.strip()
 
     return results
 

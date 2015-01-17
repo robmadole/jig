@@ -5,7 +5,7 @@ try:
     sh.Command._call_args['tty_out'] = False
 
     assert sh.git
-except sh.CommandNoFound:
+except sh.CommandNotFound:   # pragma: no cover
     raise SystemExit(
         "Could not find an installation of Git "
         "anywhere on the path. Is Git installed?"

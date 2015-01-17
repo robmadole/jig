@@ -145,7 +145,10 @@ class TestCreatePlugin(PluginTestCase):
         config = ConfigParser()
         config.read(join(plugin_dir, 'config.cfg'))
 
-        self.assertEqual(set(('settings', 'help', 'plugin')), set(config.sections()))
+        self.assertEqual(
+            set(('settings', 'help', 'plugin')),
+            set(config.sections())
+        )
         self.assertEqual('test', config.get('plugin', 'bundle'))
         self.assertEqual('plugin', config.get('plugin', 'name'))
         self.assertEqual([], config.items('settings'))
@@ -178,6 +181,26 @@ class TestUpdatePlugins(PluginTestCase):
         """
         # None are installed so we get an empty list
         self.assertEqual({}, update_plugins(self.gitrepodir))
+
+    def test_update_error(self):
+        """
+        If update is ran on something that cannot be pulled.
+        """
+        directory = mkdtemp()
+
+        makedirs(join(directory, '.git'))
+
+        plugins_dir = join(directory, '.jig', 'plugins')
+        fake_cloned_plugin = join(plugins_dir, 'abcdef1234567890')
+
+        makedirs(fake_cloned_plugin)
+
+        create_plugin(fake_cloned_plugin, bundle='a', name='a')
+
+        self.assertEqual(
+            u'fatal: Not a git repository (or any of the parent directories): .git',
+            update_plugins(directory).values()[0]
+        )
 
     def test_update_results(self):
         """

@@ -152,12 +152,6 @@ class Tracked(object):
 
         return rev
 
-    def _create(self):
-        """
-        Create a new head on the repository with the tracking branch name.
-        """
-        return self._update_ref('HEAD')
-
     @property
     def rev(self):
         """
