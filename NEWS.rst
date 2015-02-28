@@ -1,6 +1,11 @@
 News
 ====
 
+*Release 0.1.11 - February 28th, 2015*
+
+* Removes references to the async Python library which is no longer
+  needed by gitdb. Fixes #11.
+
 *Release 0.1.10 - July 23rd, 2014*
 
 * Fixed references to downloading files from GitHub after a security update

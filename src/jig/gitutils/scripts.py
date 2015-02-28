@@ -10,7 +10,6 @@ RUN_JIG_SCRIPT = \
     path.append('{jig_dir}')
     path.append('{git_python_dir}')
     path.append('{gitdb_dir}')
-    path.append('{async_dir}')
     path.append('{smmap_dir}')
 
     from jig.runner import Runner

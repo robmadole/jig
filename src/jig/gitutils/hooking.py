@@ -6,7 +6,6 @@ from shutil import copytree
 
 import git
 import gitdb
-import async
 import smmap
 
 from jig.exc import (
@@ -21,7 +20,6 @@ from jig.gitutils.checks import is_git_repo
 JIG_DIR = realpath(join(dirname(__file__), '..'))
 GIT_PYTHON_DIR = realpath(join(dirname(git.__file__), '..'))
 GITDB_DIR = realpath(join(dirname(gitdb.__file__), '..'))
-ASYNC_DIR = realpath(join(dirname(async.__file__), '..'))
 SMMAP_DIR = realpath(join(dirname(smmap.__file__), '..'))
 
 
@@ -106,7 +104,6 @@ def hook(gitdir):
         'jig_dir': JIG_DIR,
         'git_python_dir': GIT_PYTHON_DIR,
         'gitdb_dir': GITDB_DIR,
-        'async_dir': ASYNC_DIR,
         'smmap_dir': SMMAP_DIR}
 
     return _create_pre_commit(pc_filename, RUN_JIG_SCRIPT, script_kwargs)
