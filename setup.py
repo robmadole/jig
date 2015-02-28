@@ -12,7 +12,7 @@ version = imp.load_source(
     'jig', os.path.join(here, 'src', 'jig', '__init__.py')).__version__
 
 install_requires = [
-    'GitPython>=0.3.2RC1',
+    'GitPython==0.3.2',
     'docutils>=0.9.1']
 
 # Shims for missing stuff in Python 2.6
